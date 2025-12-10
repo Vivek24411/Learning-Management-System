@@ -140,19 +140,25 @@ const PDFViewer = ({ pdfUrl, title }) => {
   return (
     <div 
       ref={containerRef}
-      className={`bg-white rounded-xl shadow-lg select-none transition-all duration-300 ${
-        isFullscreen ? 'fixed inset-0 z-50 rounded-none p-4 bg-gray-900' : 'p-6'
+      className={`bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 rounded-2xl shadow-xl border border-blue-200/50 select-none transition-all duration-300 ${
+        isFullscreen ? 'fixed inset-0 z-50 rounded-none p-4 bg-gray-900' : 'p-8'
       }`}
       onContextMenu={(e) => e.preventDefault()}
       style={{ userSelect: 'none', pointerEvents: 'auto' }}
     >
       {title && !isFullscreen && (
-        <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <svg className="w-6 h-6 mr-2 text-[#7A7F3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          {title}
-        </h3>
+        <div className="mb-6">
+          <h3 className="text-2xl font-bold text-gray-800 flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <span className="bg-gradient-to-r from-gray-800 to-blue-600 bg-clip-text text-transparent">
+              {title}
+            </span>
+          </h3>
+        </div>
       )}
 
       {/* Top Controls */}
@@ -357,6 +363,8 @@ const PDFViewer = ({ pdfUrl, title }) => {
 const VideoPlayer = ({ videoDetails }) => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [showThumbnail, setShowThumbnail] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef(null);
 
   const currentVideo = videoDetails[currentVideoIndex];
@@ -369,53 +377,69 @@ const VideoPlayer = ({ videoDetails }) => {
     }
   };
 
+  const handlePlayVideo = () => {
+    setShowThumbnail(false);
+    if (videoRef.current) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleVideoPause = () => {
+    setIsPlaying(false);
+  };
+
+  const handleVideoPlay = () => {
+    setIsPlaying(true);
+  };
+
   const nextVideo = () => {
     if (currentVideoIndex < videoDetails.length - 1) {
       setCurrentVideoIndex(currentVideoIndex + 1);
+      setShowThumbnail(true);
+      setIsPlaying(false);
     }
   };
 
   const prevVideo = () => {
     if (currentVideoIndex > 0) {
       setCurrentVideoIndex(currentVideoIndex - 1);
+      setShowThumbnail(true);
+      setIsPlaying(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <svg className="w-6 h-6 mr-2 text-[#7A7F3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
-        Chapter Videos
+    <div className="bg-gradient-to-br from-white via-yellow-50/30 to-amber-50/50 rounded-2xl shadow-xl border border-yellow-200/50 p-8">
+      <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </div>
+        <span className="bg-gradient-to-r from-gray-800 to-red-600 bg-clip-text text-transparent">
+          Chapter Videos
+        </span>
       </h3>
 
       {currentVideo && (
-        <div className="space-y-4">
-          {/* Video Thumbnail (shown before play) */}
-          {currentVideo.videoThumbnail && (
-            <div className="relative">
-              <img
-                src={currentVideo.videoThumbnail}
-                alt={currentVideo.title || 'Video thumbnail'}
-                className="w-full h-48 object-cover rounded-lg shadow-md"
-              />
-            </div>
-          )}
-
-          {/* Video Player */}
+        <div className="space-y-6">
+          {/* YouTube-style Video Player with Thumbnail Overlay */}
           <div 
-            className="relative rounded-lg overflow-hidden shadow-md"
+            className="relative rounded-2xl overflow-hidden shadow-2xl group cursor-pointer bg-black"
             onContextMenu={(e) => e.preventDefault()}
           >
+            {/* Video Element (hidden when thumbnail is shown) */}
             <video
               ref={videoRef}
               src={currentVideo.video}
-              controls
+              controls={!showThumbnail}
               controlsList="nodownload noremoteplaybook"
-              className="w-full h-auto max-h-96"
-              style={{ pointerEvents: 'auto' }}
+              className={`w-full h-auto max-h-[500px] transition-opacity duration-300 ${showThumbnail ? 'opacity-0 absolute inset-0' : 'opacity-100'}`}
+              style={{ pointerEvents: showThumbnail ? 'none' : 'auto' }}
               onContextMenu={(e) => e.preventDefault()}
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
               onLoadedMetadata={() => {
                 if (videoRef.current) {
                   videoRef.current.playbackRate = playbackSpeed;
@@ -424,59 +448,123 @@ const VideoPlayer = ({ videoDetails }) => {
             >
               Your browser does not support the video tag.
             </video>
+
+            {/* Thumbnail Overlay */}
+            {showThumbnail && currentVideo.videoThumbnail && (
+              <div 
+                className="relative w-full h-64 md:h-80 lg:h-96 cursor-pointer"
+                onClick={handlePlayVideo}
+              >
+                <img
+                  src={currentVideo.videoThumbnail}
+                  alt={currentVideo.title || 'Video thumbnail'}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Dark overlay */}
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-all duration-300"></div>
+                
+                {/* Play Button - YouTube Style */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-20 h-20 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-2xl transform group-hover:scale-110 transition-all duration-300">
+                    <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Video Duration Badge (optional) */}
+                <div className="absolute bottom-4 right-4 bg-black/80 text-white px-2 py-1 rounded text-sm font-medium">
+                  Click to Play
+                </div>
+              </div>
+            )}
+
+            {/* Video Loading State */}
+            {!showThumbnail && !currentVideo.videoThumbnail && (
+              <div className="w-full h-64 md:h-80 lg:h-96 bg-gray-900 flex items-center justify-center">
+                <div className="text-white text-center">
+                  <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                  <p>Loading video...</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Video Title */}
           {currentVideo.title && (
-            <h4 className="text-lg font-medium text-gray-800">{currentVideo.title}</h4>
+            <div className="flex items-center space-x-3">
+              <div className="w-1 h-6 bg-gradient-to-b from-red-500 to-red-600 rounded-full"></div>
+              <h4 className="text-xl font-bold text-gray-800">{currentVideo.title}</h4>
+              {isPlaying && (
+                <div className="flex items-center space-x-2 text-red-600">
+                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">Playing</span>
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Video Controls */}
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-stone-50 to-amber-50/30 rounded-lg p-4">
-            {/* Speed Control */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">Speed:</span>
-              <select
-                value={playbackSpeed}
-                onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-                className="px-3 py-1 border border-[#7A7F3F] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7A7F3F]/20"
-              >
-                {speeds.map(speed => (
-                  <option key={speed} value={speed}>{speed}x</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Video Navigation */}
-            {videoDetails.length > 1 && (
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={prevVideo}
-                  disabled={currentVideoIndex === 0}
-                  className="flex items-center px-3 py-1 border border-[#7A7F3F] text-[#7A7F3F] rounded-lg hover:bg-[#7A7F3F] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          {/* Enhanced Video Controls */}
+          <div className="bg-gradient-to-r from-yellow-50 via-amber-50 to-orange-50 rounded-xl p-6 border border-yellow-200/50 shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* Speed Control */}
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  Previous
-                </button>
-                
-                <span className="text-sm text-gray-600 px-2">
-                  {currentVideoIndex + 1} of {videoDetails.length}
-                </span>
-                
-                <button
-                  onClick={nextVideo}
-                  disabled={currentVideoIndex === videoDetails.length - 1}
-                  className="flex items-center px-3 py-1 border border-[#7A7F3F] text-[#7A7F3F] rounded-lg hover:bg-[#7A7F3F] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  <span className="text-sm font-semibold text-gray-700">Speed:</span>
+                </div>
+                <select
+                  value={playbackSpeed}
+                  onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
+                  className="px-4 py-2 bg-white border border-yellow-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all duration-200"
                 >
-                  Next
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+                  {speeds.map(speed => (
+                    <option key={speed} value={speed}>{speed}x</option>
+                  ))}
+                </select>
               </div>
-            )}
+
+              {/* Video Navigation */}
+              {videoDetails.length > 1 && (
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={prevVideo}
+                    disabled={currentVideoIndex === 0}
+                    className="flex items-center px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 text-gray-700 rounded-lg hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-sm"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Previous
+                  </button>
+                  
+                  <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-yellow-300 shadow-sm">
+                    <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                    <span className="text-sm font-bold text-gray-700">
+                      {currentVideoIndex + 1} of {videoDetails.length}
+                    </span>
+                  </div>
+                  
+                  <button
+                    onClick={nextVideo}
+                    disabled={currentVideoIndex === videoDetails.length - 1}
+                    className="flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg"
+                  >
+                    Next
+                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -541,7 +629,7 @@ const Chapter = () => {
     );
   }
 
-  if(!profile.coursePurchased.includes(courseId)){
+  if(!profile.coursePurchased.includes(courseId) && !profile.isAdmin){
     toast.info("You do not have access to this chapter. Please enroll the course to access all chapters.");
     setTimeout(() => {
       navigate(`/course/${courseId}`);
@@ -598,25 +686,31 @@ const Chapter = () => {
   return (
    <>
    <Header />
-   <div className="min-h-screen bg-gradient-to-br from-stone-50 via-amber-50/30 to-stone-100">
+   <div className="min-h-screen bg-gradient-to-br mt-18 from-stone-50 via-amber-50/30 to-stone-100">
      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
        
        {/* Chapter Header */}
-       <div className="bg-white rounded-xl shadow-lg p-8">
-         <div className="flex items-center space-x-4 mb-6">
+       <div className="bg-gradient-to-r from-white via-amber-50/40 to-yellow-50/60 rounded-2xl shadow-xl border border-yellow-200/50 px-8 py-3">
+         <div className="flex items-start space-x-8 mb-6">
            {chapter.chapterThumbnailImage && (
-             <img
-               src={chapter.chapterThumbnailImage}
-               alt={chapter.chapterName}
-               className="w-20 h-20 rounded-xl object-cover shadow-md"
-             />
+             <div className="relative group">
+               <img
+                 src={chapter.chapterThumbnailImage}
+                 alt={chapter.chapterName}
+                 className="w-60 h-45 rounded-2xl object-cover shadow-lg ring-4 ring-yellow-200/50 group-hover:ring-yellow-300/60 transition-all duration-300"
+               />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+             </div>
            )}
-           <div>
-             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-               {chapter.chapterName}
-             </h1>
+           <div className="flex-1 mt-2">
+             <div className="flex items-center space-x-3 mb-4">
+               <div className="w-2 h-8 bg-gradient-to-b from-[#7A7F3F] to-yellow-500 rounded-full"></div>
+               <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-[#7A7F3F] bg-clip-text text-transparent">
+                 {chapter.chapterName}
+               </h1>
+             </div>
              {chapter.shortDescription && (
-               <p className="text-lg text-gray-600 leading-relaxed">
+               <p className="text-base text-gray-700 leading-relaxed font-medium">
                  {chapter.shortDescription}
                </p>
              )}
@@ -626,31 +720,38 @@ const Chapter = () => {
 
        {/* PDF Files Section */}
        {chapter.chapterFile && chapter.chapterFile.length > 0 && (
-         <div className="space-y-4">
-           <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
-             <svg className="w-7 h-7 mr-3 text-[#7A7F3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-             </svg>
-             Chapter Materials
+         <div className="space-y-6">
+           <h2 className="text-3xl font-bold text-gray-900 flex items-center">
+             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+               </svg>
+             </div>
+             <span className="bg-gradient-to-r from-gray-800 to-blue-600 bg-clip-text text-transparent">
+               Chapter Materials
+             </span>
            </h2>
 
            {chapter.chapterFile.length > 1 && (
-             <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-md">
-               <span className="text-gray-700 font-medium">
-                 File {currentFileIndex + 1} of {chapter.chapterFile.length}
-               </span>
-               <div className="flex space-x-2">
+             <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-xl p-6 shadow-lg border border-blue-200/50">
+               <div className="flex items-center space-x-3">
+                 <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                 <span className="text-gray-800 font-bold text-lg">
+                   File {currentFileIndex + 1} of {chapter.chapterFile.length}
+                 </span>
+               </div>
+               <div className="flex space-x-3">
                  <button
                    onClick={prevFile}
                    disabled={currentFileIndex === 0}
-                   className="px-4 py-2 border border-[#7A7F3F] text-[#7A7F3F] rounded-lg hover:bg-[#7A7F3F] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                   className="px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 text-gray-700 rounded-lg hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-sm"
                  >
                    Previous File
                  </button>
                  <button
                    onClick={nextFile}
                    disabled={currentFileIndex === chapter.chapterFile.length - 1}
-                   className="px-4 py-2 bg-[#7A7F3F] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                   className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg"
                  >
                    Next File
                  </button>
@@ -672,17 +773,23 @@ const Chapter = () => {
 
        {/* Chapter Summary Section */}
        {chapter.chapterSummary && (
-         <div className="bg-gradient-to-r from-amber-50 to-stone-50 rounded-xl shadow-lg p-8">
-           <h3 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-             <svg className="w-7 h-7 mr-3 text-[#7A7F3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-             </svg>
-             Chapter Summary
+         <div className="bg-gradient-to-br from-amber-50 via-yellow-50/60 to-orange-50 rounded-2xl shadow-xl border border-amber-200/50 p-8">
+           <h3 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+             <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+               </svg>
+             </div>
+             <span className="bg-gradient-to-r from-gray-800 to-amber-600 bg-clip-text text-transparent">
+               Chapter Summary
+             </span>
            </h3>
-           <div className="prose prose-lg max-w-none">
-             <p className="text-gray-800 leading-relaxed text-lg whitespace-pre-line">
-               {chapter.chapterSummary}
-             </p>
+           <div className="bg-white/60 rounded-xl p-6 shadow-sm border border-amber-100">
+             <div className="prose prose-lg max-w-none">
+               <p className="text-gray-800 leading-relaxed text-xl font-medium whitespace-pre-line">
+                 {chapter.chapterSummary}
+               </p>
+             </div>
            </div>
          </div>
        )}

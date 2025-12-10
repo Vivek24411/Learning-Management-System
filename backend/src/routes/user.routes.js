@@ -1,7 +1,7 @@
 const express = require("express");
 const userRouter = express.Router();
 const {body, query} = require("express-validator");
-const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse } = require("../controllers/user.controllers");
+const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder } = require("../controllers/user.controllers");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { uploadCourseThumbnail } = require("../middlewares/upload");
 const upload = require("../middlewares/upload");
@@ -105,6 +105,18 @@ userRouter.get("/deleteSection",adminAuth,[
 userRouter.post("/enrollCourse",userAuth,[
     body("courseId").isMongoId()
 ],enrollCourse)
+
+userRouter.post("/createOrder",userAuth,[
+    body("courseId").isMongoId()
+],createOrder)
+
+userRouter.post("/verifyOrder",userAuth,[
+    body("orderId").isString().isLength({min:1}),
+    body("paymentId").isString().isLength({min:1}),
+    body("signature").isString().isLength({min:1})
+],verifyOrder)
+
+
 
 
 

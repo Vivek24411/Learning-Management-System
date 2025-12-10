@@ -90,7 +90,9 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
             ) : (
               <div>
                 <h3>Locked</h3>
-                <p className="text-gray-500">Unlock this chapter by enrolling the course.</p>
+                <p className="text-gray-500">
+                  Unlock this chapter by enrolling the course.
+                </p>
               </div>
             )}
           </div>
@@ -339,10 +341,10 @@ const Course = () => {
     navigate(`/addChapter/${sectionId}`);
   };
 
-  async function enrollCourse(){
-    try{
+  async function enrollCourse() {
+    try {
       setEnrolling(true);
-      if(course.price === 0){
+      if (course.price === 0) {
         const response = await axios.post(
           `${import.meta.env.VITE_BASE_URL}/user/enrollCourse`,
           { courseId },
@@ -358,12 +360,81 @@ const Course = () => {
           await fetchProfile();
         } else {
           toast.error(response.data.message);
-        } 
-      }
+        }
+      } else {
+        const response = await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/user/createOrder`,
+          {
+            courseId,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+            },
+          }
+        );
+        console.log(response);
+        if (response.data.success) {
+          const options = {
+            key: import.meta.env.VITE_RAZORPAY_KEY,
+            amount: response.data.order.amount,
+            currency: "INR",
+            name: "Edvance Learning",
+            description: "Course Purchase",
+            order_id: response.data.order.id,
+            handler: async function (responseData) {
+              const verifyResponse = await axios.post(
+                `${import.meta.env.VITE_BASE_URL}/user/verifyOrder`,
+                {
+                  orderId: response.data.order.id,
+                  paymentId: responseData.razorpay_payment_id,
+                  signature: responseData.razorpay_signature,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${localStorage.getItem(
+                      "edvance_token"
+                    )}`,
+                  },
+                }
+              );
+              console.log(verifyResponse);
+              if(verifyResponse.data.success){
+                toast.success("Payment successful and course enrolled!");
+                await fetchProfile();
+              }else{
+                toast.error(verifyResponse.data.message);
+              }
+            },
+            prefill: {
+              name: profile.name,
+              email: profile.email,
+            },
+            notes: {
+              address: "APJ Lecture Hall",
+            },
+            theme: {
+              color: "#3399cc",
+            },
+          };
 
-    }catch(error){
+          console.log("Initializing Razorpay with options:", options);
+
+          const rzp = new window.Razorpay(options);
+
+          rzp.on("payment.failed", function (responseData) {
+            toast.error("Payment failed: " + responseData.error.description + " Please try again.");
+          });
+
+          rzp.open();
+
+        } else {
+          toast.error(response.data.message);
+        }
+      }
+    } catch (error) {
       toast.error(error.message);
-    }finally{
+    } finally {
       setEnrolling(false);
     }
   }
@@ -541,11 +612,16 @@ const Course = () => {
                 <div className="flex flex-col sm:flex-row items-center  gap-6 pt-6 border-t border-gray-200">
                   <div className="flex items-center bg-gradient-to-r from-[#7A7F3F]/10 to-[#7A7F3F]/5 rounded-xl px-6 py-3 border border-[#7A7F3F]/20">
                     <span className="text-base font-bold text-[#7A7F3F]">
-                      {course.price === 0 ? "Free" : `$${course.price.toFixed(2)}`}
+                      {course.price === 0
+                        ? "Free"
+                        : `₹${course.price.toFixed(2)}`}
                     </span>
                   </div>
 
-                  <button onClick={enrollCourse} className="bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white px-8 py-4 rounded-xl text-sm font-bold hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                  <button
+                    onClick={enrollCourse}
+                    className="bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white px-8 py-4 rounded-xl text-sm font-bold hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
                     Enroll Now
                   </button>
                 </div>

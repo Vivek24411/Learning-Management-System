@@ -6,6 +6,10 @@ const bcrypt = require("bcrypt");
 const courseModel = require("../models/course.model");
 const chapterModel = require("../models/chapter.model");
 const sectionModel = require("../models/section.model");
+const Razorpay = require("razorpay");
+const orderModel = require("../models/order.model");
+const crypto = require("crypto");
+
 
 function checkValidation(req, res) {
   const error = validationResult(req);
@@ -430,3 +434,88 @@ module.exports.enrollCourse = async (req, res, next) => {
 
   return res.json({ success: true, msg: "Course enrolled successfully" });
 };
+
+module.exports.createOrder = async (req, res, next) => {
+  checkValidation(req, res);
+  console.log("createOrder controller called");
+  const { courseId } = req.body;
+  const user = req.user;
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  if( user.coursePurchased.includes(courseId)) {
+    return res.json({ success: false, msg: "Course already purchased" });
+  }
+
+  console.log("Creating Razorpay order");
+
+  const razorPay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY,
+    key_secret: process.env.RAZORPAY_SECRET,
+  });
+
+
+
+  const order = await razorPay.orders.create({
+    amount: course.price * 100,
+    currency: "INR",
+    receipt: `receipt_order_${Date.now()}`,
+  });
+
+  console.log("Razorpay order created:", order);
+
+  if (!order) {
+    return res.json({ success: false, msg: "Order creation failed" });
+  }
+
+  const orderData = await orderModel.create({
+    userId: user._id,
+    courseId: course._id,
+    orderId: order.id,
+    status: "created",
+  });
+
+  return res.json({ success: true, msg: "Order created successfully", order});
+};
+
+module.exports.verifyOrder = async (req,res,next)=>{
+ try{
+   const error = validationResult(req);
+
+  if(!error){
+    return res.json({success:false, msg:error.array()});
+  }
+
+  const {orderId, paymentId, signature} = req.body;
+
+  const order = await orderModel.findOne({orderId});
+  
+  if(!order){
+    return res.json({success:false, msg:"Order not found"});
+  }
+
+  const generatedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_SECRET)
+    .update(orderId + '|' + paymentId)
+    .digest('hex');
+
+  if(generatedSignature !== signature){
+    return res.json({success:false, msg:"Invalid signature"});
+  }
+
+  order.paymentId = paymentId;
+  order.signature = signature;
+  order.status = "paid";
+
+  await order.save();
+
+  req.user.coursePurchased.push(order.courseId);
+  await req.user.save();
+
+  return res.json({success:true, msg:"Course enrolled successfully"});
+ }catch(error){
+    return res.json({success:false, msg:error.message});
+ }
+}

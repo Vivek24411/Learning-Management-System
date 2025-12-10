@@ -24,6 +24,7 @@
     "multer-cloudinary": "^1.1.0",
     "multer-storage-cloudinary": "^4.0.0",
     "npm": "^11.6.4",
+    "razorpay": "^2.9.6",
     "resend": "^6.5.2"
   }
 }
