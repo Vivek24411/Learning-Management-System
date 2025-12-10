@@ -1,0 +1,432 @@
+const { validationResult } = require("express-validator");
+const { createOTP, sendOTP, createHash } = require("../services/user.services");
+const otpModel = require("../models/otp.model");
+const userModel = require("../models/user.model");
+const bcrypt = require("bcrypt");
+const courseModel = require("../models/course.model");
+const chapterModel = require("../models/chapter.model");
+const sectionModel = require("../models/section.model");
+
+function checkValidation(req, res) {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+}
+
+module.exports.sendOTP = async (req, res, next) => {
+  try {
+    checkValidation(req, res);
+
+    const OTP = createOTP();
+    console.log(OTP);
+    const hashedOTP = createHash(OTP);
+    console.log(hashedOTP);
+    const { email } = req.body;
+
+    const savedOTP = await otpModel.findOne({
+      email,
+    });
+
+    if (savedOTP) {
+      savedOTP.OTP = hashedOTP;
+      savedOTP.createdAt = Date.now();
+      await savedOTP.save();
+    } else {
+      const savedOTP2 = await otpModel.create({
+        email,
+        OTP: hashedOTP,
+      });
+    }
+
+    await sendOTP(email, OTP);
+
+    return res.json({ success: true, msg: "OTP Sent Successfully" });
+  } catch (error) {
+    return res.json({ success: false, msg: error.message });
+  }
+};
+
+module.exports.verifyOTPandRegister = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { email, name, password, OTP } = req.body;
+  const hashedOTP = createHash(OTP);
+  console.log(hashedOTP);
+  const savedOTP = await otpModel.findOne({
+    email,
+    OTP: hashedOTP,
+  });
+  if (!savedOTP) {
+    return res.json({ success: false, msg: "Invalid or Expired OTP" });
+  }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await userModel.create({
+    email,
+    name,
+    password: hashedPassword,
+  });
+
+  return res.json({ success: true, msg: "Registered Successfully" });
+};
+
+module.exports.login = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { email, password } = req.body;
+
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.json({ success: false, msg: "User not found" });
+  }
+
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    return res.json({ success: false, msg: "Invalid Credentials" });
+  }
+
+  const token = user.createToken();
+
+  return res.json({ success: true, msg: "Login Successful", token });
+};
+
+module.exports.getProfile = (req, res, next) => {
+  return res.json({ success: true, user: req.user });
+};
+
+module.exports.getAllCourses = async (req, res, next) => {
+  const courses = await courseModel
+    .find()
+    .select("courseName shortDescription price courseThumbnailImage publishedAt");
+  return res.json({ success: true, courses });
+};
+
+module.exports.getCourse = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { courseId } = req.query;
+  const course = await courseModel.findById(courseId).populate({
+    path: "sections",
+    populate: {
+      path: "chapters",
+      select: "chapterName shortDescription chapterThumbnailImage",
+    },
+  });
+
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  return res.json({ success: true, course });
+};
+
+module.exports.getChapter = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { chapterId } = req.query;
+
+  const chapter = await chapterModel.findById(chapterId);
+
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter not found" });
+  }
+
+  const sectionId = await sectionModel.findOne({chapters:chapterId}).select("_id");
+
+  console.log("sectionId:", sectionId._id);
+
+  const courseId = await courseModel.findOne({sections:sectionId}).select("_id");
+
+  console.log("courseId:", courseId._id);
+
+  return res.json({ success: true, chapter, courseId : courseId._id});
+};
+
+module.exports.addCourse = async (req, res, next) => {
+  try {
+    console.log("addCourse controller called");
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+    
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.json({ success: false, msg: errors.array() });
+    }
+
+    const {
+      courseName,
+      shortDescription,
+      longDescription,
+      courseIntroduction,
+      price,
+    } = req.body;
+
+    // Check if required files exist
+    if (!req.files || !req.files.courseThumbnailImage) {
+      return res.json({ success: false, msg: "Course thumbnail image is required" });
+    }
+
+    const courseThumbnailImage = req.files.courseThumbnailImage[0].path;
+    const courseIntroductionImages = req.files.courseIntroductionImages 
+      ? req.files.courseIntroductionImages.map((file) => file.path)
+      : [];
+
+    const course = await courseModel.create({
+      courseName,
+      shortDescription,
+      longDescription,
+      courseIntroduction,
+      courseThumbnailImage,
+      price,
+      courseIntroductionImages,
+    });
+
+    return res.json({ success: true, msg: "Course added successfully", course });
+  } catch (error) {
+    console.error("Error in addCourse:", error);
+    return res.json({ success: false, msg: error.message });
+  }
+};
+
+module.exports.addSection = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { sectionTitle, sectionDescription, courseId } = req.body;
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  const section = await sectionModel.create({
+    sectionTitle,
+    sectionDescription,
+  });
+
+  course.sections.push(section._id);
+  await course.save();
+
+  return res.json({
+    success: true,
+    msg: "Section added successfully",
+    section,
+  });
+};
+
+module.exports.addChapter = async (req, res, next) => {
+  try {
+    console.log("addChapter controller called");
+    // Check validation and return early if there are errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.json({ success: false, msg: errors.array() });
+    }
+
+    const { chapterName, shortDescription, chapterSummary, sectionId, chapterVideoTitle } = req.body;
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+
+    // Handle file uploads
+    const chapterFile = req.files.chapterFile?.map((file) => file.path) || [];
+    const chapterThumbnailImage = req.files.chapterThumbnailImage?.[0].path;
+    
+    // Handle video files
+    const chapterVideo = req.files.chapterVideo?.map((video) => video.path) || [];
+    const videoThumbnailImage = req.files.chapterVideoThumbnailImage?.map((img) => img.path) || [];
+
+    // Handle video titles - they come as an array from FormData
+    const videoTitleArray = Array.isArray(chapterVideoTitle) ? chapterVideoTitle : (chapterVideoTitle ? [chapterVideoTitle] : []);
+    console.log("Video titles array:", videoTitleArray);
+
+    // Create video details array
+    let chapterVideoDetails = [];
+    if (chapterVideo && chapterVideo.length > 0) {
+      for (let i = 0; i < chapterVideo.length; i++) {
+        chapterVideoDetails.push({
+          video: chapterVideo[i],
+          videoThumbnail: videoThumbnailImage[i] || null,
+          title: videoTitleArray[i] || `Video ${i + 1}`,
+        });
+      }
+    }
+
+    // Find the section
+    const section = await sectionModel.findById(sectionId);
+    if (!section) {
+      return res.json({ success: false, msg: "Section Not Found" });
+    }
+
+    // Create chapter
+    const chapter = await chapterModel.create({
+      chapterName,
+      shortDescription,
+      chapterSummary,
+      chapterThumbnailImage,
+      chapterFile,
+      chapterVideoDetails,
+    });
+
+    // Add chapter to section
+    section.chapters.push(chapter._id);
+    await section.save(); // Fixed: was missing parentheses
+
+    return res.json({ success: true, msg: "Chapter Added Successfully", chapter });
+    
+  } catch (error) {
+    console.error("Error in addChapter:", error);
+    return res.json({ success: false, msg: error.message });
+  }
+};
+
+
+module.exports.editCourse = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const {
+    courseId,
+    courseName,
+    shortDescription,
+    longDescription,
+    courseIntroduction,
+    price,
+  } = req.body;
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  course.courseName = courseName;
+  course.shortDescription = shortDescription;
+  course.longDescription = longDescription;
+  course.courseIntroduction = courseIntroduction;
+  course.price = price;
+
+  await course.save();
+
+  return res.json({ success: true, msg: "Course updated successfully", course });
+};
+
+
+module.exports.editChapter = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { chapterId, chapterName, shortDescription, chapterSummary } = req.body;
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter not found" });
+  }
+
+  chapter.chapterName = chapterName;
+  chapter.shortDescription = shortDescription;
+  chapter.chapterSummary = chapterSummary;
+
+  await chapter.save();
+
+  return res.json({ success: true, msg: "Chapter updated successfully", chapter });
+};
+
+module.exports.editSection = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { sectionId, sectionTitle, sectionDescription } = req.body;
+
+  const section = await sectionModel.findById(sectionId);
+  if (!section) {
+    return res.json({ success: false, msg: "Section not found" });
+  }
+
+  section.sectionTitle = sectionTitle;
+  section.sectionDescription = sectionDescription;
+
+  await section.save();
+
+  return res.json({ success: true, msg: "Section updated successfully", section });
+};
+
+module.exports.deleteCourse = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { courseId } = req.query;
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  await course.remove();
+
+  return res.json({ success: true, msg: "Course deleted successfully" });
+};
+
+module.exports.deleteChapter = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { chapterId, sectionId } = req.query;
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter not found" });
+  }
+
+  const section = await sectionModel.findById(sectionId);
+  if (!section) {
+    return res.json({ success: false, msg: "Section not found" });
+  }
+
+  section.chapters.pull(chapter._id);
+  await section.save();
+
+  await chapter.remove();
+
+  return res.json({ success: true, msg: "Chapter deleted successfully" });
+};
+
+module.exports.deleteSection = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { sectionId } = req.query;
+
+  const section = await sectionModel.findById(sectionId);
+  if (!section) {
+    return res.json({ success: false, msg: "Section not found" });
+  }
+
+  const chapters = section.chapters;
+  for (let chapter of chapters) {
+    const chapterData = await chapterModel.findById(chapter);
+    await chapterData.remove();
+  }
+  
+  const course = await courseModel.findOne({ sections: section._id });
+  if (course) {
+    course.sections.pull(section._id);
+    await course.save();
+  }
+  await section.remove();
+
+  return res.json({ success: true, msg: "Section deleted successfully" });
+};
+
+
+module.exports.enrollCourse = async (req, res, next) => {
+  checkValidation(req, res);
+
+  const { courseId } = req.body;
+  const user = req.user;
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  if (user.coursePurchased.includes(courseId)) {
+    return res.json({ success: false, msg: "Course already enrolled" });
+  }
+
+  user.coursePurchased.push(courseId);
+  await user.save();
+
+  return res.json({ success: true, msg: "Course enrolled successfully" });
+};

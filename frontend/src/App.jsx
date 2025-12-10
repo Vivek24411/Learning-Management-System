@@ -1,0 +1,50 @@
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import Home from "./pages/Home.jsx";
+import Register from "./pages/Register.jsx";
+import Profile from "./pages/Profile.jsx";
+import Course from "./pages/Course.jsx";
+import Chapter from "./pages/Chapter.jsx";
+import AddCourse from "./pages/AddCourse.jsx";
+import EditCourse from "./pages/EditCourse.jsx";
+import Login from "./pages/Login.jsx";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AddChapter from "./pages/AddChapter.jsx";
+import EditChapter from "./pages/EditChapter.jsx";
+import AddSection from "./pages/AddSection.jsx";
+import ProtectedWrapper from "./protectedWrapper/ProtectedWrapper.jsx";
+
+const App = () => {
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/profile" element={<ProtectedWrapper><Profile /></ProtectedWrapper>} />
+        <Route path="/course/:courseId" element={<Course />} />
+        <Route path="/chapter/:chapterId" element={<ProtectedWrapper><Chapter /></ProtectedWrapper>} />
+        <Route path="/addCourse" element={<ProtectedWrapper><AddCourse /></ProtectedWrapper>} />
+        <Route path="/editCourse/:courseId" element={<ProtectedWrapper><EditCourse /></ProtectedWrapper>} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/addChapter/:sectionId" element={<ProtectedWrapper><AddChapter /></ProtectedWrapper>} />
+        <Route path="/editChapter/:chapterId" element={<ProtectedWrapper><EditChapter /></ProtectedWrapper>} />
+        <Route path="/addSection/:courseId" element={<ProtectedWrapper><AddSection /></ProtectedWrapper>} />
+      </Routes>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+    </>
+  );
+};
+
+export default App;
