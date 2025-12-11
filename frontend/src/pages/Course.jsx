@@ -467,6 +467,11 @@ const Course = () => {
     fetchCourse();
   }, []);
 
+  if(localStorage.getItem("edvance_token")===null){
+    toast.info("Please login to access the course details.");
+    navigate("/login");
+  }
+
   if (loading) {
     return (
       <>
