@@ -25,4 +25,10 @@ app.use("/admin",adminRouter);
 
 app.use("/user",userRouter);
 
+app.get("/getHealth",(req,res)=>{
+    return res.status(200).json({message: "API is healthy"});
+});
+
+
+
 module.exports = app;
