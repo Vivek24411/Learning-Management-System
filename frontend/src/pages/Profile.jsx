@@ -9,11 +9,11 @@ const Profile = () => {
 
   return (
     <>
-      <Header />
+      <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
       
-      <div className="min-h-screen bg-gradient-to-br from-stone-200 via-amber-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-stone-200 via-amber-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8 mt-18">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mt-10">
             <div className="lg:flex lg:flex-row-reverse">
               
               {/* Right Side - Yoga Illustration */}

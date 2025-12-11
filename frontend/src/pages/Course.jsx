@@ -15,88 +15,107 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
   const { courseId } = useParams();
 
   return (
-    <div className="bg-gradient-to-r from-stone-50 to-white rounded-2xl shadow-lg border border-[#7A7F3F]/20 hover:border-[#7A7F3F]/40 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] p-5">
-      <div className="flex items-start space-x-5">
-        {/* Chapter Thumbnail */}
-        <div className="flex-shrink-0">
-          <div className="relative">
-            {chapter.chapterThumbnailImage ? (
-              <img
-                src={chapter.chapterThumbnailImage}
-                alt={chapter.chapterName}
-                className="w-20 h-20 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden">
+      {/* Chapter Thumbnail */}
+      <div className="relative h-44">
+        {chapter.chapterThumbnailImage ? (
+          <img
+            src={chapter.chapterThumbnailImage}
+            alt={chapter.chapterName}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+            <svg
+              className="w-12 h-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
               />
-            ) : (
-              <div className="w-20 h-20 bg-gradient-to-br from-[#7A7F3F]/20 to-[#7A7F3F]/10 text-[#7A7F3F] rounded-2xl flex items-center justify-center shadow-lg">
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            )}
+            </svg>
           </div>
-        </div>
+        )}
 
-        {/* Chapter Info */}
-        <div className="flex-grow">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h4 className="text-lg font-bold text-gray-900 mb-2 hover:text-[#7A7F3F] transition-colors duration-200">
-                {chapter.chapterName}
-              </h4>
-              <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-4">
-                {chapter.shortDescription ||
-                  "Explore this chapter to deepen your understanding and practice."}
-              </p>
+        {/* Chapter Status Badge */}
+        <div className="absolute top-3 right-3">
+          {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
+            <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium flex items-center">
+              <svg
+                className="w-3 h-3 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Available
+            </div>
+          ) : (
+            <div className="bg-red-600 text-white px-2 py-1 rounded text-xs font-medium flex items-center">
+              <svg
+                className="w-3 h-3 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Locked
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chapter Info */}
+      <div className="p-5">
+        <h4 className="text-lg font-semibold text-gray-900 mb-2 leading-snug">
+          {chapter.chapterName}
+        </h4>
+        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
+          {chapter.shortDescription ||
+            "Explore this chapter to deepen your understanding and practice."}
+        </p>
+
+        {/* Chapter Action Button */}
+        {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
+          <button
+            onClick={handleChapterClick}
+            className="w-full bg-[#7A7F3F] text-white px-4 py-2 rounded font-medium hover:bg-[#6A6F35] transition-colors duration-200 text-sm"
+          >
+            Start Learning
+          </button>
+        ) : (
+          <div className="w-full bg-gray-50 border border-gray-200 rounded p-3 text-center">
+            <div className="flex items-center justify-center mb-1">
+              <svg
+                className="w-4 h-4 text-gray-400 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-gray-600 font-medium text-sm">
+                Requires enrollment
+              </span>
             </div>
           </div>
-
-          {/* Chapter Meta Info */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 text-xs text-gray-500"></div>
-
-            {/* Chapter Action Button */}
-            {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
-              <div>
-                <button
-                  onClick={handleChapterClick}
-                  className="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/90 text-white hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/80"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15M9 10V9a3 3 0 116 0v1M9 10H6a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2v-6a2 2 0 00-2-2h-3"
-                    />
-                  </svg>
-                  View Chapter
-                </button>
-              </div>
-            ) : (
-              <div>
-                <h3>Locked</h3>
-                <p className="text-gray-500">
-                  Unlock this chapter by enrolling the course.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -107,16 +126,13 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-stone-200 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/60">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Section Header */}
-      <div className="p-6 bg-gradient-to-r from-[#7A7F3F]/15 via-[#7A7F3F]/10 to-[#7A7F3F]/5 border-b border-stone-200 relative overflow-hidden">
-        {/* Decorative background pattern */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#7A7F3F]/10 to-transparent rounded-full -mt-16 -mr-16"></div>
-
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex-grow flex items-start space-x-4">
-            <div className="flex-shrink-0 mt-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#7A7F3F] to-[#7A7F3F]/80 rounded-xl flex items-center justify-center shadow-lg">
+      <div className="p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex-grow">
+            <div className="flex items-center mb-3">
+              <div className="w-10 h-10 bg-[#7A7F3F] rounded-lg flex items-center justify-center mr-4">
                 <svg
                   className="w-5 h-5 text-white"
                   fill="none"
@@ -131,20 +147,22 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
                   />
                 </svg>
               </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-gray-900">
                 {section.sectionTitle}
               </h3>
-              {section.sectionDescription && (
-                <p className="text-gray-600 leading-relaxed">
-                  {section.sectionDescription}
-                </p>
-              )}
-              {/* Chapter count indicator */}
-              <div className="flex items-center mt-3">
+            </div>
+
+            {section.sectionDescription && (
+              <p className="text-gray-600 leading-relaxed mb-3 ml-14">
+                {section.sectionDescription}
+              </p>
+            )}
+
+            {/* Chapter count indicator */}
+            <div className="flex items-center ml-14">
+              <div className="bg-gray-50 border border-gray-200 rounded px-3 py-1 flex items-center">
                 <svg
-                  className="w-4 h-4 text-gray-400 mr-2"
+                  className="w-4 h-4 text-gray-500 mr-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -156,7 +174,7 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm font-medium text-gray-700">
                   {section.chapters ? section.chapters.length : 0}
                   {section.chapters?.length === 1 ? " Chapter" : " Chapters"}
                 </span>
@@ -169,10 +187,10 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
             {isAdmin && (
               <button
                 onClick={() => onAddChapter(section._id)}
-                className="bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white px-4 py-2 rounded-xl text-sm font-medium hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center transform hover:scale-105"
+                className="bg-[#7A7F3F] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#6A6F35] transition-colors duration-200 flex items-center"
               >
                 <svg
-                  className="w-4 h-4 mr-2"
+                  className="w-4 h-4 mr-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -191,14 +209,12 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
             {/* Expand/Collapse Button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`p-3 rounded-xl transition-all duration-300 ${
-                isExpanded
-                  ? "bg-[#7A7F3F]/10 text-[#7A7F3F]"
-                  : "hover:bg-stone-100 text-gray-600"
+              className={`p-2 rounded hover:bg-gray-50 transition-colors duration-200 ${
+                isExpanded ? "text-[#7A7F3F]" : "text-gray-500"
               }`}
             >
               <svg
-                className={`w-5 h-5 transform transition-transform duration-300 ${
+                className={`w-5 h-5 transition-transform duration-200 ${
                   isExpanded ? "rotate-180" : ""
                 }`}
                 fill="none"
@@ -225,23 +241,28 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
             : "max-h-0 opacity-0 overflow-hidden"
         }`}
       >
-        <div className="p-6 space-y-4">
+        <div className="p-6">
           {section.chapters && section.chapters.length > 0 ? (
-            section.chapters.map((chapter, index) => (
-              <div
-                key={chapter._id}
-                className={`transform transition-all duration-300 ${
-                  isExpanded
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-4 opacity-0"
-                }`}
-                style={{
-                  transitionDelay: isExpanded ? `${index * 100}ms` : "0ms",
-                }}
-              >
-                <ChapterItem chapter={chapter} onViewChapter={onViewChapter} />
-              </div>
-            ))
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {section.chapters.map((chapter, index) => (
+                <div
+                  key={chapter._id}
+                  className={`transform transition-all duration-500 ${
+                    isExpanded
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-8 opacity-0"
+                  }`}
+                  style={{
+                    transitionDelay: isExpanded ? `${index * 150}ms` : "0ms",
+                  }}
+                >
+                  <ChapterItem
+                    chapter={chapter}
+                    onViewChapter={onViewChapter}
+                  />
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="text-center py-12 text-gray-500">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
@@ -399,10 +420,10 @@ const Course = () => {
                 }
               );
               console.log(verifyResponse);
-              if(verifyResponse.data.success){
+              if (verifyResponse.data.success) {
                 toast.success("Payment successful and course enrolled!");
                 await fetchProfile();
-              }else{
+              } else {
                 toast.error(verifyResponse.data.message);
               }
             },
@@ -423,11 +444,14 @@ const Course = () => {
           const rzp = new window.Razorpay(options);
 
           rzp.on("payment.failed", function (responseData) {
-            toast.error("Payment failed: " + responseData.error.description + " Please try again.");
+            toast.error(
+              "Payment failed: " +
+                responseData.error.description +
+                " Please try again."
+            );
           });
 
           rzp.open();
-
         } else {
           toast.error(response.data.message);
         }
@@ -446,19 +470,19 @@ const Course = () => {
   if (loading) {
     return (
       <>
-        <Header />
-        <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-yellow-50 pt-20 flex items-center justify-center">
-          <div className="text-center">
+        <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
+        <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+          <div className="text-center bg-white rounded-lg p-8 shadow-sm border border-gray-200 max-w-md mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce"></div>
               <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-100"></div>
               <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-200"></div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
               Loading Course
             </h3>
-            <p className="text-gray-500">
-              Preparing your learning experience...
+            <p className="text-gray-600">
+              Please wait while we load the course content...
             </p>
           </div>
         </div>
@@ -469,12 +493,12 @@ const Course = () => {
   if (!course) {
     return (
       <>
-        <Header />
-        <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-yellow-50 pt-20 flex items-center justify-center">
+        <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
+        <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-6">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-3xl mb-6">
+            <div className="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-6">
               <svg
-                className="w-10 h-10 text-red-500"
+                className="w-8 h-8 text-red-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -487,23 +511,22 @@ const Course = () => {
                 />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">
               Course Not Found
             </h3>
-            <p className="text-gray-600 mb-8 leading-relaxed">
+            <p className="text-gray-600 mb-6">
               The course you're looking for doesn't exist or has been moved.
-              Let's get you back on track.
             </p>
             <div className="space-y-3">
               <button
                 onClick={() => navigate("/")}
-                className="w-full bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white px-6 py-3 rounded-xl font-semibold hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="w-full bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200"
               >
                 Back to Home
               </button>
               <button
                 onClick={() => navigate("/#courses")}
-                className="w-full bg-white text-gray-700 px-6 py-3 rounded-xl font-medium border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                className="w-full bg-white text-gray-700 px-6 py-3 rounded font-medium border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
               >
                 Browse All Courses
               </button>
@@ -518,112 +541,133 @@ const Course = () => {
 
   return (
     <>
-      <Header
-        topics={[
-          { name: "Home", path: "/" },
-          { name: "Courses", path: "/#courses" },
-        ]}
-      />
+      <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
 
-      <div className="min-h-80 bg-gradient-to-br from-stone-100 via-amber-50 to-yellow-50">
-        {/* Full Screen Hero Section with Course Thumbnail */}
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
         <section className="relative pt-16">
-          {/* Full Screen Hero Banner */}
-          <div className="relative h-182 overflow-hidden">
+          <div className="relative h-210 overflow-hidden">
             <img
-              src={
-                course.courseThumbnailImage ||
-                "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+              src={ course.courseThumbnailImage ||
+                "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
               }
               alt={course.courseName}
-              className="w-full h-full object-cover animate-fade-in"
+              className="w-full h-full object-cover"
             />
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
 
-            {/* Course Title with Animation */}
-            <div className="absolute inset-0 flex items-center justify-center p-8">
+            <img src={course.courseThumbnailImage} alt="" />
+            <div ></div>
+
+            <div className="absolute inset-0 flex items-center justify-center px-4">
               <div className="text-center max-w-4xl mx-auto">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-8 drop-shadow-2xl leading-tight animate-slide-up">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
                   {course.courseName}
                 </h1>
+                <p className="text-lg sm:text-xl text-gray-200 max-w-2xl mx-auto">
+                  {course.shortDescription}
+                </p>
               </div>
-            </div>
-
-            {/* Scroll Down Indicator */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-              <svg
-                className="w-6 h-6 text-white opacity-70"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
             </div>
           </div>
         </section>
 
         {/* Course Overview Section */}
-        <section className="py-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-3xl shadow-xl p-8 border border-stone-200">
-              <div className="flex items-start space-x-4 mb-8">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#7A7F3F] to-[#7A7F3F]/70 rounded-2xl flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex-grow">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                    Course Overview
-                  </h3>
-                  <p className="text-lg text-gray-700 leading-relaxed">
-                    {course.shortDescription}
-                  </p>
-                </div>
+        <section className="py-12">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Course Overview
+                </h2>
+                <p className="text-lg text-gray-700 leading-relaxed">
+                  {course.shortDescription}
+                </p>
               </div>
 
               {/* Price and Enroll Section */}
               {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
-                <div className="">
-                  <span className="text-base font-bold text-[#7A7F3F]">
-                    Enrolled
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row items-center  gap-6 pt-6 border-t border-gray-200">
-                  <div className="flex items-center bg-gradient-to-r from-[#7A7F3F]/10 to-[#7A7F3F]/5 rounded-xl px-6 py-3 border border-[#7A7F3F]/20">
-                    <span className="text-base font-bold text-[#7A7F3F]">
-                      {course.price === 0
-                        ? "Free"
-                        : `₹${course.price.toFixed(2)}`}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-center">
+                    <svg
+                      className="w-6 h-6 text-green-600 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="text-lg font-semibold text-green-700">
+                      Successfully Enrolled
                     </span>
                   </div>
+                </div>
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-center sm:text-left">
+                      <div className="text-2xl font-bold text-gray-900 mb-1">
+                        {course.price === 0
+                          ? "Free"
+                          : `₹${course.price.toFixed(2)}`}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {course.price === 0
+                          ? "No cost to enroll"
+                          : "One-time payment"}
+                      </div>
+                    </div>
 
-                  <button
-                    onClick={enrollCourse}
-                    className="bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white px-8 py-4 rounded-xl text-sm font-bold hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-                  >
-                    Enroll Now
-                  </button>
+                    <button
+                      onClick={enrollCourse}
+                      disabled={enrolling}
+                      className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                      {enrolling ? (
+                        <>
+                          <svg
+                            className="animate-spin w-4 h-4 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Enroll Now
+                          <svg
+                            className="w-4 h-4 ml-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -632,69 +676,35 @@ const Course = () => {
 
         {/* Course Introduction Section */}
         {course.courseIntroduction && (
-          <section className="py-16">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-8 mb-8 border border-stone-100">
-                <div className="flex items-center mb-6">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#7A7F3F] to-[#7A7F3F]/70 rounded-xl flex items-center justify-center mr-4">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                      />
-                    </svg>
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900">
-                    Course Introduction
-                  </h2>
-                </div>
-                <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-                  <p className="text-lg">{course.courseIntroduction}</p>
+          <section className="py-12 bg-gray-50">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Course Introduction
+                </h2>
+                <div className="text-gray-700 leading-relaxed">
+                  <p className="text-base">{course.courseIntroduction}</p>
                 </div>
               </div>
 
               {/* Course Introduction Images Gallery */}
               {course.courseIntroductionImages &&
                 course.courseIntroductionImages.length > 0 && (
-                  <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-8 border border-stone-100">
-                    <div className="flex items-center mb-6">
-                      <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center mr-4">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900">
-                        Course Gallery
-                      </h3>
-                    </div>
-                    <div className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide">
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-6">
+                      Course Gallery
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {course.courseIntroductionImages.map((image, index) => (
-                        <div key={index} className="flex-shrink-0 group">
-                          <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300">
-                            <img
-                              src={image}
-                              alt={`Course introduction ${index + 1}`}
-                              className="w-72 h-52 object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          </div>
+                        <div
+                          key={index}
+                          className="relative overflow-hidden rounded-lg"
+                        >
+                          <img
+                            src={image}
+                            alt={`Course introduction ${index + 1}`}
+                            className="w-full h-48 object-cover"
+                          />
                         </div>
                       ))}
                     </div>
@@ -705,38 +715,15 @@ const Course = () => {
         )}
 
         {/* Course Details Section */}
-        <section className="py-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-50 rounded-3xl shadow-xl shadow-amber-200/30 p-8 border border-amber-200/50 relative overflow-hidden">
-              {/* Decorative Pattern */}
-              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-gradient-to-br from-amber-200/20 to-yellow-200/20 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-gradient-to-br from-yellow-200/20 to-amber-200/20 rounded-full blur-3xl"></div>
-
-              <div className="relative z-10">
-                <div className="flex items-center mb-8">
-                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900">
-                    Course Details
-                  </h2>
-                </div>
-                <div className="prose prose-lg max-w-none text-gray-800">
-                  <div className="text-lg leading-relaxed whitespace-pre-line bg-white/40 backdrop-blur-sm rounded-2xl p-6 border border-white/50">
-                    {course.longDescription}
-                  </div>
+        <section className="py-12">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Course Details
+              </h2>
+              <div className="text-gray-700 leading-relaxed">
+                <div className="text-base whitespace-pre-line">
+                  {course.longDescription}
                 </div>
               </div>
             </div>
@@ -744,33 +731,16 @@ const Course = () => {
         </section>
 
         {/* Sections & Chapters Display */}
-        <section className="py-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4">
+        <section className="py-12 bg-gray-50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
               <div>
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#7A7F3F] to-[#7A7F3F]/80 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                      />
-                    </svg>
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900">
-                    Course Content
-                  </h2>
-                </div>
-                <p className="text-gray-600 text-lg">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Course Content
+                </h2>
+                <p className="text-gray-600">
                   Explore the structured learning path designed for your
-                  transformation.
+                  success.
                 </p>
               </div>
 
@@ -778,10 +748,10 @@ const Course = () => {
               {isAdmin && (
                 <button
                   onClick={handleAddSection}
-                  className="bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white px-6 py-3 rounded-xl font-semibold hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center transform hover:scale-105"
+                  className="bg-[#7A7F3F] text-white px-4 py-2 rounded font-medium hover:bg-[#6A6F35] transition-colors duration-200 flex items-center"
                 >
                   <svg
-                    className="w-5 h-5 mr-2"
+                    className="w-4 h-4 mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -811,10 +781,10 @@ const Course = () => {
                   />
                 ))
               ) : (
-                <div className="bg-gradient-to-br from-stone-50 to-white rounded-3xl shadow-xl shadow-gray-200/50 p-16 text-center border border-stone-200">
-                  <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl mb-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-6">
                     <svg
-                      className="w-12 h-12 text-gray-400"
+                      className="w-8 h-8 text-gray-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -827,24 +797,24 @@ const Course = () => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                    Course Content Coming Soon
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                    No Content Available Yet
                   </h3>
-                  <p className="text-gray-600 text-lg mb-8 max-w-md mx-auto leading-relaxed">
-                    This course is being prepared with love and care. Exciting
-                    content will be available soon!
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    This course is currently being prepared. Content will be
+                    available soon.
                   </p>
                   {profile.isAdmin && (
-                    <div className="space-y-4">
+                    <div>
                       <p className="text-sm text-gray-500 mb-4">
                         As an admin, you can start building this course:
                       </p>
                       <button
                         onClick={handleAddSection}
-                        className="bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white px-8 py-4 rounded-xl font-semibold hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center mx-auto"
+                        className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200 flex items-center mx-auto"
                       >
                         <svg
-                          className="w-5 h-5 mr-2"
+                          className="w-4 h-4 mr-2"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"

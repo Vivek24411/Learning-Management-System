@@ -14,6 +14,7 @@ import AddChapter from "./pages/AddChapter.jsx";
 import EditChapter from "./pages/EditChapter.jsx";
 import AddSection from "./pages/AddSection.jsx";
 import ProtectedWrapper from "./protectedWrapper/ProtectedWrapper.jsx";
+import Footer from "./pages/Footer.jsx";
 
 const App = () => {
   return (
@@ -31,6 +32,7 @@ const App = () => {
         <Route path="/editChapter/:chapterId" element={<ProtectedWrapper><EditChapter /></ProtectedWrapper>} />
         <Route path="/addSection/:courseId" element={<ProtectedWrapper><AddSection /></ProtectedWrapper>} />
       </Routes>
+      <Footer/>
 
       <ToastContainer
         position="top-right"

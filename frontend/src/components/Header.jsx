@@ -1,21 +1,55 @@
 import React, { useState } from 'react'
 import { useContext } from 'react';
-import { HashLink } from 'react-router-hash-link';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserContextData } from '../context/UserContext';
 
 const Header = ({topics}) => {
   const { loggedIn, setLoggedIn, setProfile } = useContext(UserContextData);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeMenu, setActiveMenu] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     localStorage.removeItem('edvance_token');
     setLoggedIn(false);
     setProfile(null);
+    navigate('/');
   };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Navigation handler that works for both hash links and routes
+  const handleNavigation = (topic) => {
+    if (topic.name === 'Home' || topic.path === 'home') {
+      navigate('/');
+    } else if (topic.name === 'Courses' || topic.path === 'courses') {
+      if (location.pathname === '/') {
+        // If on home page, scroll to courses section
+        const element = document.getElementById('courses');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // If on other pages, navigate to home and then scroll
+        navigate('/', { state: { scrollTo: 'courses' } });
+      }
+    } else if (topic.name === 'About' || topic.path === 'about') {
+      if (location.pathname === '/') {
+        // If on home page, scroll to about section
+        const element = document.getElementById('about');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // If on other pages, navigate to home and then scroll
+        navigate('/', { state: { scrollTo: 'about' } });
+      }
+    } else {
+      // For other navigation items, use the path directly
+      navigate(topic.path || `/${topic.name.toLowerCase()}`);
+    }
   };
 
   // Lotus Icon SVG Component
@@ -54,7 +88,7 @@ const Header = ({topics}) => {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo and Brand Name */}
-          <div className="flex items-center space-x-4">
+          <Link to="/" className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               <img 
                 src="/src/assets/EdvanceLogo.png" 
@@ -72,28 +106,19 @@ const Header = ({topics}) => {
             <h1 className="text-2xl font-bold text-white tracking-wider drop-shadow-sm font-sans">
               Edvance
             </h1>
-          </div>
+          </Link>
 
           {/* Desktop Navigation Links - Center */}
           <nav className="hidden md:flex space-x-8">
             {topics && topics.map((topic, index) => (
-              <HashLink
+              <button
                 key={index}
-                to={`#${topic.path || topic.name.toLowerCase().replace(/\s+/g, '-')}`}
-                smooth
-                className={`relative text-white hover:text-yellow-300 px-3 py-2 text-base font-medium transition-all duration-300 tracking-wide font-sans group ${
-                  activeMenu === topic.name 
-                    ? 'text-yellow-300' 
-                    : ''
-                }`}
-                onClick={() => setActiveMenu(topic.name)}
+                onClick={() => handleNavigation(topic)}
+                className="relative text-white hover:text-yellow-300 px-3 py-2 text-base font-medium transition-all duration-300 tracking-wide font-sans group"
               >
                 {topic.name}
                 <span className="absolute bottom-[-8px] left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full transition-all duration-300 group-hover:w-8 shadow-lg shadow-yellow-500/30"></span>
-                {activeMenu === topic.name && (
-                  <span className="absolute bottom-[-8px] left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full shadow-lg shadow-yellow-500/30"></span>
-                )}
-              </HashLink>       
+              </button>       
             ))}
           </nav>
 
@@ -101,13 +126,12 @@ const Header = ({topics}) => {
           <div className="hidden md:flex items-center space-x-4">
             {loggedIn ? (
               <>
-                <HashLink
+                <Link
                   to="/profile"
-                  smooth
                   className="text-white hover:text-yellow-300 px-4 py-2 text-sm font-medium transition-all duration-300 tracking-wide font-sans drop-shadow-sm"
                 >
                   Profile
-                </HashLink>
+                </Link>
                 <button 
                   onClick={handleLogout}
                   className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 text-gray-800 hover:text-gray-900 px-6 py-2 rounded-full text-sm font-semibold font-sans tracking-wide transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl shadow-yellow-500/20 hover:shadow-yellow-500/30"
@@ -117,20 +141,18 @@ const Header = ({topics}) => {
               </>
             ) : (
               <>
-                <HashLink
+                <Link
                   to="/login"
-                  smooth
                   className="text-white hover:text-yellow-300 px-4 py-2 text-sm font-medium transition-all duration-300 tracking-wide font-sans drop-shadow-sm"
                 >
                   Login
-                </HashLink>
-                <HashLink
+                </Link>
+                <Link
                   to="/register"
-                  smooth
                   className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 text-gray-800 hover:text-gray-900 px-6 py-2 rounded-full text-sm font-semibold font-sans tracking-wide transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl shadow-yellow-500/20 hover:shadow-yellow-500/30 inline-block"
                 >
                   Sign Up
-                </HashLink>
+                </Link>
               </>
             )}
           </div>
@@ -159,35 +181,28 @@ const Header = ({topics}) => {
       <div className={`md:hidden backdrop-blur-md transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
         <div className="px-4 pt-2 pb-6 space-y-2 bg-gray-600 bg-opacity-95">
           {topics && topics.map((topic, index) => (
-            <HashLink
+            <button
               key={index}
-              to={`#${topic.path || topic.name.toLowerCase().replace(/\s+/g, '-')}`}
-              smooth
-              className={`block px-4 py-3 text-base font-medium transition-all duration-200 font-sans tracking-wide rounded-lg hover:bg-white hover:bg-opacity-10 ${
-                activeMenu === topic.name 
-                  ? 'text-yellow-300' 
-                  : 'text-white hover:text-yellow-300'
-              }`}
               onClick={() => {
-                setActiveMenu(topic.name);
+                handleNavigation(topic);
                 setIsMobileMenuOpen(false);
               }}
+              className="block px-4 py-3 text-base font-medium transition-all duration-200 font-sans tracking-wide rounded-lg hover:bg-white hover:bg-opacity-10 text-white hover:text-yellow-300 w-full text-left"
             >
               {topic.name}
-            </HashLink>
+            </button>
           ))}
           
           <div className="border-t border-gray-400 border-opacity-30 pt-4 mt-4 space-y-2">
             {loggedIn ? (
               <>
-                <HashLink
-                  to="#profile"
-                  smooth
+                <Link
+                  to="/profile"
                   className="text-white hover:text-yellow-300 block px-4 py-3 text-base font-medium transition-all duration-200 font-sans tracking-wide rounded-lg hover:bg-white hover:bg-opacity-10"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Profile
-                </HashLink>
+                </Link>
                 <button 
                   onClick={() => {
                     handleLogout();
@@ -200,22 +215,20 @@ const Header = ({topics}) => {
               </>
             ) : (
               <>
-                <HashLink
-                  to="#login"
-                  smooth
+                <Link
+                  to="/login"
                   className="text-white hover:text-yellow-300 block px-4 py-3 text-base font-medium transition-all duration-200 font-sans tracking-wide rounded-lg hover:bg-white hover:bg-opacity-10"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
-                </HashLink>
-                <HashLink
-                  to="#signup"
-                  smooth
+                </Link>
+                <Link
+                  to="/register"
                   className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 text-gray-800 hover:text-gray-900 block px-4 py-3 mx-4 mt-2 rounded-full text-base font-semibold font-sans tracking-wide text-center transition-all duration-300 shadow-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Sign Up
-                </HashLink>
+                </Link>
               </>
             )}
           </div>

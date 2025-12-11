@@ -53,7 +53,6 @@ userRouter.post("/addCourse",adminAuth,upload.fields([
 
 userRouter.post("/addSection",adminAuth,[
     body("sectionTitle").isString().isLength({min:1}),
-    body("sectionDescription").isString(),
     body("courseId").isMongoId()
 ],addSection)
 

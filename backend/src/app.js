@@ -10,7 +10,7 @@ dbConnection();
 
 app.use(cors({
     origin: (origin, callback)=>{
-        if(!origin || origin === "https://learning-management-system-mocha-seven.vercel.app/" || origin === "https://edvance.devx6.live") {
+        if(!origin || origin === "https://learning-management-system-mocha-seven.vercel.app/" || origin === "https://edvance.devx6.live" || origin.startsWith("http://localhost")) {
             callback(null, true);
         } else {
             callback(new Error("Not allowed"), false);

@@ -27,6 +27,8 @@ const Login = () => {
                setLoggedIn(true);
                toast.success("Login Successful");
                navigate("/");
+           }else{
+            toast.error("Login Failed: " + response.data.msg);  
            }
        }catch(error){
            console.log(error);
@@ -40,7 +42,7 @@ const Login = () => {
     <>
       <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
 
-      <div className="min-h-80 bg-gradient-to-br from-stone-200 via-amber-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-80 mt-18 bg-gradient-to-br from-stone-200 via-amber-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
             <div className="lg:flex">
