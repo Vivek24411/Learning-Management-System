@@ -50,7 +50,7 @@ const Home = () => {
         />
         <div className="absolute top-4 right-4">
           <span className="bg-[#7A7F3F] text-white px-3 py-1 rounded-full text-sm font-semibold">
-            ${course.price || '99'}
+            ₹{course.price || '99'}
           </span>
         </div>
       </div>

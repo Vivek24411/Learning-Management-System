@@ -71,7 +71,13 @@ module.exports.verifyOTPandRegister = async (req, res, next) => {
     password: hashedPassword,
   });
 
-  return res.json({ success: true, msg: "Registered Successfully" });
+  const token = user.createToken();
+  console.log("Generated token for user:", token);
+  console.log("User registered:", user._id);
+
+  await otpModel.deleteOne({ _id: savedOTP._id });
+
+  return res.json({ success: true, msg: "Registered Successfully", token });
 };
 
 module.exports.login = async (req, res, next) => {
@@ -106,7 +112,10 @@ module.exports.getAllCourses = async (req, res, next) => {
 };
 
 module.exports.getCourse = async (req, res, next) => {
-  checkValidation(req, res);
+ const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
 
   const { courseId } = req.query;
   const course = await courseModel.findById(courseId).populate({
@@ -151,9 +160,12 @@ module.exports.addCourse = async (req, res, next) => {
     console.log("addCourse controller called");
     console.log("Request body:", req.body);
     console.log("Request files:", req.files);
+    console.log("User:", req.user);
+    console.log("Is Admin:", req.user?.isAdmin);
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log("Validation errors:", errors.array());
       return res.json({ success: false, msg: errors.array() });
     }
 
@@ -165,30 +177,57 @@ module.exports.addCourse = async (req, res, next) => {
       price,
     } = req.body;
 
+    console.log("Extracted form data:", {
+      courseName,
+      shortDescription,
+      longDescription,
+      courseIntroduction,
+      price
+    });
+
     // Check if required files exist
     if (!req.files || !req.files.courseThumbnailImage) {
+      console.log("Files missing:", req.files);
       return res.json({ success: false, msg: "Course thumbnail image is required" });
     }
+
+    console.log("Files validation passed");
 
     const courseThumbnailImage = req.files.courseThumbnailImage[0].path;
     const courseIntroductionImages = req.files.courseIntroductionImages 
       ? req.files.courseIntroductionImages.map((file) => file.path)
       : [];
 
-    const course = await courseModel.create({
+    console.log("File paths extracted:", {
+      courseThumbnailImage,
+      courseIntroductionImages
+    });
+
+    console.log("Creating course in database...");
+    
+    // Prepare data for database
+    const courseData = {
       courseName,
       shortDescription,
       longDescription,
       courseIntroduction,
       courseThumbnailImage,
-      price,
+      price: parseFloat(price), // Ensure price is a number
       courseIntroductionImages,
-    });
+    };
+    
+    console.log("Course data to be saved:", courseData);
+    
+    const course = await courseModel.create(courseData);
+
+    console.log("Course created successfully:", course._id);
 
     return res.json({ success: true, msg: "Course added successfully", course });
   } catch (error) {
-    console.error("Error in addCourse:", error);
-    return res.json({ success: false, msg: error.message });
+    console.error("Error in addCourse - Full error object:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    return res.status(500).json({ success: false, msg: error.message, error: error.toString() });
   }
 };
 

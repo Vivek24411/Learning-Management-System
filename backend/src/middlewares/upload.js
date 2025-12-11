@@ -6,18 +6,21 @@ const storage = new CloudinaryStorage({
     cloudinary,
     params: async (req, file) => {
         if(file.fieldname === "courseThumbnailImage"){
+            console.log("Uploading course thumbnail");
             return {
                 folder: "Edvance/CourseThumbnailImage",
                 resource_type: "image",
                 allowed_formats: ["jpg", "png", "jpeg"]
             }
         } else if(file.fieldname === "courseIntroductionImages"){
+            console.log("Uploading course introduction images");
             return {
                 folder: "Edvance/CourseIntroductionImages",
                 resource_type: "image",
                 allowed_formats: ["jpg", "png", "jpeg"]
             }
         } else if(file.fieldname === "chapterThumbnailImage"){
+            console.log("Uploading chapter thumbnail");
             return {
                 folder: "Edvance/ChapterThumbnailImage",
                 resource_type: "image",

@@ -46,7 +46,10 @@ userRouter.post("/addCourse",adminAuth,upload.fields([
     body("price").isNumeric(),
     body("courseIntroduction").isString().isLength({min:1}),
     body("longDescription").isString().isLength({min:1}),
-],addCourse)
+],(req,res,next)=>{
+    console.log("In route");
+    next();
+},addCourse)
 
 userRouter.post("/addSection",adminAuth,[
     body("sectionTitle").isString().isLength({min:1}),
