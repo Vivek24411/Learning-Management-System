@@ -8,7 +8,15 @@ const cors = require("cors");
 dbConnection();
 
 
-app.use(cors());
+app.use(cors({
+    origin: (origin, callback)=>{
+        if(!origin || origin === "https://learning-management-system-mocha-seven.vercel.app/" || origin === "https://edvance.devx6.live") {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed"), false);
+        }
+    }
+}));
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
