@@ -4,11 +4,12 @@ import { toast } from 'react-toastify'
 import axios from 'axios';
 
 // Input component for reusability (moved outside to prevent re-renders)
-const InputField = ({ label, name, type = "text", placeholder, value, onChange, error, required = true, rows = null }) => (
+const InputField = ({ label, name, type = "text", placeholder, value, onChange, error, required = true, rows = null , extraText}) => (
   <div className="space-y-2">
     <label htmlFor={name} className="block text-sm font-semibold text-gray-700">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
+    <h3 className='text-sm text-gray-500'>{extraText}</h3>
     {rows ? (
       <textarea
         id={name}
@@ -297,7 +298,7 @@ const AddCourse = () => {
                   error={errors.courseIntroduction}
                   rows={5}
                 />
-
+                
                 {/* Price */}
                 <InputField
                   label="Course Price"
@@ -307,6 +308,7 @@ const AddCourse = () => {
                   value={formData.price}
                   onChange={handleInputChange}
                   error={errors.price}
+                  extraText = "Set Course Price 0 for Free Course"
                 />
 
                 {/* Thumbnail Image */}
