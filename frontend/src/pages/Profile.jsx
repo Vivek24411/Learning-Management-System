@@ -20,7 +20,7 @@ const Profile = () => {
               <div className="w-full lg:w-1/2 p-8 lg:p-12 flex items-center justify-center bg-gradient-to-br from-yellow-50 to-amber-100">
                 <div className="max-w-md w-full">
                   <img
-                    src="/src/assets/edvanceProfile.jpg"
+                    src="/src/assets/EdvanceLogo.png"
                     alt="Profile Illustration"
                     className="w-full h-auto rounded-3xl shadow-2xl object-cover"
                   />
