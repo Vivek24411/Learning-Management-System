@@ -30,7 +30,7 @@ module.exports.sendOTP = async(email,OTP)=>{
                     </div>
                     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #999; font-size: 12px;">
                         <p>This is an automated message. Please do not reply to this email.</p>
-                        <p>&copy; 2025 MediCare. All rights reserved.</p>
+                        <p>&copy; 2025 Edvance. All rights reserved.</p>
                     </div>
                 </div>
             `
