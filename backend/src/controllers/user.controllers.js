@@ -10,7 +10,6 @@ const Razorpay = require("razorpay");
 const orderModel = require("../models/order.model");
 const crypto = require("crypto");
 
-
 function checkValidation(req, res) {
   const error = validationResult(req);
   if (!error.isEmpty()) {
@@ -107,12 +106,14 @@ module.exports.getProfile = (req, res, next) => {
 module.exports.getAllCourses = async (req, res, next) => {
   const courses = await courseModel
     .find()
-    .select("courseName shortDescription price courseThumbnailImage publishedAt");
+    .select(
+      "courseName shortDescription price courseThumbnailImage publishedAt"
+    );
   return res.json({ success: true, courses });
 };
 
 module.exports.getCourse = async (req, res, next) => {
- const errors = validationResult(req);
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.json({ success: false, msg: errors.array() });
   }
@@ -144,15 +145,19 @@ module.exports.getChapter = async (req, res, next) => {
     return res.json({ success: false, msg: "Chapter not found" });
   }
 
-  const sectionId = await sectionModel.findOne({chapters:chapterId}).select("_id");
+  const sectionId = await sectionModel
+    .findOne({ chapters: chapterId })
+    .select("_id");
 
   console.log("sectionId:", sectionId._id);
 
-  const courseId = await courseModel.findOne({sections:sectionId}).select("_id");
+  const courseId = await courseModel
+    .findOne({ sections: sectionId })
+    .select("_id");
 
   console.log("courseId:", courseId._id);
 
-  return res.json({ success: true, chapter, courseId : courseId._id});
+  return res.json({ success: true, chapter, courseId: courseId._id });
 };
 
 module.exports.addCourse = async (req, res, next) => {
@@ -162,7 +167,7 @@ module.exports.addCourse = async (req, res, next) => {
     console.log("Request files:", req.files);
     console.log("User:", req.user);
     console.log("Is Admin:", req.user?.isAdmin);
-    
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log("Validation errors:", errors.array());
@@ -182,29 +187,32 @@ module.exports.addCourse = async (req, res, next) => {
       shortDescription,
       longDescription,
       courseIntroduction,
-      price
+      price,
     });
 
     // Check if required files exist
     if (!req.files || !req.files.courseThumbnailImage) {
       console.log("Files missing:", req.files);
-      return res.json({ success: false, msg: "Course thumbnail image is required" });
+      return res.json({
+        success: false,
+        msg: "Course thumbnail image is required",
+      });
     }
 
     console.log("Files validation passed");
 
     const courseThumbnailImage = req.files.courseThumbnailImage[0].path;
-    const courseIntroductionImages = req.files.courseIntroductionImages 
+    const courseIntroductionImages = req.files.courseIntroductionImages
       ? req.files.courseIntroductionImages.map((file) => file.path)
       : [];
 
     console.log("File paths extracted:", {
       courseThumbnailImage,
-      courseIntroductionImages
+      courseIntroductionImages,
     });
 
     console.log("Creating course in database...");
-    
+
     // Prepare data for database
     const courseData = {
       courseName,
@@ -215,19 +223,25 @@ module.exports.addCourse = async (req, res, next) => {
       price: parseFloat(price), // Ensure price is a number
       courseIntroductionImages,
     };
-    
+
     console.log("Course data to be saved:", courseData);
-    
+
     const course = await courseModel.create(courseData);
 
     console.log("Course created successfully:", course._id);
 
-    return res.json({ success: true, msg: "Course added successfully", course });
+    return res.json({
+      success: true,
+      msg: "Course added successfully",
+      course,
+    });
   } catch (error) {
     console.error("Error in addCourse - Full error object:", error);
     console.error("Error message:", error.message);
     console.error("Error stack:", error.stack);
-    return res.status(500).json({ success: false, msg: error.message, error: error.toString() });
+    return res
+      .status(500)
+      .json({ success: false, msg: error.message, error: error.toString() });
   }
 };
 
@@ -265,20 +279,32 @@ module.exports.addChapter = async (req, res, next) => {
       return res.json({ success: false, msg: errors.array() });
     }
 
-    const { chapterName, shortDescription, chapterSummary, sectionId, chapterVideoTitle } = req.body;
+    const {
+      chapterName,
+      shortDescription,
+      chapterSummary,
+      sectionId,
+      chapterVideoTitle,
+    } = req.body;
     console.log("Request body:", req.body);
     console.log("Request files:", req.files);
 
     // Handle file uploads
     const chapterFile = req.files.chapterFile?.map((file) => file.path) || [];
     const chapterThumbnailImage = req.files.chapterThumbnailImage?.[0].path;
-    
+
     // Handle video files
-    const chapterVideo = req.files.chapterVideo?.map((video) => video.path) || [];
-    const videoThumbnailImage = req.files.chapterVideoThumbnailImage?.map((img) => img.path) || [];
+    const chapterVideo =
+      req.files.chapterVideo?.map((video) => video.path) || [];
+    const videoThumbnailImage =
+      req.files.chapterVideoThumbnailImage?.map((img) => img.path) || [];
 
     // Handle video titles - they come as an array from FormData
-    const videoTitleArray = Array.isArray(chapterVideoTitle) ? chapterVideoTitle : (chapterVideoTitle ? [chapterVideoTitle] : []);
+    const videoTitleArray = Array.isArray(chapterVideoTitle)
+      ? chapterVideoTitle
+      : chapterVideoTitle
+      ? [chapterVideoTitle]
+      : [];
     console.log("Video titles array:", videoTitleArray);
 
     // Create video details array
@@ -313,14 +339,16 @@ module.exports.addChapter = async (req, res, next) => {
     section.chapters.push(chapter._id);
     await section.save(); // Fixed: was missing parentheses
 
-    return res.json({ success: true, msg: "Chapter Added Successfully", chapter });
-    
+    return res.json({
+      success: true,
+      msg: "Chapter Added Successfully",
+      chapter,
+    });
   } catch (error) {
     console.error("Error in addChapter:", error);
     return res.json({ success: false, msg: error.message });
   }
 };
-
 
 module.exports.editCourse = async (req, res, next) => {
   checkValidation(req, res);
@@ -347,9 +375,12 @@ module.exports.editCourse = async (req, res, next) => {
 
   await course.save();
 
-  return res.json({ success: true, msg: "Course updated successfully", course });
+  return res.json({
+    success: true,
+    msg: "Course updated successfully",
+    course,
+  });
 };
-
 
 module.exports.editChapter = async (req, res, next) => {
   checkValidation(req, res);
@@ -367,7 +398,11 @@ module.exports.editChapter = async (req, res, next) => {
 
   await chapter.save();
 
-  return res.json({ success: true, msg: "Chapter updated successfully", chapter });
+  return res.json({
+    success: true,
+    msg: "Chapter updated successfully",
+    chapter,
+  });
 };
 
 module.exports.editSection = async (req, res, next) => {
@@ -385,7 +420,11 @@ module.exports.editSection = async (req, res, next) => {
 
   await section.save();
 
-  return res.json({ success: true, msg: "Section updated successfully", section });
+  return res.json({
+    success: true,
+    msg: "Section updated successfully",
+    section,
+  });
 };
 
 module.exports.deleteCourse = async (req, res, next) => {
@@ -441,7 +480,7 @@ module.exports.deleteSection = async (req, res, next) => {
     const chapterData = await chapterModel.findById(chapter);
     await chapterData.remove();
   }
-  
+
   const course = await courseModel.findOne({ sections: section._id });
   if (course) {
     course.sections.pull(section._id);
@@ -451,7 +490,6 @@ module.exports.deleteSection = async (req, res, next) => {
 
   return res.json({ success: true, msg: "Section deleted successfully" });
 };
-
 
 module.exports.enrollCourse = async (req, res, next) => {
   checkValidation(req, res);
@@ -485,7 +523,7 @@ module.exports.createOrder = async (req, res, next) => {
     return res.json({ success: false, msg: "Course not found" });
   }
 
-  if( user.coursePurchased.includes(courseId)) {
+  if (user.coursePurchased.includes(courseId)) {
     return res.json({ success: false, msg: "Course already purchased" });
   }
 
@@ -495,8 +533,6 @@ module.exports.createOrder = async (req, res, next) => {
     key_id: process.env.RAZORPAY_KEY,
     key_secret: process.env.RAZORPAY_SECRET,
   });
-
-
 
   const order = await razorPay.orders.create({
     amount: course.price * 100,
@@ -517,44 +553,89 @@ module.exports.createOrder = async (req, res, next) => {
     status: "created",
   });
 
-  return res.json({ success: true, msg: "Order created successfully", order});
+  return res.json({ success: true, msg: "Order created successfully", order });
 };
 
-module.exports.verifyOrder = async (req,res,next)=>{
- try{
-   const error = validationResult(req);
+module.exports.verifyOrder = async (req, res, next) => {
+  try {
+    const error = validationResult(req);
 
-  if(!error){
-    return res.json({success:false, msg:error.array()});
+    if (!error) {
+      return res.json({ success: false, msg: error.array() });
+    }
+
+    const { orderId, paymentId, signature } = req.body;
+
+    const order = await orderModel.findOne({ orderId });
+
+    if (!order) {
+      return res.json({ success: false, msg: "Order not found" });
+    }
+
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_SECRET)
+      .update(orderId + "|" + paymentId)
+      .digest("hex");
+
+    if (generatedSignature !== signature) {
+      return res.json({ success: false, msg: "Invalid signature" });
+    }
+
+    order.paymentId = paymentId;
+    order.signature = signature;
+    order.status = "paid";
+
+    await order.save();
+
+    req.user.coursePurchased.push(order.courseId);
+    await req.user.save();
+
+    return res.json({ success: true, msg: "Course enrolled successfully" });
+  } catch (error) {
+    return res.json({ success: false, msg: error.message });
+  }
+};
+
+module.exports.resetPassword = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
   }
 
-  const {orderId, paymentId, signature} = req.body;
+  const { email, newPassword, OTP } = req.body;
 
-  const order = await orderModel.findOne({orderId});
-  
-  if(!order){
-    return res.json({success:false, msg:"Order not found"});
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.json({
+      success: false,
+      msg: "You are not registered, please sign up",
+    });
+  }  
+
+  const isPasswordSame = await user.comparePassword(newPassword);
+  if (isPasswordSame) {
+    return res.json({
+      success: false,
+      msg: "New password cannot be the same as the old password",
+    });
   }
 
-  const generatedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_SECRET)
-    .update(orderId + '|' + paymentId)
-    .digest('hex');
+  const hashedOTP = createHash(OTP);
 
-  if(generatedSignature !== signature){
-    return res.json({success:false, msg:"Invalid signature"});
+  const savedOTP = await otpModel.findOne({
+    email,
+    OTP: hashedOTP,
+  });
+
+  if (!savedOTP) {
+    return res.json({ success: false, msg: "Invalid or expired OTP" });
   }
 
-  order.paymentId = paymentId;
-  order.signature = signature;
-  order.status = "paid";
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  await user.save();
 
-  await order.save();
+  await otpModel.deleteOne({ _id: savedOTP._id });
 
-  req.user.coursePurchased.push(order.courseId);
-  await req.user.save();
-
-  return res.json({success:true, msg:"Course enrolled successfully"});
- }catch(error){
-    return res.json({success:false, msg:error.message});
- }
-}
+  return res.json({ success: true, msg: "Password reset successfully" });
+};

@@ -15,6 +15,7 @@ import EditChapter from "./pages/EditChapter.jsx";
 import AddSection from "./pages/AddSection.jsx";
 import ProtectedWrapper from "./protectedWrapper/ProtectedWrapper.jsx";
 import Footer from "./pages/Footer.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
 
 const App = () => {
   return (
@@ -31,6 +32,7 @@ const App = () => {
         <Route path="/addChapter/:sectionId" element={<ProtectedWrapper><AddChapter /></ProtectedWrapper>} />
         <Route path="/editChapter/:chapterId" element={<ProtectedWrapper><EditChapter /></ProtectedWrapper>} />
         <Route path="/addSection/:courseId" element={<ProtectedWrapper><AddSection /></ProtectedWrapper>} />
+        <Route path="/forgotPassword" element={<ForgotPassword />} />
       </Routes>
       <Footer/>
 

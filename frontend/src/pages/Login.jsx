@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { useContext } from 'react';
 import { UserContextData } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Login = () => {
 
@@ -129,9 +130,9 @@ const Login = () => {
 
                     {/* Forgot Password Link */}
                     <div className="flex items-center justify-end">
-                      <a href="#" className="text-sm text-[#7A7F3F] hover:text-[#7A7F3F]/80 font-medium transition-colors duration-200">
+                      <Link to={'/forgotPassword'} className="text-sm text-[#7A7F3F] hover:text-[#7A7F3F]/80 font-medium transition-colors duration-200">
                         Forgot your password?
-                      </a>
+                      </Link>
                     </div>
 
                     <button
@@ -157,7 +158,7 @@ const Login = () => {
                       )}
                     </button>
 
-                    {/* Or Divider */}
+                    {/* Or Divider
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-300"></div>
@@ -165,7 +166,7 @@ const Login = () => {
                       <div className="relative flex justify-center text-sm">
                         <span className="px-2 bg-white text-gray-500">Or continue with</span>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Social Login Buttons
                     <div className="grid grid-cols-2 gap-3">

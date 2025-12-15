@@ -1,10 +1,11 @@
 const express = require("express");
 const userRouter = express.Router();
 const {body, query} = require("express-validator");
-const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder } = require("../controllers/user.controllers");
+const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword } = require("../controllers/user.controllers");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { uploadCourseThumbnail } = require("../middlewares/upload");
 const upload = require("../middlewares/upload");
+
 
 userRouter.post("/sendOTP",[
     body("email").isEmail().isLength({min:1})
@@ -117,6 +118,12 @@ userRouter.post("/verifyOrder",userAuth,[
     body("paymentId").isString().isLength({min:1}),
     body("signature").isString().isLength({min:1})
 ],verifyOrder)
+
+userRouter.post("/resetPassword",[
+    body("email").isEmail().isLength({min:1}),
+    body("newPassword").isString().isLength({min:3}),
+    body("OTP").isString().isLength({min:6})
+],resetPassword)
 
 
 
