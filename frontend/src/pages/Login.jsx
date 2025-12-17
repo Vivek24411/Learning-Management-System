@@ -188,7 +188,7 @@ const Login = () => {
                       </button>
                     </div> */}
                   </div>
-
+console.log(import.meta.env.VITE_BASE_URL);
                   {/* Footer */}
                   <div className="mt-8 text-center text-sm text-gray-600">
                     Don't have an account?{' '}

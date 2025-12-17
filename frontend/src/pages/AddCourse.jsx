@@ -201,12 +201,15 @@ const AddCourse = () => {
         data.append('courseIntroductionImages', file);
       });
 
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/addCourse`, data, {
+      const response = await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/user/addCourse`,
+      data,
+      {
         headers: {
-          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('edvance_token')}`
         }
-      });
+      }
+    );
         console.log("Add Course Response:", response);
       if(response.data.success){
         toast.success(response.data.msg || "Course added successfully");

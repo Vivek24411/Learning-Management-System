@@ -1,18 +1,33 @@
 import React, { useState, useContext, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { UserContextData } from "../context/UserContext";
 import Header from "../components/Header";
 
+
 // Chapter Item Component
-const ChapterItem = ({ chapter, onViewChapter }) => {
+const ChapterItem = ({ chapter, onViewChapter, isAdmin }) => {
+  const navigate = useNavigate();
+  const { profile } = useContext(UserContextData);
+  const { courseId } = useParams();
+
   const handleChapterClick = () => {
     onViewChapter(chapter._id);
   };
 
-  const { profile } = useContext(UserContextData);
-  const { courseId } = useParams();
+  const handleQuizAction = () => {
+    if (isAdmin) {
+      // Redirects admin to the quiz management page
+      navigate(`/admin/quiz/${chapter._id}`);
+    } else {
+      // Redirects student to the quiz attempt page
+      navigate(`/quiz/${chapter._id}`);
+    }
+  };
+
+  // Check if user has access
+  const hasAccess = profile?.coursePurchased?.includes(courseId) || profile?.isAdmin;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden">
@@ -44,7 +59,7 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
 
         {/* Chapter Status Badge */}
         <div className="absolute top-3 right-3">
-          {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
+          {hasAccess ? (
             <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium flex items-center">
               <svg
                 className="w-3 h-3 mr-1"
@@ -88,14 +103,26 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
             "Explore this chapter to deepen your understanding and practice."}
         </p>
 
-        {/* Chapter Action Button */}
-        {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
-          <button
-            onClick={handleChapterClick}
-            className="w-full bg-[#7A7F3F] text-white px-4 py-2 rounded font-medium hover:bg-[#6A6F35] transition-colors duration-200 text-sm"
-          >
-            Start Learning
-          </button>
+        {/* Chapter Actions */}
+        {hasAccess ? (
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handleChapterClick}
+              className="w-full bg-[#7A7F3F] text-white px-4 py-2 rounded font-medium hover:bg-[#6A6F35] transition-colors duration-200 text-sm"
+            >
+              Start Learning
+            </button>
+            {/* NEW QUIZ BUTTON */}
+            <button
+              onClick={handleQuizAction}
+              className="w-full bg-white border border-[#7A7F3F] text-[#7A7F3F] px-4 py-2 rounded font-medium hover:bg-gray-50 transition-colors duration-200 text-sm flex items-center justify-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              {isAdmin ? "Manage Quiz" : "Start Quiz"}
+            </button>
+          </div>
         ) : (
           <div className="w-full bg-gray-50 border border-gray-200 rounded p-3 text-center">
             <div className="flex items-center justify-center mb-1">
@@ -123,6 +150,10 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
 
 // Section Item Component
 const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
+  console.log("SECTION VIDEOS:", section.sectionVideos);
+
+  const navigate = useNavigate();
+
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -183,28 +214,122 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Admin Add Chapter Button */}
-            {isAdmin && (
-              <button
-                onClick={() => onAddChapter(section._id)}
-                className="bg-[#7A7F3F] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#6A6F35] transition-colors duration-200 flex items-center"
-              >
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Chapter
-              </button>
-            )}
+  {/* Admin Add Chapter Button */}
+  {isAdmin && (
+    <button
+      onClick={() => onAddChapter(section._id)}
+      className="bg-[#7A7F3F] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#6A6F35] transition-colors duration-200 flex items-center"
+    >
+      <svg
+        className="w-4 h-4 mr-1"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 4v16m8-8H4"
+        />
+      </svg>
+      Add Chapter
+    </button>
+  )}
+
+  {/* SECTION VIDEO CTA — ADD THIS BELOW, NOT REPLACE */}
+  {isAdmin && (
+    <button
+      onClick={() => navigate(`/admin/section/${section._id}/video`)}
+      className="bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-500 transition-colors duration-200 flex items-center"
+    >
+      <svg
+        className="w-4 h-4 mr-1"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+        />
+      </svg>
+      Add Video
+    </button>
+  )}
+
+            {/* Section Quiz CTA */}
+            {/* SECTION QUIZ ACTIONS */}
+{isAdmin ? (
+  <div className="flex items-center gap-2">
+    {/* ADMIN: START QUIZ (PREVIEW) */}
+    <button
+      onClick={() => navigate(`/quiz/section/${section._id}`)}
+      className="bg-[#7A7F3F] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#6A6F35] transition-colors duration-200 flex items-center"
+    >
+      <svg
+        className="w-4 h-4 mr-1"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5 3l14 9-14 9V3z"
+        />
+      </svg>
+      Start Quiz
+    </button>
+
+    {/* ADMIN: ADD / EDIT QUIZ */}
+    <button
+      onClick={() => navigate(`/admin/quiz/section/${section._id}`)}
+      className="bg-white border border-[#7A7F3F] text-[#7A7F3F] px-3 py-2 rounded text-sm font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+    >
+      <svg
+        className="w-4 h-4 mr-1"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"
+        />
+      </svg>
+      Add / Edit Quiz
+    </button>
+  </div>
+) : (
+  /* USER: START QUIZ */
+  <button
+    onClick={() => navigate(`/quiz/section/${section._id}`)}
+    className="bg-[#7A7F3F] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#6A6F35] transition-colors duration-200 flex items-center"
+  >
+    <svg
+      className="w-4 h-4 mr-1"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 3l14 9-14 9V3z"
+      />
+    </svg>
+    Start Quiz
+  </button>
+)}
+
+
 
             {/* Expand/Collapse Button */}
             <button
@@ -242,6 +367,33 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
         }`}
       >
         <div className="p-6">
+          {/* SECTION VIDEOS */}
+{section.sectionVideos && section.sectionVideos.length > 0 && (
+
+  <div className="mb-8">
+    <h4 className="text-lg font-semibold text-gray-900 mb-4">
+      Section Videos
+    </h4>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {section.sectionVideos.map((video) => (
+        <div
+          key={video._id}
+          onClick={() => navigate(`/section/video/${video._id}`)}
+          className="cursor-pointer bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
+        >
+          <div className="mb-1 font-medium text-gray-800">
+            {video.title}
+          </div>
+          <div className="text-xs text-gray-500">
+            Video Lesson
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
           {section.chapters && section.chapters.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {section.chapters.map((chapter, index) => (
@@ -259,6 +411,7 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
                   <ChapterItem
                     chapter={chapter}
                     onViewChapter={onViewChapter}
+                    isAdmin={isAdmin}
                   />
                 </div>
               ))}
@@ -318,11 +471,12 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
 const Course = () => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [addingSection, setAddingSection] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const { courseId } = useParams();
-  const { profile, setProfile, fetchProfile } = useContext(UserContextData);
+  const { profile, fetchProfile } = useContext(UserContextData);
   const navigate = useNavigate();
+  const location = useLocation();
+
 
   async function fetchCourse() {
     try {
@@ -336,7 +490,6 @@ const Course = () => {
         }
       );
 
-      console.log(response);
       if (response.data.success) {
         setCourse(response.data.course);
       } else {
@@ -361,6 +514,14 @@ const Course = () => {
   const handleAddChapter = (sectionId) => {
     navigate(`/addChapter/${sectionId}`);
   };
+
+    const handleSectionQuiz = (sectionId) => {
+  if (profile?.isAdmin) {
+    navigate(`/admin/quiz/section/${sectionId}`);
+  } else {
+    navigate(`/quiz/section/${sectionId}`);
+  }
+};
 
   async function enrollCourse() {
     try {
@@ -394,7 +555,6 @@ const Course = () => {
             },
           }
         );
-        console.log(response);
         if (response.data.success) {
           const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY,
@@ -419,7 +579,6 @@ const Course = () => {
                   },
                 }
               );
-              console.log(verifyResponse);
               if (verifyResponse.data.success) {
                 toast.success("Payment successful and course enrolled!");
                 await fetchProfile();
@@ -438,8 +597,6 @@ const Course = () => {
               color: "#3399cc",
             },
           };
-
-          console.log("Initializing Razorpay with options:", options);
 
           const rzp = new window.Razorpay(options);
 
@@ -464,13 +621,21 @@ const Course = () => {
   }
 
   useEffect(() => {
-    fetchCourse();
+    if(localStorage.getItem("edvance_token") === null){
+      toast.info("Please login to access the course details.");
+      navigate("/login");
+    } else {
+      fetchCourse();
+    }
   }, []);
+  useEffect(() => {
+  if (location.state?.refreshCourse) {
+    fetchCourse();
 
-  if(localStorage.getItem("edvance_token")===null){
-    toast.info("Please login to access the course details.");
-    navigate("/login");
+    // clear the state so it doesn't refetch again
+    navigate(location.pathname, { replace: true });
   }
+}, [location.state]);
 
   if (loading) {
     return (
@@ -559,10 +724,7 @@ const Course = () => {
               alt={course.courseName}
               className="w-full h-full object-cover"
             />
-
-            <img src={course.courseThumbnailImage} alt="" />
-            <div ></div>
-
+            <div className="absolute inset-0 bg-black/50"></div>
             <div className="absolute inset-0 flex items-center justify-center px-4">
               <div className="text-center max-w-4xl mx-auto">
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
@@ -590,7 +752,7 @@ const Course = () => {
               </div>
 
               {/* Price and Enroll Section */}
-              {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
+              {profile?.coursePurchased?.includes(courseId) || profile?.isAdmin ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex items-center justify-center">
                     <svg
@@ -783,7 +945,10 @@ const Course = () => {
                     onViewChapter={handleViewChapter}
                     isAdmin={isAdmin}
                     onAddChapter={handleAddChapter}
+                    onSectionQuiz={handleSectionQuiz}
+                    
                   />
+
                 ))
               ) : (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
@@ -809,7 +974,7 @@ const Course = () => {
                     This course is currently being prepared. Content will be
                     available soon.
                   </p>
-                  {profile.isAdmin && (
+                  {isAdmin && (
                     <div>
                       <p className="text-sm text-gray-500 mb-4">
                         As an admin, you can start building this course:

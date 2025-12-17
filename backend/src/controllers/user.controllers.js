@@ -120,12 +120,16 @@ module.exports.getCourse = async (req, res, next) => {
 
   const { courseId } = req.query;
   const course = await courseModel.findById(courseId).populate({
-    path: "sections",
-    populate: {
-      path: "chapters",
-      select: "chapterName shortDescription chapterThumbnailImage",
-    },
-  });
+  path: "sections",
+  select: "sectionTitle sectionDescription chapters sectionVideos",
+  populate: {
+    path: "chapters",
+    select: "chapterName shortDescription chapterThumbnailImage",
+  },
+});
+
+
+
 
   if (!course) {
     return res.json({ success: false, msg: "Course not found" });
@@ -139,7 +143,8 @@ module.exports.getChapter = async (req, res, next) => {
 
   const { chapterId } = req.query;
 
-  const chapter = await chapterModel.findById(chapterId);
+  const section = await sectionModel.findById(sectionId);
+
 
   if (!chapter) {
     return res.json({ success: false, msg: "Chapter not found" });
@@ -639,3 +644,84 @@ module.exports.resetPassword = async (req, res, next) => {
 
   return res.json({ success: true, msg: "Password reset successfully" });
 };
+module.exports.addChapterQuiz = async (req, res) => {
+  try {
+    const { chapterId, quiz } = req.body;
+
+    const chapter = await chapterModel.findById(chapterId);
+    if (!chapter) {
+      return res.json({ success: false, msg: "Chapter not found" });
+    }
+
+    chapter.quiz = quiz;
+    await chapter.save();
+
+    return res.json({
+      success: true,
+      msg: "Chapter quiz saved successfully",
+      quiz: chapter.quiz,
+    });
+  } catch (error) {
+    return res.json({ success: false, msg: error.message });
+  }
+};
+
+module.exports.getChapterQuiz = async (req, res) => {
+  try {
+    const { chapterId } = req.query;
+
+    const chapter = await chapterModel.findById(chapterId).select("quiz");
+    if (!chapter || !chapter.quiz) {
+      return res.json({ success: false, msg: "Quiz not found" });
+    }
+
+    return res.json({
+      success: true,
+      quiz: chapter.quiz,
+    });
+  } catch (error) {
+    return res.json({ success: false, msg: error.message });
+  }
+};
+
+exports.addSectionVideo = async (req, res) => {
+  try {
+    const { sectionId, title } = req.body;
+
+    const videoFile = req.files?.video?.[0];
+    const thumbnailFile = req.files?.thumbnail?.[0]; // optional
+
+    if (!videoFile) {
+      return res.json({ success: false, msg: "Video file required" });
+    }
+
+    const section = await sectionModel.findById(sectionId);
+if (!section) {
+  return res.json({ success: false, msg: "Section not found" });
+}
+
+if (!section.videos) {
+  section.videos = [];
+}
+
+section.sectionVideos.push({
+  title,
+  videoUrl: req.file.path,
+  thumbnail: req.file.thumbnail || "",
+});
+
+
+    await section.save();
+
+    return res.json({
+      success: true,
+      msg: "Section video added successfully",
+    });
+  } catch (err) {
+    console.error("addSectionVideo error:", err);
+    return res.status(500).json({ success: false, msg: err.message });
+  }
+};
+
+
+
