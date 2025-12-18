@@ -415,6 +415,7 @@ const VideoPlayer = ({ videoDetails }) => {
         </svg>
         Chapter Videos
       </h3>
+      <h6 className="text-gray-500 text-xs mb-3">Double Tap On Video To Enter Fullscreen</h6>
 
       {currentVideo && (
         <div className="space-y-6">
@@ -428,10 +429,38 @@ const VideoPlayer = ({ videoDetails }) => {
               ref={videoRef}
               src={currentVideo.video}
               controls={!showThumbnail}
-              controlsList="nodownload noremoteplaybook"
-              className={`w-full h-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] transition-opacity duration-300 ${showThumbnail ? 'opacity-0 absolute inset-0' : 'opacity-100'}`}
+              controlsList="nodownload noremoteplayback"
+              disablePictureInPicture
+              disableRemotePlayback
+              className={`w-full h-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] transition-opacity duration-300 protected ${showThumbnail ? 'opacity-0 absolute inset-0' : 'opacity-100'}`}
               style={{ pointerEvents: showThumbnail ? 'none' : 'auto' }}
               onContextMenu={(e) => e.preventDefault()}
+              onSelectStart={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+              onLoadStart={(e) => {
+                // Additional protection with fullscreen override
+                if (e.target) {
+                  e.target.addEventListener('contextmenu', e => e.preventDefault());
+                  e.target.addEventListener('selectstart', e => e.preventDefault());
+                  e.target.addEventListener('dragstart', e => e.preventDefault());
+                  
+                  // Override fullscreen to maintain protection
+                  const originalRequestFullscreen = e.target.requestFullscreen;
+                  e.target.requestFullscreen = function() {
+                    // Apply the same protection in fullscreen
+                    const result = originalRequestFullscreen.call(this);
+                    if (result && result.then) {
+                      result.then(() => {
+                        // Maintain protection in fullscreen
+                        this.addEventListener('contextmenu', e => e.preventDefault());
+                        this.addEventListener('selectstart', e => e.preventDefault());
+                        this.addEventListener('dragstart', e => e.preventDefault());
+                      });
+                    }
+                    return result;
+                  };
+                }
+              }}
               onPlay={handleVideoPlay}
               onPause={handleVideoPause}
               onLoadedMetadata={() => {
@@ -604,6 +633,65 @@ const Chapter = () => {
     getChapter();
     // Smooth scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Additional video protection
+    const protectVideos = () => {
+      const videos = document.querySelectorAll('video');
+      videos.forEach(video => {
+        // Disable right-click
+        video.addEventListener('contextmenu', e => e.preventDefault());
+        
+        // Disable text selection
+        video.addEventListener('selectstart', e => e.preventDefault());
+        
+        // Disable drag
+        video.addEventListener('dragstart', e => e.preventDefault());
+        
+        // Disable keyboard shortcuts that might allow download
+        video.addEventListener('keydown', (e) => {
+          // Disable F12, Ctrl+Shift+I, Ctrl+S, etc.
+          if (e.key === 'F12' || 
+              (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+              (e.ctrlKey && e.key === 's') ||
+              (e.ctrlKey && e.key === 'S') ||
+              (e.ctrlKey && e.key === 'u') ||
+              (e.ctrlKey && e.key === 'U')) {
+            e.preventDefault();
+            return false;
+          }
+        });
+        
+        // Handle fullscreen changes to maintain protection
+        video.addEventListener('fullscreenchange', () => {
+          if (document.fullscreenElement === video) {
+            // Video is now in fullscreen - reapply protection
+            setTimeout(() => {
+              video.addEventListener('contextmenu', e => e.preventDefault());
+              video.addEventListener('selectstart', e => e.preventDefault());
+              video.addEventListener('dragstart', e => e.preventDefault());
+            }, 100);
+          }
+        });
+        
+        // Handle webkit fullscreen
+        video.addEventListener('webkitfullscreenchange', () => {
+          if (document.webkitFullscreenElement === video) {
+            setTimeout(() => {
+              video.addEventListener('contextmenu', e => e.preventDefault());
+              video.addEventListener('selectstart', e => e.preventDefault());
+              video.addEventListener('dragstart', e => e.preventDefault());
+            }, 100);
+          }
+        });
+      });
+    };
+    
+    // Apply protection initially and whenever DOM changes
+    protectVideos();
+    const observer = new MutationObserver(protectVideos);
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return () => observer.disconnect();
   }, [chapterId]);
 
   if (loading) {
@@ -705,6 +793,12 @@ const Chapter = () => {
              )}
            </div>
          </div>
+       </div>
+
+       <div>
+        <h3>Quiz</h3>
+        <button onClick={()=>{navigate(`/quiz/chapter/${chapter._id}`)}}>Add Quiz</button>
+        {chapter.chapterQuiz && chapter.chapterQuiz.length > 0 ? <div onClick={()=>{navigate(`/takeQuiz/chapter/${chapter._id}`)}}>Take Quiz</div> : <div>No Quiz Available</div>}
        </div>
 
        {/* PDF Files Section */}

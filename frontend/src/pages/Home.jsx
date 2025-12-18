@@ -92,6 +92,7 @@ const Home = () => {
         <button className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md font-medium hover:bg-[#6B7035] transition-colors duration-200">
           View Details
         </button>
+        
       </div>
     </div>
   );
@@ -192,7 +193,8 @@ const Home = () => {
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course, index) => (
-                <div
+                <div>
+                  <div
                   key={course._id || index}
                   className={`transform transition-all duration-500 ease-out ${
                     heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
@@ -201,6 +203,9 @@ const Home = () => {
                   onClick={() => navigate(`/course/${course._id}`)}
                 >
                   <CourseCard course={course} />
+                  
+                </div>
+                <button onClick={() => navigate(`/editCourse/${course._id}`)}>Edit Course</button>
                 </div>
               ))}
             </div>

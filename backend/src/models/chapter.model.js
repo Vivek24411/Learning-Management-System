@@ -19,6 +19,9 @@ const chapterSchema = new mongoose.Schema({
     },
     chapterVideoDetails:{
         type:[Object]
+    },
+    chapterQuiz:{
+        type: [Object],
     }
 })
 

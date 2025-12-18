@@ -9,8 +9,15 @@ const sectionSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  sectionVideoUrl: {
+    type: [String],
+    default: [],
+  },
   chapters: {
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Chapter" }],
+  },
+  sectionQuiz: {
+    type: [],
   },
 });
 

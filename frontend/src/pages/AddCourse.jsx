@@ -157,9 +157,7 @@ const AddCourse = () => {
       newErrors.shortDescription = 'Short description is required';
     }
     
-    if (!formData.longDescription.trim()) {
-      newErrors.longDescription = 'Long description is required';
-    }
+   
     
     if (!formData.courseIntroduction.trim()) {
       newErrors.courseIntroduction = 'Course introduction is required';
@@ -286,6 +284,7 @@ const AddCourse = () => {
                   onChange={handleInputChange}
                   error={errors.longDescription}
                   rows={6}
+                  required={false}
                 />
 
                 {/* Course Introduction */}

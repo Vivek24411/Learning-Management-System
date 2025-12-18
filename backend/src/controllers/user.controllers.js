@@ -249,6 +249,9 @@ module.exports.addSection = async (req, res, next) => {
   checkValidation(req, res);
 
   const { sectionTitle, sectionDescription, courseId } = req.body;
+  console.log(req.files);
+  const sectionVideo = req.files.map((file) => file.path) || [];
+  console.log("Section videos paths:", sectionVideo);
 
   const course = await courseModel.findById(courseId);
   if (!course) {
@@ -258,6 +261,7 @@ module.exports.addSection = async (req, res, next) => {
   const section = await sectionModel.create({
     sectionTitle,
     sectionDescription,
+    sectionVideoUrl: sectionVideo,
   });
 
   course.sections.push(section._id);
@@ -610,7 +614,7 @@ module.exports.resetPassword = async (req, res, next) => {
       success: false,
       msg: "You are not registered, please sign up",
     });
-  }  
+  }
 
   const isPasswordSame = await user.comparePassword(newPassword);
   if (isPasswordSame) {
@@ -638,4 +642,140 @@ module.exports.resetPassword = async (req, res, next) => {
   await otpModel.deleteOne({ _id: savedOTP._id });
 
   return res.json({ success: true, msg: "Password reset successfully" });
+};
+
+module.exports.addSectionQuiz = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { id, quizData } = req.body;
+
+  const section = await sectionModel.findById(id);
+  if (!section) {
+    return res.json({ success: false, msg: "section does not exist" });
+  }
+
+  section.sectionQuiz = quizData;
+  await section.save();
+  console.log(section.sectionQuiz);
+
+  return res.json({ success: true, msg: "Quiz added successfully" });
+};
+
+module.exports.getSectionQuiz = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { id } = req.query;
+
+  const section = await sectionModel.findById(id);
+  if (!section) {
+    return res.json({ success: false, msg: "section does not exist" });
+  }
+
+  return res.json({ success: true, quiz: section.sectionQuiz });
+};
+
+module.exports.addChapterQuiz = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { id, quizData } = req.body;
+
+  const chapter = await chapterModel.findById(id);
+  if (!chapter) {
+    return res.json({ success: false, msg: "chapter does not exist" });
+  }
+
+  chapter.chapterQuiz = quizData;
+  await chapter.save();
+  console.log(chapter.chapterQuiz);
+
+  return res.json({ success: true, msg: "Quiz added successfully" });
+};
+
+module.exports.getChapterQuiz = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { id } = req.query;
+
+  const chapter = await chapterModel.findById(id);
+  if (!chapter) {
+    return res.json({ success: false, msg: "chapter does not exist" });
+  }
+
+  return res.json({ success: true, quiz: chapter.chapterQuiz });
+};
+
+module.exports.submitSectionQuiz = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { id, answeredQuizData } = req.body;
+
+  const section = await sectionModel.findById(id);
+  if (!section) {
+    return res.json({ success: false, msg: "section does not exist" });
+  }
+  let score = 0;
+  for (let i = 0; i < answeredQuizData.length; i++) {
+    if (answeredQuizData[i].chosenAnswer === answeredQuizData[i].correct) {
+      score += 1;
+    }
+  }
+
+  const user = req.user;
+
+  user.sectionQuizAttempt.push({
+    sectionId: id,
+    answeredQuizData,
+    score,
+  });
+
+  await user.save();
+
+  return res.json({ success: true, msg: "Quiz submitted successfully", score });
+};
+
+module.exports.submitChapterQuiz = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { id, answeredQuizData } = req.body;
+
+  const chapter = await chapterModel.findById(id);
+  if (!chapter) {
+    return res.json({ success: false, msg: "chapter does not exist" });
+  }
+  let score = 0;
+  for (let i = 0; i < answeredQuizData.length; i++) {
+    if (answeredQuizData[i].chosenAnswer === answeredQuizData[i].correct) {
+      score += 1;
+    }
+  }
+
+  const user = req.user;
+
+  user.chapterQuizAttempt.push({
+    chapterId: id,
+    answeredQuizData,
+    score,
+  });
+
+  await user.save();
+
+  return res.json({ success: true, msg: "Quiz submitted successfully", score });
 };

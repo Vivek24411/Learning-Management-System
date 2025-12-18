@@ -16,6 +16,9 @@ import AddSection from "./pages/AddSection.jsx";
 import ProtectedWrapper from "./protectedWrapper/ProtectedWrapper.jsx";
 import Footer from "./pages/Footer.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
+import QuizSection from "./pages/QuizSection.jsx";
+import TakeSectionQuiz from "./pages/TakeSectionQuiz.jsx";
+
 
 const App = () => {
   return (
@@ -24,7 +27,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<ProtectedWrapper><Profile /></ProtectedWrapper>} />
-        <Route path="/course/:courseId" element={<Course />} />
+        <Route path="/course/:courseId" element={<ProtectedWrapper><Course /></ProtectedWrapper>} />
         <Route path="/chapter/:chapterId" element={<ProtectedWrapper><Chapter /></ProtectedWrapper>} />
         <Route path="/addCourse" element={<ProtectedWrapper><AddCourse /></ProtectedWrapper>} />
         <Route path="/editCourse/:courseId" element={<ProtectedWrapper><EditCourse /></ProtectedWrapper>} />
@@ -32,6 +35,8 @@ const App = () => {
         <Route path="/addChapter/:sectionId" element={<ProtectedWrapper><AddChapter /></ProtectedWrapper>} />
         <Route path="/editChapter/:chapterId" element={<ProtectedWrapper><EditChapter /></ProtectedWrapper>} />
         <Route path="/addSection/:courseId" element={<ProtectedWrapper><AddSection /></ProtectedWrapper>} />
+        <Route path="/quiz/:type/:id" element={<ProtectedWrapper><QuizSection /></ProtectedWrapper>} />
+        <Route path="/takeQuiz/:type/:id" element={<ProtectedWrapper><TakeSectionQuiz /></ProtectedWrapper>} />
         <Route path="/forgotPassword" element={<ForgotPassword />} />
       </Routes>
       <Footer/>

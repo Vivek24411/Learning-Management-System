@@ -13,6 +13,7 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
 
   const { profile } = useContext(UserContextData);
   const { courseId } = useParams();
+  const navigate = useNavigate();
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden">
@@ -25,20 +26,14 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-            <svg
-              className="w-12 h-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
+          <div className="w-full h-full bg-gradient-to-br from-[#7A7F3F] to-[#6A6F35] flex items-center justify-center relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white rounded-full translate-x-12 translate-y-12"></div>
+              <div className="absolute top-1/2 left-1/3 w-4 h-4 bg-white rounded-full"></div>
+              <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-white rounded-full"></div>
+            </div>
           </div>
         )}
 
@@ -124,6 +119,7 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
 // Section Item Component
 const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+    const navigate = useNavigate();
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -158,8 +154,8 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
               </p>
             )}
 
-            {/* Chapter count indicator */}
-            <div className="flex items-center ml-14">
+            {/* Section Info Indicators */}
+            <div className="flex items-center space-x-3 ml-14">
               <div className="bg-gray-50 border border-gray-200 rounded px-3 py-1 flex items-center">
                 <svg
                   className="w-4 h-4 text-gray-500 mr-2"
@@ -171,7 +167,7 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 712-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
                 <span className="text-sm font-medium text-gray-700">
@@ -179,6 +175,55 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
                   {section.chapters?.length === 1 ? " Chapter" : " Chapters"}
                 </span>
               </div>
+
+              {/* Video count indicator */}
+              {section.sectionVideoUrl &&
+                section.sectionVideoUrl.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded px-3 py-1 flex items-center">
+                    <svg
+                      className="w-4 h-4 text-red-500 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-red-700">
+                      {section.sectionVideoUrl.length}
+                      {section.sectionVideoUrl.length === 1
+                        ? " Video"
+                        : " Videos"}
+                    </span>
+                  </div>
+                )}
+
+              <div>
+                <button
+                  onClick={() => {
+                    navigate(`/quiz/section/${section._id}`);
+                  }}
+                  className="bg-blue-50 border border-blue-200 rounded px-3 py-1 flex items-center"
+                >
+                  Add Quiz
+                </button>
+              </div>
+              {section.sectionQuiz && section.sectionQuiz.length > 0 && (
+                <div>
+                  <button
+                    onClick={() => {
+                      navigate(`/takeQuiz/section/${section._id}`);
+                    }}
+                    className="bg-green-50 border border-green-200 rounded px-3 py-1 flex items-center"
+                  >
+                    Take Quiz
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -241,7 +286,84 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
             : "max-h-0 opacity-0 overflow-hidden"
         }`}
       >
-        <div className="p-6">
+        <div className="p-6 space-y-6">
+          {/* Section Videos */}
+          {section.sectionVideoUrl && section.sectionVideoUrl.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg
+                  className="w-5 h-5 mr-2 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+                Section Videos ({section.sectionVideoUrl.length})
+              </h4>
+              <h6 className="text-gray-500 text-xs mb-3">
+                Double Tap On Video To Enter Fullscreen
+              </h6>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {section.sectionVideoUrl.map((videoUrl, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
+                  >
+                    <div className="aspect-video bg-gray-900 relative">
+                      <video
+                        src={videoUrl}
+                        controls
+                        preload="metadata"
+                        className="w-full h-full object-cover protected"
+                        controlsList="nodownload noremoteplayback"
+                        disablePictureInPicture
+                        disableRemotePlayback
+                        onContextMenu={(e) => e.preventDefault()}
+                        onSelectStart={(e) => e.preventDefault()}
+                        onDragStart={(e) => e.preventDefault()}
+                        onLoadStart={(e) => {
+                          // Additional protection
+                          e.target.addEventListener("contextmenu", (e) =>
+                            e.preventDefault()
+                          );
+                          e.target.addEventListener("selectstart", (e) =>
+                            e.preventDefault()
+                          );
+                          e.target.addEventListener("dragstart", (e) =>
+                            e.preventDefault()
+                          );
+                        }}
+                      />
+                      <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
+                        Video {index + 1}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-center justify-center">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <svg
+                            className="w-4 h-4 mr-1 text-red-500"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                          <span>Section Video</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {section.chapters && section.chapters.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {section.chapters.map((chapter, index) => (
@@ -465,9 +587,70 @@ const Course = () => {
 
   useEffect(() => {
     fetchCourse();
+
+    // Additional video protection
+    const protectVideos = () => {
+      const videos = document.querySelectorAll("video");
+      videos.forEach((video) => {
+        // Disable right-click
+        video.addEventListener("contextmenu", (e) => e.preventDefault());
+
+        // Disable text selection
+        video.addEventListener("selectstart", (e) => e.preventDefault());
+
+        // Disable drag
+        video.addEventListener("dragstart", (e) => e.preventDefault());
+
+        // Disable keyboard shortcuts that might allow download
+        video.addEventListener("keydown", (e) => {
+          // Disable F12, Ctrl+Shift+I, Ctrl+S, etc.
+          if (
+            e.key === "F12" ||
+            (e.ctrlKey && e.shiftKey && e.key === "I") ||
+            (e.ctrlKey && e.key === "s") ||
+            (e.ctrlKey && e.key === "S") ||
+            (e.ctrlKey && e.key === "u") ||
+            (e.ctrlKey && e.key === "U")
+          ) {
+            e.preventDefault();
+            return false;
+          }
+        });
+
+        // Handle fullscreen changes to maintain protection
+        video.addEventListener("fullscreenchange", () => {
+          if (document.fullscreenElement === video) {
+            // Video is now in fullscreen - reapply protection
+            setTimeout(() => {
+              video.addEventListener("contextmenu", (e) => e.preventDefault());
+              video.addEventListener("selectstart", (e) => e.preventDefault());
+              video.addEventListener("dragstart", (e) => e.preventDefault());
+            }, 100);
+          }
+        });
+
+        // Handle webkit fullscreen
+        video.addEventListener("webkitfullscreenchange", () => {
+          if (document.webkitFullscreenElement === video) {
+            setTimeout(() => {
+              video.addEventListener("contextmenu", (e) => e.preventDefault());
+              video.addEventListener("selectstart", (e) => e.preventDefault());
+              video.addEventListener("dragstart", (e) => e.preventDefault());
+            }, 100);
+          }
+        });
+      });
+    };
+
+    // Apply protection initially and whenever DOM changes
+    protectVideos();
+    const observer = new MutationObserver(protectVideos);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
   }, []);
 
-  if(localStorage.getItem("edvance_token")===null){
+  if (localStorage.getItem("edvance_token") === null) {
     toast.info("Please login to access the course details.");
     navigate("/login");
   }
@@ -475,7 +658,13 @@ const Course = () => {
   if (loading) {
     return (
       <>
-        <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
+        <Header
+          topics={[
+            { name: "Home", path: "home" },
+            { name: "Courses", path: "courses" },
+            { name: "About", path: "about" },
+          ]}
+        />
         <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
           <div className="text-center bg-white rounded-lg p-8 shadow-sm border border-gray-200 max-w-md mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-4">
@@ -498,7 +687,13 @@ const Course = () => {
   if (!course) {
     return (
       <>
-        <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
+        <Header
+          topics={[
+            { name: "Home", path: "home" },
+            { name: "Courses", path: "courses" },
+            { name: "About", path: "about" },
+          ]}
+        />
         <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-6">
             <div className="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-6">
@@ -546,14 +741,21 @@ const Course = () => {
 
   return (
     <>
-      <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
+      <Header
+        topics={[
+          { name: "Home", path: "home" },
+          { name: "Courses", path: "courses" },
+          { name: "About", path: "about" },
+        ]}
+      />
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
         <section className="relative pt-16">
           <div className="relative h-210 overflow-hidden">
             <img
-              src={ course.courseThumbnailImage ||
+              src={
+                course.courseThumbnailImage ||
                 "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
               }
               alt={course.courseName}
@@ -561,7 +763,7 @@ const Course = () => {
             />
 
             <img src={course.courseThumbnailImage} alt="" />
-            <div ></div>
+            <div></div>
 
             <div className="absolute inset-0 flex items-center justify-center px-4">
               <div className="text-center max-w-4xl mx-auto">

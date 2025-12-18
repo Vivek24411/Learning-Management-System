@@ -1,7 +1,7 @@
 const express = require("express");
 const userRouter = express.Router();
 const {body, query} = require("express-validator");
-const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword } = require("../controllers/user.controllers");
+const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz } = require("../controllers/user.controllers");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { uploadCourseThumbnail } = require("../middlewares/upload");
 const upload = require("../middlewares/upload");
@@ -38,21 +38,18 @@ userRouter.get("/getChapter",userAuth,[
 userRouter.post("/addCourse",adminAuth,upload.fields([
     { name: "courseThumbnailImage", maxCount: 1 },
     { name: "courseIntroductionImages", maxCount: 5 },
-]),(req,res,next)=>{
-    console.log("In route");
-    next();
-},[
+]),[
     body("courseName").isString().isLength({min:1}),
     body("shortDescription").isString().isLength({min:1}),
     body("price").isNumeric(),
     body("courseIntroduction").isString().isLength({min:1}),
-    body("longDescription").isString().isLength({min:1}),
+    body("longDescription").isString()
 ],(req,res,next)=>{
     console.log("In route");
     next();
 },addCourse)
 
-userRouter.post("/addSection",adminAuth,[
+userRouter.post("/addSection",adminAuth,upload.array("sectionVideo", 5),[
     body("sectionTitle").isString().isLength({min:1}),
     body("courseId").isMongoId()
 ],addSection)
@@ -76,7 +73,7 @@ userRouter.post("/editCourse",adminAuth,[
     body("shortDescription").isString().isLength({min:1}),
     body("price").isNumeric(),
     body("courseIntroduction").isString().isLength({min:1}),
-    body("longDescription").isString().isLength({min:1}),
+    body("longDescription").isString()
 ],editCourse)
 
 userRouter.post("/editChapter",adminAuth,[
@@ -124,6 +121,37 @@ userRouter.post("/resetPassword",[
     body("newPassword").isString().isLength({min:3}),
     body("OTP").isString().isLength({min:6})
 ],resetPassword)
+
+
+userRouter.post("/addSectionQuiz",adminAuth,[
+    body("id").isMongoId(),
+    body("quizData").isArray({min:1})
+],addSectionQuiz)
+
+userRouter.post("/addChapterQuiz",adminAuth,[
+    body("id").isMongoId(),
+    body("quizData").isArray({min:1})
+],addChapterQuiz)
+
+
+userRouter.get("/getSectionQuiz",userAuth,[
+    query("id").isMongoId()
+],getSectionQuiz)
+
+userRouter.get("/getChapterQuiz",userAuth,[
+    query("id").isMongoId()
+],getChapterQuiz)
+
+userRouter.post("/submitSectionQuiz",userAuth,[
+    body("id").isMongoId(),
+    body("answeredQuizData").isArray({min:1})
+],submitSectionQuiz)
+
+userRouter.post("/submitChapterQuiz",userAuth,[
+    body("id").isMongoId(),
+    body("answeredQuizData").isArray({min:1})
+],submitChapterQuiz)
+
 
 
 
