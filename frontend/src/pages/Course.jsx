@@ -6,7 +6,7 @@ import { UserContextData } from "../context/UserContext";
 import Header from "../components/Header";
 
 // Chapter Item Component
-const ChapterItem = ({ chapter, onViewChapter }) => {
+const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
   const handleChapterClick = () => {
     onViewChapter(chapter._id);
   };
@@ -14,6 +14,37 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
   const { profile } = useContext(UserContextData);
   const { courseId } = useParams();
   const navigate = useNavigate();
+
+  async function handleDeleteChapter(chapterId) {
+    if (!window.confirm("Are you sure you want to delete this chapter? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/user/deleteChapter`, {
+        params: { 
+          chapterId,
+          sectionId 
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+        }
+      });
+      
+      console.log(response);
+      if(response.data.success){
+        toast.success("Chapter deleted successfully");
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.error("Failed to delete chapter: " + (response.data.msg || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error deleting chapter:", error);
+      toast.error("Failed to delete chapter: " + error.message);
+    }
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden">
@@ -103,6 +134,25 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
                 />
               </svg>
               Edit Chapter
+            </button>
+            <button
+              onClick={() => handleDeleteChapter(chapter._id)}
+              className="w-full bg-red-50 text-red-700 px-4 py-2 rounded-md font-medium hover:bg-red-100 transition-colors duration-200 text-sm flex items-center justify-center border border-red-200 mt-2"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+              Delete Chapter
             </button>
           </div>
         )}
@@ -492,6 +542,7 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
                   <ChapterItem
                     chapter={chapter}
                     onViewChapter={onViewChapter}
+                    sectionId={section._id}
                   />
                 </div>
               ))}
