@@ -83,6 +83,30 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
             "Explore this chapter to deepen your understanding and practice."}
         </p>
 
+        {profile?.isAdmin && (
+          <div className="mb-4">
+            <button
+              onClick={() => navigate(`/editChapter/${chapter._id}`)}
+              className="w-full bg-blue-50 text-blue-700 px-4 py-2 rounded-md font-medium hover:bg-blue-100 transition-colors duration-200 text-sm flex items-center justify-center border border-blue-200"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              Edit Chapter
+            </button>
+          </div>
+        )}
+
         {/* Chapter Action Button */}
         {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
           <button
@@ -119,7 +143,30 @@ const ChapterItem = ({ chapter, onViewChapter }) => {
 // Section Item Component
 const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { profile } = useContext(UserContextData);
+
+  async function handleDeleteSection(sectionId) {
+    const response = await axios.get(
+      `${import.meta.env.VITE_BASE_URL}/user/deleteSection`,
+      {
+        params: { sectionId },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+        },
+      }
+    );
+    console.log(response);
+    if (response.data.success) {
+      toast.success("Section deleted successfully");
+      setTimeout(() => {
+        // Refresh the page or update the UI as needed
+        window.location.reload();
+      }, 2000);
+    } else {
+      toast.error("Failed to delete section");
+    }
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -203,23 +250,87 @@ const SectionItem = ({ section, onViewChapter, isAdmin, onAddChapter }) => {
                 )}
 
               <div>
-                <button
-                  onClick={() => {
-                    navigate(`/quiz/section/${section._id}`);
-                  }}
-                  className="bg-blue-50 border border-blue-200 rounded px-3 py-1 flex items-center"
-                >
-                  Add Quiz
-                </button>
+                {profile?.isAdmin && (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => navigate(`/quiz/section/${section._id}`)}
+                      className="bg-purple-50 border border-purple-200 text-purple-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-purple-100 transition-colors duration-200 flex items-center"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                      Add Quiz
+                    </button>
+                    <button
+                      onClick={() => navigate(`/editSection/${section._id}`)}
+                      className="bg-blue-50 border border-blue-200 text-blue-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-blue-100 transition-colors duration-200 flex items-center"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      Edit Section
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteSection(section._id)}
+                      className="bg-red-50 border border-red-200 text-red-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-red-100 transition-colors duration-200 flex items-center"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
               {section.sectionQuiz && section.sectionQuiz.length > 0 && (
                 <div>
                   <button
-                    onClick={() => {
-                      navigate(`/takeQuiz/section/${section._id}`);
-                    }}
-                    className="bg-green-50 border border-green-200 rounded px-3 py-1 flex items-center"
+                    onClick={() => navigate(`/takeQuiz/section/${section._id}`)}
+                    className="bg-green-50 border border-green-200 text-green-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-green-100 transition-colors duration-200 flex items-center"
                   >
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
                     Take Quiz
                   </button>
                 </div>

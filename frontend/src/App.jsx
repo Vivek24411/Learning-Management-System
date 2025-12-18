@@ -18,6 +18,7 @@ import Footer from "./pages/Footer.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import QuizSection from "./pages/QuizSection.jsx";
 import TakeSectionQuiz from "./pages/TakeSectionQuiz.jsx";
+import EditSection from "./pages/EditSection.jsx";
 
 
 const App = () => {
@@ -38,6 +39,8 @@ const App = () => {
         <Route path="/quiz/:type/:id" element={<ProtectedWrapper><QuizSection /></ProtectedWrapper>} />
         <Route path="/takeQuiz/:type/:id" element={<ProtectedWrapper><TakeSectionQuiz /></ProtectedWrapper>} />
         <Route path="/forgotPassword" element={<ForgotPassword />} />
+        <Route path="/editSection/:sectionId" element={<ProtectedWrapper><EditSection /></ProtectedWrapper>} />
+
       </Routes>
       <Footer/>
 

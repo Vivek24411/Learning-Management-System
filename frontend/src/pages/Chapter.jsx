@@ -795,10 +795,98 @@ const Chapter = () => {
          </div>
        </div>
 
-       <div>
-        <h3>Quiz</h3>
-        <button onClick={()=>{navigate(`/quiz/chapter/${chapter._id}`)}}>Add Quiz</button>
-        {chapter.chapterQuiz && chapter.chapterQuiz.length > 0 ? <div onClick={()=>{navigate(`/takeQuiz/chapter/${chapter._id}`)}}>Take Quiz</div> : <div>No Quiz Available</div>}
+       {/* Chapter Quiz Section */}
+       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+         <div className="flex items-center justify-between mb-6">
+           <h3 className="text-xl font-medium text-gray-900 flex items-center">
+             <svg className="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+             </svg>
+             Chapter Quiz
+           </h3>
+           
+           {/* Admin Add Quiz Button */}
+           {profile?.isAdmin && (
+             <button 
+               onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
+               className="bg-purple-50 border border-purple-200 text-purple-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors duration-200 flex items-center"
+             >
+               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+               </svg>
+               Add Quiz
+             </button>
+           )}
+         </div>
+
+         {/* Quiz Content */}
+         {chapter.chapterQuiz && chapter.chapterQuiz.length > 0 ? (
+           <div className="space-y-4">
+             {/* Quiz Info Card */}
+             <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-100 p-4">
+               <div className="flex items-center space-x-3 mb-3">
+                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                   <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                   </svg>
+                 </div>
+                 <div>
+                   <h4 className="font-medium text-gray-900">Quiz Available</h4>
+                   <p className="text-sm text-gray-600">Test your knowledge with {chapter.chapterQuiz.length} questions</p>
+                 </div>
+               </div>
+               
+               {/* Quiz Stats */}
+               <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+                 <div className="flex items-center">
+                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                   </svg>
+                   {chapter.chapterQuiz.length} Questions
+                 </div>
+                 <div className="flex items-center">
+                  
+                  
+                 </div>
+               </div>
+
+               {/* Take Quiz Button */}
+               <button 
+                 onClick={() => navigate(`/takeQuiz/chapter/${chapter._id}`)}
+                 className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center transform hover:scale-[1.02]"
+               >
+                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                 </svg>
+                 Start Quiz
+               </button>
+             </div>
+           </div>
+         ) : (
+           /* No Quiz Available State */
+           <div className="text-center py-12">
+             <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
+               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+               </svg>
+             </div>
+             <h4 className="text-lg font-medium text-gray-700 mb-2">No Quiz Available</h4>
+             <p className="text-gray-500 mb-4">
+               There's no quiz available for this chapter yet.
+             </p>
+             {profile?.isAdmin && (
+               <button 
+                 onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
+                 className="inline-flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
+               >
+                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                 </svg>
+                 Create Quiz
+               </button>
+             )}
+           </div>
+         )}
        </div>
 
        {/* PDF Files Section */}

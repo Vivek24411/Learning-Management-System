@@ -4,35 +4,35 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Header from "../components/Header";
 
-const EditChapter = () => {
-  const [chapter, setChapter] = useState(null);
+const EditSection = () => {
+  const [section, setSection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   
-  const { chapterId } = useParams();
+  const { sectionId } = useParams();
   const navigate = useNavigate();
 
-  async function fetchChapterData() {
+  async function fetchSectionData() {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/user/getChapter`,
+        `${import.meta.env.VITE_BASE_URL}/user/getSection`,
         {
-          params: { chapterId },
+          params: { sectionId },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
           },
         }
       );
       if (response.data.success) {
-        setChapter(response.data.chapter);
+        setSection(response.data.section);
       } else {
-        toast.error(response.data.message || "Chapter not found");
+        toast.error(response.data.message || "Section not found");
       }
     } catch (error) {
-      console.error("Error fetching chapter data:", error);
-      toast.error("Failed to fetch chapter data");
+      console.error("Error fetching section data:", error);
+      toast.error("Failed to fetch section data");
     } finally {
       setLoading(false);
     }
@@ -42,19 +42,19 @@ const EditChapter = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!chapter.chapterName?.trim()) {
-      newErrors.chapterName = "Chapter name is required";
-    } else if (chapter.chapterName.length < 3) {
-      newErrors.chapterName = "Chapter name must be at least 3 characters";
+    if (!section.sectionTitle?.trim()) {
+      newErrors.sectionTitle = "Section name is required";
+    } else if (section.sectionTitle.length < 3) {
+      newErrors.sectionTitle = "Section name must be at least 3 characters";
     }
     
-    // shortDescription and chapterSummary are optional, so no validation needed
+    // sectionDescription is optional, so no validation needed
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  async function editChapter(e) {
+  async function editSection(e) {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -65,12 +65,11 @@ const EditChapter = () => {
     try {
       setSaving(true);
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/user/editChapter`,
+        `${import.meta.env.VITE_BASE_URL}/user/editSection`,
         {
-          chapterId: chapter._id,
-          chapterName: chapter.chapterName,
-          shortDescription: chapter.shortDescription || "",
-          chapterSummary: chapter.chapterSummary || ""
+          sectionId: section._id,
+          sectionTitle: section.sectionTitle,
+          sectionDescription: section.sectionDescription || ""
         },
         {
           headers: {
@@ -80,21 +79,21 @@ const EditChapter = () => {
       );
       
       if (response.data.success) {
-        toast.success("Chapter updated successfully");
+        toast.success("Section updated successfully");
         navigate(-1); // Go back to previous page
       } else {
-        toast.error(response.data.message || "Failed to update chapter");
+        toast.error(response.data.message || "Failed to update section");
       }
     } catch (error) {
-      console.error("Error updating chapter:", error);
-      toast.error("Failed to update chapter");
+      console.error("Error updating section:", error);
+      toast.error("Failed to update section");
     } finally {
       setSaving(false);
     }
   }
 
   const handleInputChange = (field, value) => {
-    setChapter(prev => ({
+    setSection(prev => ({
       ...prev,
       [field]: value
     }));
@@ -107,10 +106,9 @@ const EditChapter = () => {
       }));
     }
   };
-
   useEffect(() => {
-    fetchChapterData();
-  }, [chapterId]);
+    fetchSectionData();
+  }, [sectionId]);
 
   if (loading) {
     return (
@@ -123,15 +121,15 @@ const EditChapter = () => {
               <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-100"></div>
               <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-200"></div>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading Chapter</h3>
-            <p className="text-gray-600">Please wait while we load the chapter data...</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading Section</h3>
+            <p className="text-gray-600">Please wait while we load the section data...</p>
           </div>
         </div>
       </>
     );
   }
 
-  if (!chapter) {
+  if (!section) {
     return (
       <>
         <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
@@ -142,8 +140,8 @@ const EditChapter = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Chapter Not Found</h3>
-            <p className="text-gray-600 mb-6">Unable to load chapter data. Please try again.</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Section Not Found</h3>
+            <p className="text-gray-600 mb-6">Unable to load section data. Please try again.</p>
             <button
               onClick={() => navigate(-1)}
               className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200"
@@ -174,8 +172,8 @@ const EditChapter = () => {
                 </svg>
               </button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Edit Chapter</h1>
-                <p className="text-gray-600 mt-1">Update chapter information and content</p>
+                <h1 className="text-3xl font-bold text-gray-900">Edit Section</h1>
+                <p className="text-gray-600 mt-1">Update section information and settings</p>
               </div>
             </div>
           </div>
@@ -186,84 +184,61 @@ const EditChapter = () => {
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-[#7A7F3F] rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Chapter Information</h2>
-                  <p className="text-sm text-gray-600">Update the details of your chapter</p>
+                  <h2 className="text-xl font-semibold text-gray-900">Section Information</h2>
+                  <p className="text-sm text-gray-600">Update the details of your section</p>
                 </div>
               </div>
             </div>
 
-            <form onSubmit={editChapter} className="p-6 space-y-6">
-              {/* Chapter Name */}
+            <form onSubmit={editSection} className="p-6 space-y-6">
+              {/* Section Name */}
               <div>
-                <label htmlFor="chapterName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Chapter Name <span className="text-red-500">*</span>
+                <label htmlFor="sectionTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                  Section Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  id="chapterName"
-                  value={chapter.chapterName || ""}
-                  onChange={(e) => handleInputChange('chapterName', e.target.value)}
+                  id="sectionTitle"
+                  value={section.sectionTitle || ""}
+                  onChange={(e) => handleInputChange('sectionTitle', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent transition-colors duration-200 ${
-                    errors.chapterName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    errors.sectionTitle ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="Enter chapter name..."
+                  placeholder="Enter section name..."
                 />
-                {errors.chapterName && (
+                {errors.sectionTitle && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    {errors.chapterName}
+                    {errors.sectionTitle}
                   </p>
                 )}
               </div>
 
-              {/* Short Description */}
+              {/* Section Description */}
               <div>
-                <label htmlFor="shortDescription" className="block text-sm font-medium text-gray-700 mb-2">
-                  Short Description <span className="text-gray-400 text-xs">(Optional)</span>
+                <label htmlFor="sectionDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                  Section Description <span className="text-gray-400 text-xs">(Optional)</span>
                 </label>
                 <textarea
-                  id="shortDescription"
-                  rows="3"
-                  value={chapter.shortDescription || ""}
-                  onChange={(e) => handleInputChange('shortDescription', e.target.value)}
+                  id="sectionDescription"
+                  rows="4"
+                  value={section.sectionDescription || ""}
+                  onChange={(e) => handleInputChange('sectionDescription', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none transition-colors duration-200"
-                  placeholder="Brief description of what this chapter covers (optional)..."
+                  placeholder="Brief description of what this section covers (optional)..."
                 />
                 <div className="flex items-center justify-between mt-1">
                   <p className="text-xs text-gray-500">
-                    A concise overview of the chapter content
+                    Provide additional context about this section's content
                   </p>
                   <p className="text-xs text-gray-500">
-                    {chapter.shortDescription?.length || 0} characters
-                  </p>
-                </div>
-              </div>
-
-              {/* Chapter Summary */}
-              <div>
-                <label htmlFor="chapterSummary" className="block text-sm font-medium text-gray-700 mb-2">
-                  Chapter Summary <span className="text-gray-400 text-xs">(Optional)</span>
-                </label>
-                <textarea
-                  id="chapterSummary"
-                  rows="5"
-                  value={chapter.chapterSummary || ""}
-                  onChange={(e) => handleInputChange('chapterSummary', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none transition-colors duration-200"
-                  placeholder="Detailed summary of the chapter content, key learning points, and outcomes (optional)..."
-                />
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-500">
-                    Comprehensive overview of learning objectives and key takeaways
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {chapter.chapterSummary?.length || 0} characters
+                    {section.sectionDescription?.length || 0} characters
                   </p>
                 </div>
               </div>
@@ -289,14 +264,14 @@ const EditChapter = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Updating Chapter...
+                      Updating Section...
                     </>
                   ) : (
                     <>
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Update Chapter
+                      Update Section
                     </>
                   )}
                 </button>
@@ -304,32 +279,30 @@ const EditChapter = () => {
             </form>
           </div>
 
-          {/* Current Chapter Info */}
-          {chapter && (
+          {/* Current Section Info */}
+          {section && (
             <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
               <div className="flex items-start space-x-3">
                 <svg className="w-6 h-6 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex-1">
-                  <h3 className="text-sm font-medium text-blue-800 mb-2">Current Chapter Content</h3>
+                  <h3 className="text-sm font-medium text-blue-800 mb-2">Current Section Information</h3>
                   <div className="text-sm text-blue-700 space-y-1">
-                    {chapter.chapterFile && chapter.chapterFile.length > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">Files:</span>
-                        <span>{chapter.chapterFile.length} files attached</span>
-                      </div>
-                    )}
-                    {chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">Chapters:</span>
+                      <span>{section.chapters?.length || 0} chapters</span>
+                    </div>
+                    {section.sectionVideoUrl && section.sectionVideoUrl.length > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="font-medium">Videos:</span>
-                        <span>{chapter.chapterVideoDetails.length} videos</span>
+                        <span>{section.sectionVideoUrl.length} videos</span>
                       </div>
                     )}
-                    {chapter.chapterThumbnailImage && (
+                    {section.sectionQuiz && section.sectionQuiz.length > 0 && (
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">Thumbnail:</span>
-                        <span>✅ Available</span>
+                        <span className="font-medium">Quiz:</span>
+                        <span>{section.sectionQuiz.length} questions</span>
                       </div>
                     )}
                   </div>
@@ -339,19 +312,18 @@ const EditChapter = () => {
           )}
 
           {/* Help Section */}
-          <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
+          <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
             <div className="flex items-start space-x-3">
-              <svg className="w-6 h-6 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
               <div>
-                <h3 className="text-sm font-medium text-green-800 mb-1">Chapter Editing Tips</h3>
-                <ul className="text-sm text-green-700 space-y-1">
-                  <li>• Use a clear and engaging chapter name that reflects the learning content</li>
-                  <li>• Short description helps students understand what they'll learn quickly</li>
-                  <li>• Chapter summary provides detailed learning objectives and outcomes</li>
-                  <li>• Only the chapter name is required - other fields are optional but recommended</li>
-                  <li>• Consider how this chapter fits into the overall section flow</li>
+                <h3 className="text-sm font-medium text-yellow-800 mb-1">Section Editing Tips</h3>
+                <ul className="text-sm text-yellow-700 space-y-1">
+                  <li>• Use a clear and descriptive section name that reflects the content</li>
+                  <li>• Section description is optional but helps students understand the content</li>
+                  <li>• Keep section names concise but informative</li>
+                  <li>• Consider the logical flow of sections within your course</li>
                 </ul>
               </div>
             </div>
@@ -362,4 +334,4 @@ const EditChapter = () => {
   );
 };
 
-export default EditChapter
+export default EditSection;

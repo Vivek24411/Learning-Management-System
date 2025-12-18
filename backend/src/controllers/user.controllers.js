@@ -441,7 +441,7 @@ module.exports.deleteCourse = async (req, res, next) => {
     return res.json({ success: false, msg: "Course not found" });
   }
 
-  await course.remove();
+  await course.deleteOne();
 
   return res.json({ success: true, msg: "Course deleted successfully" });
 };
@@ -464,7 +464,7 @@ module.exports.deleteChapter = async (req, res, next) => {
   section.chapters.pull(chapter._id);
   await section.save();
 
-  await chapter.remove();
+  await chapter.deleteOne();
 
   return res.json({ success: true, msg: "Chapter deleted successfully" });
 };
@@ -482,7 +482,7 @@ module.exports.deleteSection = async (req, res, next) => {
   const chapters = section.chapters;
   for (let chapter of chapters) {
     const chapterData = await chapterModel.findById(chapter);
-    await chapterData.remove();
+    await chapterData.deleteOne();
   }
 
   const course = await courseModel.findOne({ sections: section._id });
@@ -490,7 +490,7 @@ module.exports.deleteSection = async (req, res, next) => {
     course.sections.pull(section._id);
     await course.save();
   }
-  await section.remove();
+  await section.deleteOne();
 
   return res.json({ success: true, msg: "Section deleted successfully" });
 };
@@ -778,4 +778,20 @@ module.exports.submitChapterQuiz = async (req, res, next) => {
   await user.save();
 
   return res.json({ success: true, msg: "Quiz submitted successfully", score });
+};
+
+module.exports.getSection = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { sectionId } = req.query;
+
+  const section = await sectionModel.findById(sectionId);
+  if (!section) {
+    return res.json({ success: false, msg: "Section not found" });
+  }
+
+  return res.json({ success: true, section });
 };
