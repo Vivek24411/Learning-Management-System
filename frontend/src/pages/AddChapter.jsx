@@ -75,6 +75,7 @@ const AddChapter = () => {
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [chapterFiles, setChapterFiles] = useState([]);
   const [videoDetails, setVideoDetails] = useState([]);
+  const [externalLinks, setExternalLinks] = useState([{ label: "", url: "" }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -197,6 +198,24 @@ const AddChapter = () => {
     }
   };
 
+  // External Links Functions
+  const addMoreLink = () => {
+    setExternalLinks([...externalLinks, { label: "", url: "" }]);
+  };
+
+  const handleExternalLinkChange = (index, field, value) => {
+    const updatedLinks = [...externalLinks];
+    updatedLinks[index][field] = value;
+    setExternalLinks(updatedLinks);
+  };
+
+  const removeExternalLink = (index) => {
+    if (externalLinks.length > 1) {
+      const updatedLinks = externalLinks.filter((_, i) => i !== index);
+      setExternalLinks(updatedLinks);
+    }
+  };
+
   // Form validation
   const validateForm = () => {
     const newErrors = {};
@@ -247,7 +266,8 @@ const AddChapter = () => {
         }
       });
 
-      
+      // Append external links
+      data.append("externalLinks", JSON.stringify(externalLinks));
 
       console.log(data);
 
@@ -275,6 +295,7 @@ const AddChapter = () => {
         setThumbnailPreview(null);
         setChapterFiles([]);
         setVideoDetails([]);
+        setExternalLinks([{ label: "", url: "" }]);
         
         // Navigate back or to course page
         setTimeout(() => {
@@ -610,6 +631,168 @@ const AddChapter = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* External Links Section */}
+              <div className="space-y-3">
+                <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
+                  <svg
+                    className="w-5 h-5 mr-2 text-[#7A7F3F]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                  </svg>
+                  External Links
+                  <span className="text-gray-400 text-sm font-normal ml-2">
+                    (Optional)
+                  </span>
+                </label>
+
+                <div className="space-y-4">
+                  {externalLinks.map((link, index) => (
+                    <div key={index} className="bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl p-6 relative">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-lg font-semibold text-gray-900 flex items-center">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7l10 10M17 7l-5 5"
+                              />
+                            </svg>
+                          </div>
+                          Link {index + 1}
+                        </h4>
+                        {externalLinks.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeExternalLink(index)}
+                            className="flex items-center justify-center w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-full transition-colors duration-200"
+                            title="Remove link"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Link Label */}
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Link Label
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={link.label}
+                              onChange={(e) => handleExternalLinkChange(index, 'label', e.target.value)}
+                              placeholder="e.g., Additional Resources, Documentation"
+                              className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                            />
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                              <svg
+                                className="w-4 h-4 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a1.994 1.994 0 01-1.414.586H7a4 4 0 01-4-4V7a4 4 0 014-4z"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Link URL */}
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Link URL
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="url"
+                              value={link.url}
+                              onChange={(e) => handleExternalLinkChange(index, 'url', e.target.value)}
+                              placeholder="https://example.com"
+                              className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                            />
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                              <svg
+                                className="w-4 h-4 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add More Links Button */}
+                  <button
+                    type="button"
+                    onClick={addMoreLink}
+                    className="w-full py-4 border-2 border-dashed border-stone-300 rounded-2xl text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all duration-200 flex items-center justify-center space-x-2 group"
+                  >
+                    <svg
+                      className="w-5 h-5 group-hover:scale-110 transition-transform duration-200"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <span className="font-medium">Add Another Link</span>
+                  </button>
+                </div>
+
+                <p className="text-sm text-gray-500 ml-1">
+                  Add helpful external resources, documentation, or supplementary materials for this chapter
+                </p>
               </div>
 
               {/* Action Buttons */}

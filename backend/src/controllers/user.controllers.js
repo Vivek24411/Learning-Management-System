@@ -248,7 +248,7 @@ module.exports.addCourse = async (req, res, next) => {
 module.exports.addSection = async (req, res, next) => {
   checkValidation(req, res);
 
-  const { sectionTitle, sectionDescription, courseId } = req.body;
+  const { sectionTitle, sectionDescription, courseId, externalLinks } = req.body;
   console.log(req.files);
   const sectionVideo = req.files.map((file) => file.path) || [];
   console.log("Section videos paths:", sectionVideo);
@@ -262,6 +262,7 @@ module.exports.addSection = async (req, res, next) => {
     sectionTitle,
     sectionDescription,
     sectionVideoUrl: sectionVideo,
+    externalLinks: JSON.parse(externalLinks)
   });
 
   course.sections.push(section._id);
@@ -289,6 +290,7 @@ module.exports.addChapter = async (req, res, next) => {
       chapterSummary,
       sectionId,
       chapterVideoTitle,
+      externalLinks,
     } = req.body;
     console.log("Request body:", req.body);
     console.log("Request files:", req.files);
@@ -329,6 +331,16 @@ module.exports.addChapter = async (req, res, next) => {
       return res.json({ success: false, msg: "Section Not Found" });
     }
 
+    // Parse external links
+    let parsedExternalLinks = [];
+    if (externalLinks) {
+      try {
+        parsedExternalLinks = JSON.parse(externalLinks);
+      } catch (error) {
+        console.error("Error parsing external links:", error);
+      }
+    }
+
     // Create chapter
     const chapter = await chapterModel.create({
       chapterName,
@@ -337,6 +349,7 @@ module.exports.addChapter = async (req, res, next) => {
       chapterThumbnailImage,
       chapterFile,
       chapterVideoDetails,
+      externalLinks: parsedExternalLinks,
     });
 
     // Add chapter to section
@@ -794,4 +807,394 @@ module.exports.getSection = async (req, res, next) => {
   }
 
   return res.json({ success: true, section });
+};
+
+module.exports.updateCourseThumbnail = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { courseId } = req.body;
+  if (!courseId) {
+    return res.json({ success: false, msg: "Course Not Found" });
+  }
+
+  const courseThumbnailImage = req.file.path;
+
+  const course = await courseModel.findByIdAndUpdate(
+    courseId,
+    { courseThumbnailImage },
+    { new: true }
+  );
+
+  return res.json({
+    success: true,
+    course,
+    msg: "Course Thumbnail Updated Successfully",
+  });
+};
+
+module.exports.removeCourseIntroductionImage = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { courseId, imageURL } = req.body;
+  if (!courseId) {
+    return res.json({ success: false, msg: "Course Not Found" });
+  }
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course Not Found" });
+  }
+
+  course.courseIntroductionImages = course.courseIntroductionImages.filter(
+    (img) => img !== imageURL
+  );
+
+  await course.save();
+
+  return res.json({
+    success: true,
+    msg: "Course Introduction Image Removed Successfully",
+    course
+  });
+};
+
+module.exports.addIntroductionImage = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { courseId } = req.body;
+  if (!courseId) {
+    return res.json({ success: false, msg: "Course Not Found" });
+  }
+
+  const introductionImages = req.files.map((file) => file.path) || [];
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course Not Found" });
+  }
+
+  course.courseIntroductionImages.push(...introductionImages);
+  await course.save();
+
+  return res.json({
+    success: true,
+    msg: "Introduction Images Added Successfully",
+    course,
+  });
+};
+
+module.exports.removeSectionVideo = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { sectionId, videoURL } = req.body;
+  if (!sectionId) {
+    return res.json({ success: false, msg: "Section Not Found" });
+  }
+
+  const section = await sectionModel.findById(sectionId);
+  if (!section) {
+    return res.json({ success: false, msg: "Section Not Found" });
+  }
+
+  section.sectionVideoUrl = section.sectionVideoUrl.filter(
+    (video) => video !== videoURL
+  );
+
+  await section.save();
+
+  return res.json({
+    success: true,
+    msg: "Section Video Removed Successfully",
+    section
+  });
+};
+
+module.exports.addSectionVideos = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { sectionId } = req.body;
+  if (!sectionId) {
+    return res.json({ success: false, msg: "Section Not Found" });
+  }
+
+  const sectionVideos = req.files.map((file) => file.path) || [];
+
+  const section = await sectionModel.findById(sectionId);
+  if (!section) {
+    return res.json({ success: false, msg: "Section Not Found" });
+  }
+
+  section.sectionVideoUrl.push(...sectionVideos);
+  await section.save();
+
+  return res.json({
+    success: true,
+    msg: "Section Videos Added Successfully",
+    section,
+  });
+};
+
+module.exports.addChapterExternalLinks = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { chapterId, externalLinks } = req.body;
+  if (!chapterId) {
+    return res.json({ success: false, msg: "Chapter Not Found" });
+  }
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter Not Found" });
+  }
+
+  chapter.externalLinks = externalLinks;
+  await chapter.save();
+
+  return res.json({
+    success: true,
+    msg: "Chapter External Links Added Successfully",
+    chapter,
+  });
+};
+
+module.exports.removeChapterExternalLink = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { chapterId, linkIndex } = req.body;
+  if (!chapterId) {
+    return res.json({ success: false, msg: "Chapter Not Found" });
+  }
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter Not Found" });
+  }
+
+  if (chapter.externalLinks && chapter.externalLinks.length > linkIndex) {
+    chapter.externalLinks.splice(linkIndex, 1);
+    await chapter.save();
+  }
+
+  return res.json({
+    success: true,
+    msg: "Chapter External Link Removed Successfully",
+    chapter,
+  });
+};
+
+module.exports.updateChapterExternalLinks = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { chapterId, externalLinks } = req.body;
+  if (!chapterId) {
+    return res.json({ success: false, msg: "Chapter Not Found" });
+  }
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter Not Found" });
+  }
+
+  chapter.externalLinks = externalLinks;
+  await chapter.save();
+
+  return res.json({
+    success: true,
+    msg: "Chapter External Links Updated Successfully",
+    chapter,
+  });
+};
+
+module.exports.updateChapterThumbnail = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { chapterId } = req.body;
+  if (!chapterId) {
+    return res.json({ success: false, msg: "Chapter ID is required" });
+  }
+
+  const chapterThumbnailImage = req.file.path;
+
+  const chapter = await chapterModel.findByIdAndUpdate(
+    chapterId,
+    { chapterThumbnailImage },
+    { new: true }
+  );
+
+  return res.json({
+    success: true,
+    chapter,
+    msg: "Chapter Thumbnail Updated Successfully",
+  });
+};
+
+module.exports.removeChapterFile = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { chapterId, fileURL } = req.body;
+  if (!chapterId) {
+    return res.json({ success: false, msg: "Chapter ID is required" });
+  }
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter not found" });
+  }
+
+  chapter.chapterFile = chapter.chapterFile.filter(
+    (file) => file !== fileURL
+  );
+
+  await chapter.save();
+
+  return res.json({
+    success: true,
+    msg: "Chapter File Removed Successfully",
+    chapter
+  });
+};
+
+module.exports.addChapterFiles = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { chapterId } = req.body;
+  if (!chapterId) {
+    return res.json({ success: false, msg: "Chapter ID is required" });
+  }
+
+  const chapterFiles = req.files.map((file) => file.path) || [];
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter not found" });
+  }
+
+  chapter.chapterFile.push(...chapterFiles);
+  await chapter.save();
+
+  return res.json({
+    success: true,
+    msg: "Chapter Files Added Successfully",
+    chapter,
+  });
+};
+
+module.exports.removeChapterVideo = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { chapterId, videoIndex } = req.body;
+  if (!chapterId) {
+    return res.json({ success: false, msg: "Chapter ID is required" });
+  }
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter not found" });
+  }
+
+  if (chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > videoIndex) {
+    chapter.chapterVideoDetails.splice(videoIndex, 1);
+    await chapter.save();
+  }
+
+  return res.json({
+    success: true,
+    msg: "Chapter Video Removed Successfully",
+    chapter,
+  });
+};
+
+module.exports.addChapterVideos = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { chapterId, chapterVideoTitle } = req.body;
+  if (!chapterId) {
+    return res.json({ success: false, msg: "Chapter ID is required" });
+  }
+
+  const chapterVideo = req.files.chapterVideo?.map((video) => video.path) || [];
+  const videoThumbnailImage = req.files.chapterVideoThumbnailImage?.map((img) => img.path) || [];
+
+  const videoTitleArray = Array.isArray(chapterVideoTitle)
+    ? chapterVideoTitle
+    : chapterVideoTitle
+    ? [chapterVideoTitle]
+    : [];
+
+  let newVideoDetails = [];
+  if (chapterVideo && chapterVideo.length > 0) {
+    chapterVideo.forEach((video, index) => {
+      newVideoDetails.push({
+        video: video,
+        videoThumbnail: videoThumbnailImage[index] || null,
+        title: videoTitleArray[index] || `Video ${index + 1}`,
+      });
+    });
+  }
+
+  const chapter = await chapterModel.findById(chapterId);
+  if (!chapter) {
+    return res.json({ success: false, msg: "Chapter not found" });
+  }
+
+  chapter.chapterVideoDetails.push(...newVideoDetails);
+  await chapter.save();
+
+  return res.json({
+    success: true,
+    msg: "Chapter Videos Added Successfully",
+    chapter,
+  });
 };

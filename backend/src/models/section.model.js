@@ -19,6 +19,10 @@ const sectionSchema = new mongoose.Schema({
   sectionQuiz: {
     type: [],
   },
+  externalLinks: {
+    type: [Object],
+    default: [],
+  }
 });
 
 

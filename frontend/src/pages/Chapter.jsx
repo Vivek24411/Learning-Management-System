@@ -602,6 +602,17 @@ const Chapter = () => {
    const [courseId, setCourseId] = useState(null);
    const {profile} = useContext(UserContextData)
    const navigate = useNavigate();
+   
+   // Management states
+   const [managementLoading, setManagementLoading] = useState(false);
+   const [showFileUpload, setShowFileUpload] = useState(false);
+   const [showVideoUpload, setShowVideoUpload] = useState(false);
+   const [showThumbnailUpload, setShowThumbnailUpload] = useState(false);
+   const [newFiles, setNewFiles] = useState([]);
+   const [newVideos, setNewVideos] = useState([]);
+   const [newVideoThumbnails, setNewVideoThumbnails] = useState([]);
+   const [videoTitles, setVideoTitles] = useState([]);
+   const [newThumbnail, setNewThumbnail] = useState(null);
 
    async function getChapter(){
     try{
@@ -628,6 +639,181 @@ const Chapter = () => {
       setLoading(false);
     }
   }
+
+  // Management functions
+  const handleRemoveFile = async (fileURL) => {
+    try {
+      setManagementLoading(true);
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/removeChapterFile`, {
+        chapterId,
+        fileURL
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
+        }
+      });
+      
+      if (response.data.success) {
+        setChapter(response.data.chapter);
+        setCurrentFileIndex(0);
+        toast.success("File removed successfully");
+      } else {
+        toast.error("Failed to remove file");
+      }
+    } catch (error) {
+      toast.error("Error removing file");
+      console.error("Error:", error);
+    } finally {
+      setManagementLoading(false);
+    }
+  };
+
+  const handleAddFiles = async () => {
+    if (newFiles.length === 0) {
+      toast.error("Please select files to upload");
+      return;
+    }
+
+    try {
+      setManagementLoading(true);
+      const formData = new FormData();
+      formData.append('chapterId', chapterId);
+      
+      newFiles.forEach((file) => {
+        formData.append('chapterFile', file);
+      });
+
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/addChapterFiles`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
+        }
+      });
+
+      if (response.data.success) {
+        setChapter(response.data.chapter);
+        setNewFiles([]);
+        setShowFileUpload(false);
+        toast.success("Files added successfully");
+      } else {
+        toast.error("Failed to add files");
+      }
+    } catch (error) {
+      toast.error("Error adding files");
+      console.error("Error:", error);
+    } finally {
+      setManagementLoading(false);
+    }
+  };
+
+  const handleRemoveVideo = async (videoIndex) => {
+    try {
+      setManagementLoading(true);
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/removeChapterVideo`, {
+        chapterId,
+        videoIndex
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
+        }
+      });
+      
+      if (response.data.success) {
+        setChapter(response.data.chapter);
+        toast.success("Video removed successfully");
+      } else {
+        toast.error("Failed to remove video");
+      }
+    } catch (error) {
+      toast.error("Error removing video");
+      console.error("Error:", error);
+    } finally {
+      setManagementLoading(false);
+    }
+  };
+
+  const handleAddVideos = async () => {
+    if (newVideos.length === 0) {
+      toast.error("Please select videos to upload");
+      return;
+    }
+
+    try {
+      setManagementLoading(true);
+      const formData = new FormData();
+      formData.append('chapterId', chapterId);
+      
+      newVideos.forEach((video) => {
+        formData.append('chapterVideo', video);
+      });
+
+      newVideoThumbnails.forEach((thumbnail) => {
+        formData.append('chapterVideoThumbnailImage', thumbnail);
+      });
+
+      videoTitles.forEach((title) => {
+        formData.append('chapterVideoTitle', title);
+      });
+
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/addChapterVideos`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
+        }
+      });
+
+      if (response.data.success) {
+        setChapter(response.data.chapter);
+        setNewVideos([]);
+        setNewVideoThumbnails([]);
+        setVideoTitles([]);
+        setShowVideoUpload(false);
+        toast.success("Videos added successfully");
+      } else {
+        toast.error("Failed to add videos");
+      }
+    } catch (error) {
+      toast.error("Error adding videos");
+      console.error("Error:", error);
+    } finally {
+      setManagementLoading(false);
+    }
+  };
+
+  const handleUpdateThumbnail = async () => {
+    if (!newThumbnail) {
+      toast.error("Please select a thumbnail image");
+      return;
+    }
+
+    try {
+      setManagementLoading(true);
+      const formData = new FormData();
+      formData.append('chapterId', chapterId);
+      formData.append('chapterThumbnailImage', newThumbnail);
+
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/updateChapterThumbnail`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
+        }
+      });
+
+      if (response.data.success) {
+        setChapter(response.data.chapter);
+        setNewThumbnail(null);
+        setShowThumbnailUpload(false);
+        toast.success("Thumbnail updated successfully");
+      } else {
+        toast.error("Failed to update thumbnail");
+      }
+    } catch (error) {
+      toast.error("Error updating thumbnail");
+      console.error("Error:", error);
+    } finally {
+      setManagementLoading(false);
+    }
+  };
 
   useEffect(() => {
     getChapter();
@@ -793,7 +979,141 @@ const Chapter = () => {
              )}
            </div>
          </div>
+         
+         {/* Admin Thumbnail Management */}
+         {profile?.isAdmin && (
+           <div className="mt-6 pt-6 border-t border-gray-200">
+             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+               <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                 <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                 </svg>
+                 Thumbnail Management
+               </h3>
+               <button
+                 onClick={() => setShowThumbnailUpload(!showThumbnailUpload)}
+                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                 disabled={managementLoading}
+               >
+                 {showThumbnailUpload ? 'Cancel' : 'Update Thumbnail'}
+               </button>
+             </div>
+
+             {showThumbnailUpload && (
+               <div className="mt-4 p-4 bg-gray-50 rounded-md border">
+                 <div className="space-y-4">
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Select New Thumbnail Image
+                     </label>
+                     <input
+                       type="file"
+                       accept="image/*"
+                       onChange={(e) => setNewThumbnail(e.target.files[0])}
+                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                     />
+                   </div>
+                   <div className="flex space-x-2">
+                     <button
+                       onClick={handleUpdateThumbnail}
+                       disabled={!newThumbnail || managementLoading}
+                       className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+                     >
+                       {managementLoading ? 'Updating...' : 'Update Thumbnail'}
+                     </button>
+                     <button
+                       onClick={() => {
+                         setShowThumbnailUpload(false);
+                         setNewThumbnail(null);
+                       }}
+                       className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 text-sm"
+                     >
+                       Cancel
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             )}
+           </div>
+         )}
        </div>
+
+       {/* External Links Section */}
+       {chapter.externalLinks && chapter.externalLinks.length > 0 && (
+         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+           <h3 className="text-xl font-medium text-gray-900 mb-6 flex items-center">
+             <svg
+               className="w-5 h-5 text-blue-600 mr-3"
+               fill="none"
+               stroke="currentColor"
+               viewBox="0 0 24 24"
+             >
+               <path
+                 strokeLinecap="round"
+                 strokeLinejoin="round"
+                 strokeWidth={2}
+                 d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+               />
+             </svg>
+             External Resources ({chapter.externalLinks.length})
+           </h3>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+             {chapter.externalLinks.map((link, index) => (
+               <a
+                 key={index}
+                 href={link.url}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200 hover:from-blue-100 hover:to-blue-200 hover:shadow-md transition-all duration-200 group block"
+               >
+                 <div className="flex items-start space-x-3">
+                   <div className="flex-shrink-0">
+                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                       <svg
+                         className="w-5 h-5 text-white"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24"
+                       >
+                         <path
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           strokeWidth={2}
+                           d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7l10 10M17 7l-5 5"
+                         />
+                       </svg>
+                     </div>
+                   </div>
+                   <div className="flex-grow min-w-0">
+                     <h4 className="font-semibold text-gray-900 group-hover:text-blue-800 transition-colors duration-200 mb-1">
+                       {link.label || `External Link ${index + 1}`}
+                     </h4>
+                     <p className="text-sm text-blue-700 truncate font-medium">
+                       {link.url}
+                     </p>
+                     <div className="flex items-center mt-2 text-xs text-blue-600">
+                       <svg
+                         className="w-3 h-3 mr-1"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24"
+                       >
+                         <path
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           strokeWidth={2}
+                           d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7l10 10M17 7l-5 5"
+                         />
+                       </svg>
+                       <span>Opens in new tab</span>
+                     </div>
+                   </div>
+                 </div>
+               </a>
+             ))}
+           </div>
+         </div>
+       )}
 
        {/* Chapter Quiz Section */}
        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
@@ -893,12 +1213,85 @@ const Chapter = () => {
        {chapter.chapterFile && chapter.chapterFile.length > 0 && (
          <div className="space-y-6">
            <div className="border-t border-gray-200 pt-8">
-             <h2 className="text-xl font-medium text-gray-900 flex items-center mb-6">
-               <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-               </svg>
-               Chapter Materials
-             </h2>
+             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+               <h2 className="text-xl font-medium text-gray-900 flex items-center mb-4 sm:mb-0">
+                 <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                 </svg>
+                 Chapter Materials
+               </h2>
+               
+               {/* Admin File Management */}
+               {profile?.isAdmin && (
+                 <div className="flex flex-col sm:flex-row gap-2">
+                   <button
+                     onClick={() => setShowFileUpload(!showFileUpload)}
+                     className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                     disabled={managementLoading}
+                   >
+                     Add Files
+                   </button>
+                   {chapter.chapterFile.length > 0 && (
+                     <button
+                       onClick={() => handleRemoveFile(chapter.chapterFile[currentFileIndex])}
+                       className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 text-sm font-medium"
+                       disabled={managementLoading}
+                     >
+                       {managementLoading ? 'Removing...' : 'Remove Current File'}
+                     </button>
+                   )}
+                 </div>
+               )}
+             </div>
+
+             {/* File Upload Section */}
+             {profile?.isAdmin && showFileUpload && (
+               <div className="mb-6 p-4 bg-gray-50 rounded-md border">
+                 <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Files</h3>
+                 <div className="space-y-4">
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Select PDF Files (Max 5)
+                     </label>
+                     <input
+                       type="file"
+                       accept=".pdf"
+                       multiple
+                       onChange={(e) => setNewFiles([...e.target.files])}
+                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                     />
+                     {newFiles.length > 0 && (
+                       <div className="mt-2">
+                         <p className="text-sm text-gray-600">Selected files:</p>
+                         <ul className="text-xs text-gray-500 mt-1">
+                           {newFiles.map((file, index) => (
+                             <li key={index}>{file.name}</li>
+                           ))}
+                         </ul>
+                       </div>
+                     )}
+                   </div>
+                   <div className="flex space-x-2">
+                     <button
+                       onClick={handleAddFiles}
+                       disabled={newFiles.length === 0 || managementLoading}
+                       className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+                     >
+                       {managementLoading ? 'Uploading...' : 'Upload Files'}
+                     </button>
+                     <button
+                       onClick={() => {
+                         setShowFileUpload(false);
+                         setNewFiles([]);
+                       }}
+                       className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 text-sm"
+                     >
+                       Cancel
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             )}
            </div>
 
            {chapter.chapterFile.length > 1 && (
@@ -935,12 +1328,220 @@ const Chapter = () => {
          </div>
        )}
 
-       {/* Videos Section */}
-       {chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > 0 && (
+       {/* Admin-only File Upload when no files exist */}
+       {profile?.isAdmin && (!chapter.chapterFile || chapter.chapterFile.length === 0) && (
          <div className="border-t border-gray-200 pt-8">
-           <VideoPlayer videoDetails={chapter.chapterVideoDetails} />
+           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+             <div className="text-center">
+               <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+               </svg>
+               <h3 className="text-lg font-medium text-gray-900 mb-2">No Chapter Files</h3>
+               <p className="text-gray-500 mb-4">Add PDF files for this chapter to provide additional learning materials.</p>
+               <button
+                 onClick={() => setShowFileUpload(true)}
+                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+               >
+                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                 </svg>
+                 Add Files
+               </button>
+             </div>
+           </div>
+
+           {/* File Upload Section for when no files exist */}
+           {showFileUpload && (
+             <div className="mt-6 p-4 bg-gray-50 rounded-md border">
+               <h3 className="text-lg font-medium text-gray-900 mb-4">Add Chapter Files</h3>
+               <div className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                     Select PDF Files (Max 5)
+                   </label>
+                   <input
+                     type="file"
+                     accept=".pdf"
+                     multiple
+                     onChange={(e) => setNewFiles([...e.target.files])}
+                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                   />
+                   {newFiles.length > 0 && (
+                     <div className="mt-2">
+                       <p className="text-sm text-gray-600">Selected files:</p>
+                       <ul className="text-xs text-gray-500 mt-1">
+                         {newFiles.map((file, index) => (
+                           <li key={index}>{file.name}</li>
+                         ))}
+                       </ul>
+                     </div>
+                   )}
+                 </div>
+                 <div className="flex space-x-2">
+                   <button
+                     onClick={handleAddFiles}
+                     disabled={newFiles.length === 0 || managementLoading}
+                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+                   >
+                     {managementLoading ? 'Uploading...' : 'Upload Files'}
+                   </button>
+                   <button
+                     onClick={() => {
+                       setShowFileUpload(false);
+                       setNewFiles([]);
+                     }}
+                     className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 text-sm"
+                   >
+                     Cancel
+                   </button>
+                 </div>
+               </div>
+             </div>
+           )}
          </div>
        )}
+
+       {/* Videos Section */}
+       {(chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > 0) || profile?.isAdmin ? (
+         <div className="border-t border-gray-200 pt-8">
+           {/* Admin Video Management */}
+           {profile?.isAdmin && (
+             <div className="mb-6">
+               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                 <h3 className="text-xl font-medium text-gray-900 flex items-center mb-4 sm:mb-0">
+                   <svg className="w-5 h-5 text-red-600 mr-3" fill="currentColor" viewBox="0 0 24 24">
+                     <path d="M8 5v14l11-7z"/>
+                   </svg>
+                   Video Management
+                 </h3>
+                 <div className="flex flex-col sm:flex-row gap-2">
+                   <button
+                     onClick={() => setShowVideoUpload(!showVideoUpload)}
+                     className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                     disabled={managementLoading}
+                   >
+                     Add Videos
+                   </button>
+                   {chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > 0 && (
+                     <select
+                       onChange={(e) => {
+                         if (e.target.value !== '') {
+                           handleRemoveVideo(parseInt(e.target.value));
+                           e.target.value = '';
+                         }
+                       }}
+                       className="px-3 py-2 bg-red-600 text-white rounded-md text-sm font-medium"
+                       defaultValue=""
+                       disabled={managementLoading}
+                     >
+                       <option value="">Remove Video</option>
+                       {chapter.chapterVideoDetails.map((video, index) => (
+                         <option key={index} value={index}>
+                           {video.title || `Video ${index + 1}`}
+                         </option>
+                       ))}
+                     </select>
+                   )}
+                 </div>
+               </div>
+
+               {/* Video Upload Section */}
+               {showVideoUpload && (
+                 <div className="mb-6 p-4 bg-gray-50 rounded-md border">
+                   <h4 className="text-lg font-medium text-gray-900 mb-4">Add New Videos</h4>
+                   <div className="space-y-4">
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                         Select Video Files (Max 5)
+                       </label>
+                       <input
+                         type="file"
+                         accept="video/*"
+                         multiple
+                         onChange={(e) => setNewVideos([...e.target.files])}
+                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                       />
+                     </div>
+                     
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                         Video Thumbnail Images (Optional)
+                       </label>
+                       <input
+                         type="file"
+                         accept="image/*"
+                         multiple
+                         onChange={(e) => setNewVideoThumbnails([...e.target.files])}
+                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                       />
+                     </div>
+
+                     {newVideos.length > 0 && (
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Video Titles
+                         </label>
+                         {newVideos.map((video, index) => (
+                           <div key={index} className="mb-2">
+                             <input
+                               type="text"
+                               placeholder={`Title for ${video.name}`}
+                               value={videoTitles[index] || ''}
+                               onChange={(e) => {
+                                 const updatedTitles = [...videoTitles];
+                                 updatedTitles[index] = e.target.value;
+                                 setVideoTitles(updatedTitles);
+                               }}
+                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                             />
+                           </div>
+                         ))}
+                       </div>
+                     )}
+
+                     {newVideos.length > 0 && (
+                       <div className="mt-2">
+                         <p className="text-sm text-gray-600">Selected videos:</p>
+                         <ul className="text-xs text-gray-500 mt-1">
+                           {newVideos.map((video, index) => (
+                             <li key={index}>{video.name}</li>
+                           ))}
+                         </ul>
+                       </div>
+                     )}
+
+                     <div className="flex space-x-2">
+                       <button
+                         onClick={handleAddVideos}
+                         disabled={newVideos.length === 0 || managementLoading}
+                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+                       >
+                         {managementLoading ? 'Uploading...' : 'Upload Videos'}
+                       </button>
+                       <button
+                         onClick={() => {
+                           setShowVideoUpload(false);
+                           setNewVideos([]);
+                           setNewVideoThumbnails([]);
+                           setVideoTitles([]);
+                         }}
+                         className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 text-sm"
+                       >
+                         Cancel
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+               )}
+             </div>
+           )}
+           
+           {/* Video Player */}
+           {chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > 0 && (
+             <VideoPlayer videoDetails={chapter.chapterVideoDetails} />
+           )}
+         </div>
+       ) : null}
 
        {/* Chapter Summary Section */}
        {chapter.chapterSummary && (

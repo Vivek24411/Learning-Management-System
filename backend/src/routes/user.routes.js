@@ -1,7 +1,7 @@
 const express = require("express");
 const userRouter = express.Router();
 const {body, query} = require("express-validator");
-const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, getSection } = require("../controllers/user.controllers");
+const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, removeSectionVideo, addSectionVideos, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos } = require("../controllers/user.controllers");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { uploadCourseThumbnail } = require("../middlewares/upload");
 const upload = require("../middlewares/upload");
@@ -51,7 +51,7 @@ userRouter.post("/addCourse",adminAuth,upload.fields([
 
 userRouter.post("/addSection",adminAuth,upload.array("sectionVideo", 5),[
     body("sectionTitle").isString().isLength({min:1}),
-    body("courseId").isMongoId()
+    body("courseId").isMongoId(),
 ],addSection)
 
 userRouter.post("/addChapter",adminAuth,upload.fields([
@@ -156,8 +156,67 @@ userRouter.get("/getSection",adminAuth,[
     query("sectionId").isMongoId()
 ],getSection)
 
+userRouter.post("/updateCourseThumbnail",adminAuth,upload.single("courseThumbnailImage"),[
+    body("courseId").isMongoId()
+],updateCourseThumbnail)
 
+userRouter.post("/removeCourseIntroductionImage",adminAuth,[
+    body("courseId").isMongoId(),
+    body("imageURL").isString().isLength({min:1})
+],removeCourseIntroductionImage)
 
+userRouter.post("/addIntroductionImages",adminAuth,upload.array("courseIntroductionImages", 5),[
+    body("courseId").isMongoId()
+],addIntroductionImage)
 
+userRouter.post("/removeSectionVideo",adminAuth,[
+    body("sectionId").isMongoId(),
+    body("videoURL").isString().isLength({min:1})
+],removeSectionVideo)
+
+userRouter.post("/addSectionVideos",adminAuth,upload.array("sectionVideo", 5),[
+    body("sectionId").isMongoId()
+],addSectionVideos)
+
+userRouter.post("/addChapterExternalLinks",adminAuth,[
+    body("chapterId").isMongoId(),
+    body("externalLinks").isArray()
+],addChapterExternalLinks)
+
+userRouter.post("/removeChapterExternalLink",adminAuth,[
+    body("chapterId").isMongoId(),
+    body("linkIndex").isNumeric()
+],removeChapterExternalLink)
+
+userRouter.post("/updateChapterExternalLinks",adminAuth,[
+    body("chapterId").isMongoId(),
+    body("externalLinks").isArray()
+],updateChapterExternalLinks)
+
+userRouter.post("/updateChapterThumbnail",adminAuth,upload.single("chapterThumbnailImage"),[
+    body("chapterId").isMongoId()
+],updateChapterThumbnail)
+
+userRouter.post("/removeChapterFile",adminAuth,[
+    body("chapterId").isMongoId(),
+    body("fileURL").isString().isLength({min:1})
+],removeChapterFile)
+
+userRouter.post("/addChapterFiles",adminAuth,upload.array("chapterFile", 5),[
+    body("chapterId").isMongoId()
+],addChapterFiles)
+
+userRouter.post("/removeChapterVideo",adminAuth,[
+    body("chapterId").isMongoId(),
+    body("videoIndex").isNumeric()
+],removeChapterVideo)
+
+userRouter.post("/addChapterVideos",adminAuth,upload.fields([
+    {name: "chapterVideo", maxCount:5},
+    {name: "chapterVideoThumbnailImage", maxCount:5}
+]),[
+    body("chapterId").isMongoId(),
+    body("chapterVideoTitle").optional()
+],addChapterVideos)
 
 module.exports = userRouter;
