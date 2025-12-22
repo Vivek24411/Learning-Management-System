@@ -1,7 +1,7 @@
 const express = require("express");
 const userRouter = express.Router();
 const {body, query} = require("express-validator");
-const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, removeSectionVideo, addSectionVideos, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos } = require("../controllers/user.controllers");
+const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, removeSectionVideo, addSectionVideos, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos, giveAccessToCourse, giveAdminAccess } = require("../controllers/user.controllers");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { uploadCourseThumbnail } = require("../middlewares/upload");
 const upload = require("../middlewares/upload");
@@ -219,4 +219,12 @@ userRouter.post("/addChapterVideos",adminAuth,upload.fields([
     body("chapterVideoTitle").optional()
 ],addChapterVideos)
 
+userRouter.post("/giveCourseAccess",adminAuth,[
+    body("emailArray").isArray({min:1}),
+    body("courseId").isMongoId()
+],giveAccessToCourse)
+
+userRouter.post("/giveAdminAccess",adminAuth,[
+    body("email").isEmail().isLength({min:1})
+],giveAdminAccess)
 module.exports = userRouter;

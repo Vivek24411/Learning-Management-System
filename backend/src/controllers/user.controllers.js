@@ -248,7 +248,8 @@ module.exports.addCourse = async (req, res, next) => {
 module.exports.addSection = async (req, res, next) => {
   checkValidation(req, res);
 
-  const { sectionTitle, sectionDescription, courseId, externalLinks } = req.body;
+  const { sectionTitle, sectionDescription, courseId, externalLinks } =
+    req.body;
   console.log(req.files);
   const sectionVideo = req.files.map((file) => file.path) || [];
   console.log("Section videos paths:", sectionVideo);
@@ -262,7 +263,7 @@ module.exports.addSection = async (req, res, next) => {
     sectionTitle,
     sectionDescription,
     sectionVideoUrl: sectionVideo,
-    externalLinks: JSON.parse(externalLinks)
+    externalLinks: JSON.parse(externalLinks),
   });
 
   course.sections.push(section._id);
@@ -862,7 +863,7 @@ module.exports.removeCourseIntroductionImage = async (req, res, next) => {
   return res.json({
     success: true,
     msg: "Course Introduction Image Removed Successfully",
-    course
+    course,
   });
 };
 
@@ -921,7 +922,7 @@ module.exports.removeSectionVideo = async (req, res, next) => {
   return res.json({
     success: true,
     msg: "Section Video Removed Successfully",
-    section
+    section,
   });
 };
 
@@ -1081,16 +1082,14 @@ module.exports.removeChapterFile = async (req, res, next) => {
     return res.json({ success: false, msg: "Chapter not found" });
   }
 
-  chapter.chapterFile = chapter.chapterFile.filter(
-    (file) => file !== fileURL
-  );
+  chapter.chapterFile = chapter.chapterFile.filter((file) => file !== fileURL);
 
   await chapter.save();
 
   return res.json({
     success: true,
     msg: "Chapter File Removed Successfully",
-    chapter
+    chapter,
   });
 };
 
@@ -1140,7 +1139,10 @@ module.exports.removeChapterVideo = async (req, res, next) => {
     return res.json({ success: false, msg: "Chapter not found" });
   }
 
-  if (chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > videoIndex) {
+  if (
+    chapter.chapterVideoDetails &&
+    chapter.chapterVideoDetails.length > videoIndex
+  ) {
     chapter.chapterVideoDetails.splice(videoIndex, 1);
     await chapter.save();
   }
@@ -1165,7 +1167,8 @@ module.exports.addChapterVideos = async (req, res, next) => {
   }
 
   const chapterVideo = req.files.chapterVideo?.map((video) => video.path) || [];
-  const videoThumbnailImage = req.files.chapterVideoThumbnailImage?.map((img) => img.path) || [];
+  const videoThumbnailImage =
+    req.files.chapterVideoThumbnailImage?.map((img) => img.path) || [];
 
   const videoTitleArray = Array.isArray(chapterVideoTitle)
     ? chapterVideoTitle
@@ -1196,5 +1199,50 @@ module.exports.addChapterVideos = async (req, res, next) => {
     success: true,
     msg: "Chapter Videos Added Successfully",
     chapter,
+  });
+};
+
+module.exports.giveAccessToCourse = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { emailArray, courseId } = req.body;
+
+  emailArray.forEach(async (email) => {
+    await userModel.findOneAndUpdate(
+      { email },
+      { $addToSet: { coursePurchased: courseId } }
+    );
+  });
+
+  return res.json({
+    success: true,
+    msg: "Access to course granted successfully",
+  });
+};
+
+module.exports.giveAdminAccess = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { email } = req.body;
+
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.json({ success: false, msg: "User not found" });
+  }
+
+  user.isAdmin = true;
+  await user.save();
+
+  return res.json({
+    success: true,
+    msg: "Admin access granted successfully",
   });
 };
