@@ -91,7 +91,7 @@ const Home = () => {
         />
         <div className="absolute top-3 right-3">
           <span className="bg-white/95 backdrop-blur-sm text-gray-900 px-3 py-1 rounded-md text-sm font-medium border border-white/20">
-            ₹{course.price || '99'}
+            {course.price ===0 ? 'Free' : `₹${course.price}`}
           </span>
         </div>
       </div>
