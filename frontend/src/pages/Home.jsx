@@ -83,11 +83,11 @@ const Home = () => {
   const CourseCard = ({ course }) => (
     <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer">
       {/* Course Image */}
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
         <img
           src={course.courseThumbnailImage || "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
           alt={course.courseName}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-3 right-3">
           <span className="bg-white/95 backdrop-blur-sm text-gray-900 px-3 py-1 rounded-md text-sm font-medium border border-white/20">

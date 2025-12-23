@@ -1619,37 +1619,39 @@ const Course = () => {
       />
 
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
+        {/* Fullscreen Hero Image Section */}
         <section className="relative pt-16">
-          <div className="relative h-210 overflow-hidden">
+          <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900" style={{height: 'calc(100vh - 4rem)'}}>
             <img
               src={
                 course.courseThumbnailImage ||
                 "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
               }
               alt={course.courseName}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
+            {/* Optional subtle overlay for better image visibility */}
+            <div className="absolute inset-0 bg-black/10"></div>
+          </div>
+        </section>
 
-            <img src={course.courseThumbnailImage} alt="" />
-            <div></div>
-
-            <div className="absolute inset-0 flex items-center justify-center px-4">
-              <div className="text-center max-w-4xl mx-auto">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-                  {course.courseName}
-                </h1>
-                <p className="text-lg sm:text-xl text-gray-200 max-w-2xl mx-auto">
-                  {course.shortDescription}
-                </p>
-              </div>
+        {/* Course Info Section - Below Thumbnail */}
+        <section className="py-12 bg-white">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                {course.courseName}
+              </h1>
+              <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                {course.shortDescription}
+              </p>
             </div>
           </div>
         </section>
 
         {/* Admin Thumbnail Update Section */}
         {profile.isAdmin && (
-          <section className="py-8 bg-white border-b border-gray-200">
+          <section className="py-8 bg-gray-50 border-b border-gray-200">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -1797,7 +1799,7 @@ const Course = () => {
                                   "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
                                 }
                                 alt="Current Course Thumbnail"
-                                className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                                className="w-full h-48 object-contain bg-gray-100 rounded-lg border border-gray-200"
                               />
                               <div className="absolute top-2 left-2 bg-gray-800/70 text-white px-2 py-1 rounded text-xs">
                                 Current
