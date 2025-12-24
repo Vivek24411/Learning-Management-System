@@ -81,7 +81,7 @@ const Home = () => {
   }, [location.state, navigate, location.pathname]);
 
   const CourseCard = ({ course }) => (
-    <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer h-full flex flex-col">
+    <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer flex flex-col h-full">
       {/* Course Image */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
         <img
@@ -97,11 +97,11 @@ const Home = () => {
       </div>
 
       {/* Course Content */}
-      <div className="p-6 flex-grow flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-snug line-clamp-2 min-h-[3.5rem]">
+      <div className="p-6 flex flex-col flex-grow">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-snug">
           {course.courseName}
         </h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed flex-grow">
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed flex-grow">
           {course.shortDescription || "Discover inner peace and balance through this transformative yoga journey."}
         </p>
         
@@ -113,12 +113,11 @@ const Home = () => {
           {course.publishedDate ? new Date(course.publishedDate).toLocaleDateString() : 'Recently Added'}
         </div>
 
-        {/* View Details Button */}
-        <div className="mt-auto flex-shrink-0">
-          <button className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md font-medium hover:bg-[#6B7035] transition-colors duration-200">
-            View Details
-          </button>
-        </div>
+        {/* View Details Button - Fixed at bottom */}
+        <button className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md  font-medium hover:bg-[#6B7035] transition-colors duration-200 mt-auto flex-shrink-0">
+          View Details
+        </button>
+        
       </div>
     </div>
   );
@@ -219,23 +218,28 @@ const Home = () => {
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course, index) => (
-                <div>
-                  <div
+                <div
                   key={course._id || index}
                   className={`transform transition-all duration-500 ease-out ${
                     heroLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-                  }`}
+                  } ${profile?.isAdmin ? 'h-[460px]' : 'h-[400px]'} flex flex-col`}
                   style={{ transitionDelay: `${index * 150}ms` }}
-                  onClick={() => navigate(`/course/${course._id}`)}
                 >
-                  <CourseCard course={course} />
+                  <div 
+                    onClick={() => navigate(`/course/${course._id}`)}
+                    className="flex-grow"
+                  >
+                    <CourseCard course={course} />
+                  </div>
                   
-                </div>
                   {profile?.isAdmin && (
-                    <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                    <div className="mt-2 flex flex-col sm:flex-row gap-2 flex-shrink-0">
                       <button 
-                        onClick={() => navigate(`/editCourse/${course._id}`)}
-                        className="flex-1 bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/editCourse/${course._id}`)
+                        }}
+                        className="flex-1 bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center"
                       >
                         <svg
                           className="w-4 h-4 mr-1"
@@ -253,7 +257,10 @@ const Home = () => {
                         Edit Course
                       </button>
                       <button 
-                        onClick={() => handleDeleteCourse(course._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCourse(course._id)
+                        }}
                         className="flex-1 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-red-100 transition-colors duration-200 flex items-center justify-center"
                       >
                         <svg
@@ -273,9 +280,9 @@ const Home = () => {
                       </button>
                     </div>
                   )}
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
         ) : (
           /* No Courses State */
             <div className="text-center py-16">

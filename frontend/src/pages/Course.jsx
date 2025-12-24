@@ -60,7 +60,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer h-full flex flex-col">
+    <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer h-[580px] flex flex-col">
       {/* Chapter Thumbnail */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
         {chapter.chapterThumbnailImage ? (
@@ -118,44 +118,46 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
       </div>
 
       {/* Chapter Info */}
-      <div className="p-6 flex-grow flex flex-col">
-        <h4 className="text-lg font-semibold text-gray-900 mb-2 leading-snug line-clamp-2 min-h-[3.5rem]">
+      <div className="p-6 flex flex-col flex-grow">
+        <h4 className="text-lg font-semibold text-gray-900 mb-2 leading-snug">
           {chapter.chapterName}
         </h4>
-        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
+        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 flex-shrink-0">
           {chapter.shortDescription ||
             "Explore this chapter to deepen your understanding and practice."}
         </p>
 
         {/* External Links Indicator */}
-        {chapter.externalLinks && chapter.externalLinks.length > 0 && (
-          <div className="mb-3 flex-shrink-0">
-            <div className="inline-flex items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
-              <svg
-                className="w-3 h-3 text-blue-500 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                />
-              </svg>
-              <span className="text-xs font-medium text-blue-700">
-                {chapter.externalLinks.length} Resource
-                {chapter.externalLinks.length !== 1 ? "s" : ""}
-              </span>
+        <div className="flex-grow">
+          {chapter.externalLinks && chapter.externalLinks.length > 0 && (
+            <div className="mb-3">
+              <div className="inline-flex items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+                <svg
+                  className="w-3 h-3 text-blue-500 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  />
+                </svg>
+                <span className="text-xs font-medium text-blue-700">
+                  {chapter.externalLinks.length} Resource
+                  {chapter.externalLinks.length !== 1 ? "s" : ""}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Admin Buttons - Fixed height container */}
-        <div className="mb-4 flex-shrink-0" style={{ minHeight: profile?.isAdmin ? 'auto' : '0' }}>
+        {/* Bottom Actions - Fixed at bottom */}
+        <div className="mt-auto flex flex-col gap-2">
           {profile?.isAdmin && (
-            <>
+            <div className="mb-4">
               <button
                 onClick={() => navigate(`/editChapter/${chapter._id}`)}
                 className="w-full bg-blue-50 text-blue-700 py-2.5 px-4 rounded-md font-medium hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center border border-blue-200"
@@ -195,39 +197,38 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
                 </svg>
                 Delete Chapter
               </button>
-            </>
+            </div>
+          )}
+
+          {/* Chapter Action Button */}
+          {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
+            <button
+              onClick={handleChapterClick}
+              className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md font-medium hover:bg-[#6A6F35] transition-colors duration-200"
+            >
+              Start Learning
+            </button>
+          ) : (
+            <div className="w-full bg-gray-50 border border-gray-200 rounded p-3 text-center">
+              <div className="flex items-center justify-center mb-1">
+                <svg
+                  className="w-4 h-4 text-gray-400 mr-1"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="text-gray-600 font-medium text-sm">
+                  Requires enrollment
+                </span>
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Chapter Action Button - Always at bottom */}
-        <div className="mt-auto flex-shrink-0">
-          {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
-          <button
-            onClick={handleChapterClick}
-            className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md font-medium hover:bg-[#6A6F35] transition-colors duration-200"
-          >
-            Start Learning
-          </button>
-          ) : (
-              <div className="w-full bg-gray-50 border border-gray-200 rounded p-3 text-center">
-              <div className="flex items-center justify-center mb-1">
-              <svg
-                className="w-4 h-4 text-gray-400 mr-1"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-gray-600 font-medium text-sm">
-                Requires enrollment
-              </span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
