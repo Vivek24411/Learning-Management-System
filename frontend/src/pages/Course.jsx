@@ -60,14 +60,14 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer h-full flex flex-col">
       {/* Chapter Thumbnail */}
-      <div className="relative h-44">
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
         {chapter.chapterThumbnailImage ? (
           <img
             src={chapter.chapterThumbnailImage}
             alt={chapter.chapterName}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-[#7A7F3F] to-[#6A6F35] flex items-center justify-center relative overflow-hidden">
@@ -118,18 +118,18 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
       </div>
 
       {/* Chapter Info */}
-      <div className="p-5">
-        <h4 className="text-lg font-semibold text-gray-900 mb-2 leading-snug">
+      <div className="p-6 flex-grow flex flex-col">
+        <h4 className="text-lg font-semibold text-gray-900 mb-2 leading-snug line-clamp-2 min-h-[3.5rem]">
           {chapter.chapterName}
         </h4>
-        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
+        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
           {chapter.shortDescription ||
             "Explore this chapter to deepen your understanding and practice."}
         </p>
 
         {/* External Links Indicator */}
         {chapter.externalLinks && chapter.externalLinks.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-3 flex-shrink-0">
             <div className="inline-flex items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
               <svg
                 className="w-3 h-3 text-blue-500 mr-1"
@@ -152,61 +152,65 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
           </div>
         )}
 
-        {profile?.isAdmin && (
-          <div className="mb-4">
-            <button
-              onClick={() => navigate(`/editChapter/${chapter._id}`)}
-              className="w-full bg-blue-50 text-blue-700 px-4 py-2 rounded-md font-medium hover:bg-blue-100 transition-colors duration-200 text-sm flex items-center justify-center border border-blue-200"
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        {/* Admin Buttons - Fixed height container */}
+        <div className="mb-4 flex-shrink-0" style={{ minHeight: profile?.isAdmin ? 'auto' : '0' }}>
+          {profile?.isAdmin && (
+            <>
+              <button
+                onClick={() => navigate(`/editChapter/${chapter._id}`)}
+                className="w-full bg-blue-50 text-blue-700 py-2.5 px-4 rounded-md font-medium hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center border border-blue-200"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              Edit Chapter
-            </button>
-            <button
-              onClick={() => handleDeleteChapter(chapter._id)}
-              disabled={submitting}
-              className="w-full bg-red-50 text-red-700 px-4 py-2 rounded-md font-medium hover:bg-red-100 transition-colors duration-200 text-sm flex items-center justify-center border border-red-200 mt-2"
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                Edit Chapter
+              </button>
+              <button
+                onClick={() => handleDeleteChapter(chapter._id)}
+                disabled={submitting}
+                className="w-full bg-red-50 text-red-700 py-2.5 px-4 rounded-md font-medium hover:bg-red-100 transition-colors duration-200 flex items-center justify-center border border-red-200 mt-2"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-              Delete Chapter
-            </button>
-          </div>
-        )}
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+                Delete Chapter
+              </button>
+            </>
+          )}
+        </div>
 
-        {/* Chapter Action Button */}
-        {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
+        {/* Chapter Action Button - Always at bottom */}
+        <div className="mt-auto flex-shrink-0">
+          {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
           <button
             onClick={handleChapterClick}
-            className="w-full bg-[#7A7F3F] text-white px-4 py-2 rounded font-medium hover:bg-[#6A6F35] transition-colors duration-200 text-sm"
+            className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md font-medium hover:bg-[#6A6F35] transition-colors duration-200"
           >
             Start Learning
           </button>
-        ) : (
-          <div className="w-full bg-gray-50 border border-gray-200 rounded p-3 text-center">
-            <div className="flex items-center justify-center mb-1">
+          ) : (
+              <div className="w-full bg-gray-50 border border-gray-200 rounded p-3 text-center">
+              <div className="flex items-center justify-center mb-1">
               <svg
                 className="w-4 h-4 text-gray-400 mr-1"
                 fill="currentColor"

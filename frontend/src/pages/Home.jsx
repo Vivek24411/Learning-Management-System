@@ -81,9 +81,9 @@ const Home = () => {
   }, [location.state, navigate, location.pathname]);
 
   const CourseCard = ({ course }) => (
-    <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer">
+    <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer h-full flex flex-col">
       {/* Course Image */}
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
         <img
           src={course.courseThumbnailImage || "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
           alt={course.courseName}
@@ -97,16 +97,16 @@ const Home = () => {
       </div>
 
       {/* Course Content */}
-      <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-snug">
+      <div className="p-6 flex-grow flex flex-col">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-snug line-clamp-2 min-h-[3.5rem]">
           {course.courseName}
         </h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+        <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed flex-grow">
           {course.shortDescription || "Discover inner peace and balance through this transformative yoga journey."}
         </p>
         
         {/* Course Meta */}
-        <div className="flex items-center text-xs text-gray-500 mb-5">
+        <div className="flex items-center text-xs text-gray-500 mb-5 flex-shrink-0">
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -114,10 +114,11 @@ const Home = () => {
         </div>
 
         {/* View Details Button */}
-        <button className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md font-medium hover:bg-[#6B7035] transition-colors duration-200">
-          View Details
-        </button>
-        
+        <div className="mt-auto flex-shrink-0">
+          <button className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md font-medium hover:bg-[#6B7035] transition-colors duration-200">
+            View Details
+          </button>
+        </div>
       </div>
     </div>
   );
