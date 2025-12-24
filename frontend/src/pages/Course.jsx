@@ -14,6 +14,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
   const { profile } = useContext(UserContextData);
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleDeleteChapter(chapterId) {
     if (
@@ -25,6 +26,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
     }
 
     try {
+      setSubmitting(true);
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/user/deleteChapter`,
         {
@@ -52,6 +54,8 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
     } catch (error) {
       console.error("Error deleting chapter:", error);
       toast.error("Failed to delete chapter: " + error.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -141,7 +145,8 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
                 />
               </svg>
               <span className="text-xs font-medium text-blue-700">
-                {chapter.externalLinks.length} Resource{chapter.externalLinks.length !== 1 ? 's' : ''}
+                {chapter.externalLinks.length} Resource
+                {chapter.externalLinks.length !== 1 ? "s" : ""}
               </span>
             </div>
           </div>
@@ -170,6 +175,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
             </button>
             <button
               onClick={() => handleDeleteChapter(chapter._id)}
+              disabled={submitting}
               className="w-full bg-red-50 text-red-700 px-4 py-2 rounded-md font-medium hover:bg-red-100 transition-colors duration-200 text-sm flex items-center justify-center border border-red-200 mt-2"
             >
               <svg
@@ -224,10 +230,10 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
 };
 
 // Section Item Component
-const SectionItem = ({ 
-  section, 
-  onViewChapter, 
-  isAdmin, 
+const SectionItem = ({
+  section,
+  onViewChapter,
+  isAdmin,
   onAddChapter,
   sectionVideoInput,
   setSectionVideoInput,
@@ -238,11 +244,18 @@ const SectionItem = ({
   handleSectionVideoFiles,
   addSectionVideos,
   removeSectionVideo,
-  updatingThumbnail
+  updatingThumbnail,
+  setCourse,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const { profile } = useContext(UserContextData);
+  const [submitting, setSubmitting] = useState(false);
+  const [sectionLink, setSectionLink] = useState([{
+    label: "",
+    url: "",
+  }]);
+  const [showSectionLinkInput, setShowSectionLinkInput] = useState(false);
 
   async function handleDeleteSection(sectionId) {
     const response = await axios.get(
@@ -264,6 +277,105 @@ const SectionItem = ({
     } else {
       toast.error("Failed to delete section");
     }
+  }
+
+  async function removeSectionLink(label) {
+    try {
+      setSubmitting(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/deleteSectionLink`,
+        {
+          sectionId: section._id,
+          label,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setCourse((prev) => {
+          const oldCourse = { ...prev };
+          console.log(oldCourse)
+          console.log(section._id)
+          oldCourse.sections = oldCourse.sections.map((sec) => {
+            return sec._id === section._id
+              ? { ...sec, externalLinks: response.data.externalLinks }
+              : sec;
+          });
+        
+          console.log(oldCourse);
+          return oldCourse;
+        });
+        toast.success("Section link removed successfully");
+      } else {
+        toast.error(response.data.msg);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function addSection() {
+    try {
+      if (!sectionLink[0].url) {
+        return toast.error("Please add atleast One Link");
+      }
+      setSubmitting(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/addSectionLink`,
+        {
+          sectionId: section._id,
+          sectionLink,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setCourse((prev) => {
+          const oldCourse = { ...prev };
+          oldCourse.sections = oldCourse.sections.map((sec) => {
+            return sec._id === section._id
+              ? { ...sec, externalLinks: response.data.externalLinks }
+              : sec;
+          });
+          return oldCourse;
+        });
+        setSectionLink([{ label: "", url: "" }]);
+        setShowSectionLinkInput(false);
+        toast.success("Section links added successfully");
+      } else {
+        toast.error(response.data.msg);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function addSectionInput() {
+    setSectionLink((prev) => {
+      return [...prev, { label: "", url: "" }];
+    });
+  }
+
+  function removeSectionInput(index){
+    const secLink = [...sectionLink];
+    const updatedSecLink = secLink.filter((sec, i)=>{
+      if(index!==i){
+        return sec
+      }
+    })
+    setSectionLink(updatedSecLink);
   }
 
   return (
@@ -401,7 +513,7 @@ const SectionItem = ({
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
-                      >          
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -412,7 +524,12 @@ const SectionItem = ({
                       Edit Section
                     </button>
                     <button
-                      onClick={() => setSectionVideoInput(prev => ({ ...prev, [section._id]: !prev[section._id] }))}
+                      onClick={() =>
+                        setSectionVideoInput((prev) => ({
+                          ...prev,
+                          [section._id]: !prev[section._id],
+                        }))
+                      }
                       className="bg-red-50 border border-red-200 text-red-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-red-100 transition-colors duration-200 flex items-center"
                     >
                       <svg
@@ -594,11 +711,13 @@ const SectionItem = ({
                       <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
                         Video {index + 1}
                       </div>
-                      
+
                       {/* Admin Remove Button */}
                       {profile?.isAdmin && (
                         <button
-                          onClick={() => removeSectionVideo(section._id, videoUrl, index)}
+                          onClick={() =>
+                            removeSectionVideo(section._id, videoUrl, index)
+                          }
                           className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white p-1 rounded-full transition-colors duration-200 backdrop-blur-sm"
                           title="Remove video"
                         >
@@ -659,16 +778,26 @@ const SectionItem = ({
                         />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900">Section Video Gallery</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Section Video Gallery
+                    </h3>
                   </div>
                   <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
-                    {section.sectionVideoUrl ? section.sectionVideoUrl.length : 0} videos
+                    {section.sectionVideoUrl
+                      ? section.sectionVideoUrl.length
+                      : 0}{" "}
+                    videos
                   </div>
                 </div>
 
                 {!sectionVideoInput[section._id] ? (
                   <button
-                    onClick={() => setSectionVideoInput(prev => ({ ...prev, [section._id]: true }))}
+                    onClick={() =>
+                      setSectionVideoInput((prev) => ({
+                        ...prev,
+                        [section._id]: true,
+                      }))
+                    }
                     className="flex items-center bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors duration-200"
                   >
                     <svg
@@ -684,7 +813,7 @@ const SectionItem = ({
                         d="M12 4v16m8-8H4"
                       />
                     </svg>
-                    Add Section Videos   
+                    Add Section Videos
                   </button>
                 ) : (
                   <div className="space-y-4">
@@ -703,13 +832,19 @@ const SectionItem = ({
                             strokeLinejoin="round"
                           />
                         </svg>
-                        <p className="text-lg font-medium text-gray-900 mb-1">Upload section videos</p>
-                        <p className="text-sm text-gray-500 mb-4">Select multiple video files to add to this section</p>
+                        <p className="text-lg font-medium text-gray-900 mb-1">
+                          Upload section videos
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Select multiple video files to add to this section
+                        </p>
                         <input
                           type="file"
                           multiple
                           accept="video/*"
-                          onChange={(e) => handleSectionVideoFiles(e, section._id)}
+                          onChange={(e) =>
+                            handleSectionVideoFiles(e, section._id)
+                          }
                           className="hidden"
                           id={`sectionVideo-${section._id}`}
                         />
@@ -736,45 +871,263 @@ const SectionItem = ({
                     </div>
 
                     {/* Video Preview Grid */}
-                    {sectionVideoFiles[section._id] && sectionVideoFiles[section._id].length > 0 && (
-                      <div className="bg-white rounded-lg p-4 border">
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-lg font-medium text-gray-900">Preview ({sectionVideoFiles[section._id].length} videos selected)</h4>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                          {sectionVideoPreview[section._id]?.map((videoSrc, index) => (
-                            <div key={index} className="relative">
-                              <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                                <video
-                                  src={videoSrc}
-                                  className="w-full h-full object-cover"
-                                  controls={false}
-                                  muted
-                                />
-                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                  <div className="bg-white/90 text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
-                                    Video {index + 1}
+                    {sectionVideoFiles[section._id] &&
+                      sectionVideoFiles[section._id].length > 0 && (
+                        <div className="bg-white rounded-lg p-4 border">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-lg font-medium text-gray-900">
+                              Preview ({sectionVideoFiles[section._id].length}{" "}
+                              videos selected)
+                            </h4>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            {sectionVideoPreview[section._id]?.map(
+                              (videoSrc, index) => (
+                                <div key={index} className="relative">
+                                  <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                                    <video
+                                      src={videoSrc}
+                                      className="w-full h-full object-cover"
+                                      controls={false}
+                                      muted
+                                    />
+                                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                      <div className="bg-white/90 text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
+                                        Video {index + 1}
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
+                              )
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex space-x-3">
+                            <button
+                              onClick={() => addSectionVideos(section._id)}
+                              disabled={updatingThumbnail}
+                              className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                            >
+                              {updatingThumbnail ? (
+                                <>
+                                  <svg
+                                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                  </svg>
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <svg
+                                    className="w-4 h-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                    />
+                                  </svg>
+                                  Upload Videos
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSectionVideoInput((prev) => ({
+                                  ...prev,
+                                  [section._id]: false,
+                                }));
+                                setSectionVideoFiles((prev) => ({
+                                  ...prev,
+                                  [section._id]: null,
+                                }));
+                                setSectionVideoPreview((prev) => ({
+                                  ...prev,
+                                  [section._id]: null,
+                                }));
+                              }}
+                              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Section Link Management - Admin Only */}
+          {profile?.isAdmin && (
+            <div className="mb-6">
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Section External Links
+                    </h3>
+                  </div>
+                  <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
+                    {section.externalLinks ? section.externalLinks.length : 0} links
+                  </div>
+                </div>
+
+                {!showSectionLinkInput ? (
+                  <button
+                    onClick={() => setShowSectionLinkInput(true)}
+                    className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Add Section Links
+                  </button>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-lg p-4 border-2 border-dashed border-blue-300">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-lg font-medium text-gray-900">Add External Links</h4>
+                          <button
+                            onClick={() => addSectionInput()}
+                            className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add More Links
+                          </button>
+                        </div>
+
+                        {sectionLink.map((link, index) => (
+                          <div key={index} className="bg-gray-50 rounded-lg p-4 border">
+                            <div className="flex items-start justify-between mb-3">
+                              <h5 className="font-medium text-gray-900">Link {index + 1}</h5>
+                              {sectionLink.length > 1 && (
+                                <button
+                                  onClick={() => removeSectionInput(index)}
+                                  className="text-red-500 hover:text-red-700 p-1"
+                                  title="Remove this link"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Link Label
+                                </label>
+                                <input
+                                  type="text"
+                                  value={link.label}
+                                  onChange={(e) => {
+                                    const newLinks = [...sectionLink];
+                                    newLinks[index].label = e.target.value;
+                                    setSectionLink(newLinks);
+                                  }}
+                                  placeholder="Enter link label (e.g., Documentation, Tutorial)"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Link URL
+                                </label>
+                                <input
+                                  type="url"
+                                  value={link.url}
+                                  onChange={(e) => {
+                                    const newLinks = [...sectionLink];
+                                    newLinks[index].url = e.target.value;
+                                    setSectionLink(newLinks);
+                                  }}
+                                  placeholder="https://example.com"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
                               </div>
                             </div>
-                          ))}
-                        </div>
-                        
+                          </div>
+                        ))}
+
                         {/* Action Buttons */}
-                        <div className="flex space-x-3">
+                        <div className="flex space-x-3 pt-4">
                           <button
-                            onClick={() => addSectionVideos(section._id)}
-                            disabled={updatingThumbnail}
-                            className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                            onClick={addSection}
+                            disabled={submitting}
+                            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                           >
-                            {updatingThumbnail ? (
+                            {submitting ? (
                               <>
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <svg
+                                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  />
                                 </svg>
-                                Uploading...
+                                Adding Links...
                               </>
                             ) : (
                               <>
@@ -788,18 +1141,17 @@ const SectionItem = ({
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={2}
-                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                                   />
                                 </svg>
-                                Upload Videos
+                                Add Section Links
                               </>
                             )}
                           </button>
                           <button
                             onClick={() => {
-                              setSectionVideoInput(prev => ({ ...prev, [section._id]: false }));
-                              setSectionVideoFiles(prev => ({ ...prev, [section._id]: null }));
-                              setSectionVideoPreview(prev => ({ ...prev, [section._id]: null }));
+                              setShowSectionLinkInput(false);
+                              setSectionLink([{ label: "", url: "" }]);
                             }}
                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200"
                           >
@@ -807,7 +1159,7 @@ const SectionItem = ({
                           </button>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -835,57 +1187,88 @@ const SectionItem = ({
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {section.externalLinks.map((link, index) => (
-                  <a
+                  <div
                     key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200 hover:from-blue-100 hover:to-blue-200 hover:shadow-md transition-all duration-200 group block"
+                    className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-blue-200 hover:shadow-md transition-all duration-200 group relative"
                   >
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                          <svg
-                            className="w-5 h-5 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7l10 10M17 7l-5 5"
-                            />
-                          </svg>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-4"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                            <svg
+                              className="w-5 h-5 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7l10 10M17 7l-5 5"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="flex-grow min-w-0">
+                          <h5 className="font-semibold text-gray-900 group-hover:text-blue-800 transition-colors duration-200 mb-1">
+                            {link.label || `External Link ${index + 1}`}
+                          </h5>
+                          <p className="text-sm text-blue-700 truncate font-medium">
+                            {link.url}
+                          </p>
+                          <div className="flex items-center mt-2 text-xs text-blue-600">
+                            <svg
+                              className="w-3 h-3 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7l10 10M17 7l-5 5"
+                              />
+                            </svg>
+                            <span>Opens in new tab</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex-grow min-w-0">
-                        <h5 className="font-semibold text-gray-900 group-hover:text-blue-800 transition-colors duration-200 mb-1">
-                          {link.label || `External Link ${index + 1}`}
-                        </h5>
-                        <p className="text-sm text-blue-700 truncate font-medium">
-                          {link.url}
-                        </p>
-                        <div className="flex items-center mt-2 text-xs text-blue-600">
-                          <svg
-                            className="w-3 h-3 mr-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7l10 10M17 7l-5 5"
-                            />
-                          </svg>
-                          <span>Opens in new tab</span>
-                        </div>
-                      </div>
-                    </div>
-                  </a>
+                    </a>
+                    
+                    {/* Admin Remove Button */}
+                    {profile?.isAdmin && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          removeSectionLink(link.label);
+                        }}
+                        className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 rounded-full transition-colors duration-200 backdrop-blur-sm opacity-0 group-hover:opacity-100"
+                        title="Remove link"
+                      >
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -976,8 +1359,9 @@ const Course = () => {
   const [updatingThumbnail, setUpdatingThumbnail] = useState(false);
   const [introductionImageInput, setIntroductionImageInput] = useState(false);
   const [introductionImageFiles, setIntroductionImageFiles] = useState(null);
-  const [introductionImagePreview, setIntroductionImagePreview] = useState(null);
-  
+  const [introductionImagePreview, setIntroductionImagePreview] =
+    useState(null);
+
   // Section Video Management States
   const [sectionVideoInput, setSectionVideoInput] = useState({});
   const [sectionVideoFiles, setSectionVideoFiles] = useState({});
@@ -985,12 +1369,12 @@ const Course = () => {
 
   // Course Access Management States
   const [showAccessManagement, setShowAccessManagement] = useState(false);
-  const [emailInput, setEmailInput] = useState('');
+  const [emailInput, setEmailInput] = useState("");
   const [grantingAccess, setGrantingAccess] = useState(false);
 
   // Admin Access Management States
   const [showAdminManagement, setShowAdminManagement] = useState(false);
-  const [adminEmailInput, setAdminEmailInput] = useState('');
+  const [adminEmailInput, setAdminEmailInput] = useState("");
   const [grantingAdminAccess, setGrantingAdminAccess] = useState(false);
 
   const { courseId } = useParams();
@@ -1365,40 +1749,44 @@ const Course = () => {
   function handleIntroductionImageFiles(e) {
     const files = Array.from(e.target.files);
     setIntroductionImageFiles(files);
-    setIntroductionImagePreview(files.map((file)=>URL.createObjectURL(file)))
+    setIntroductionImagePreview(files.map((file) => URL.createObjectURL(file)));
   }
 
   async function addIntroductionImages() {
-    try{
+    try {
       if (!introductionImageFiles || introductionImageFiles.length === 0) {
         toast.error("Please select introduction images to upload.");
         return;
       }
 
       setUpdatingThumbnail(true);
-      const formData = new FormData;
-      introductionImageFiles.forEach((file)=>{
-        formData.append("courseIntroductionImages",file);
-      })
-      formData.append("courseId",courseId);
+      const formData = new FormData();
+      introductionImageFiles.forEach((file) => {
+        formData.append("courseIntroductionImages", file);
+      });
+      formData.append("courseId", courseId);
 
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/addIntroductionImages`,formData,
-        {headers:{
-          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
-        }}
-      )
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/addIntroductionImages`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
       console.log(response);
-      if(response.data.success){
+      if (response.data.success) {
         toast.success("Introduction Images Added Successfully");
         setCourse(response.data.course);
         setIntroductionImageInput(false);
         setIntroductionImageFiles(null);
         setIntroductionImagePreview(null);
       }
-    }catch(err){
+    } catch (err) {
       console.error("Error uploading introduction images:", err);
       toast.error("An error occurred while uploading the introduction images.");
-    }finally{
+    } finally {
       setUpdatingThumbnail(false);
     }
   }
@@ -1406,19 +1794,22 @@ const Course = () => {
   // Section Video Management Functions
   function handleSectionVideoFiles(e, sectionId) {
     const files = Array.from(e.target.files);
-    setSectionVideoFiles(prev => ({
+    setSectionVideoFiles((prev) => ({
       ...prev,
-      [sectionId]: files
+      [sectionId]: files,
     }));
-    setSectionVideoPreview(prev => ({
+    setSectionVideoPreview((prev) => ({
       ...prev,
-      [sectionId]: files.map((file) => URL.createObjectURL(file))
+      [sectionId]: files.map((file) => URL.createObjectURL(file)),
     }));
   }
 
   async function addSectionVideos(sectionId) {
     try {
-      if (!sectionVideoFiles[sectionId] || sectionVideoFiles[sectionId].length === 0) {
+      if (
+        !sectionVideoFiles[sectionId] ||
+        sectionVideoFiles[sectionId].length === 0
+      ) {
         toast.error("Please select section videos to upload.");
         return;
       }
@@ -1439,22 +1830,25 @@ const Course = () => {
           },
         }
       );
-      
+
       console.log(response);
       if (response.data.success) {
         toast.success("Section Videos Added Successfully");
         // Update the course state with the updated section
-        setCourse(prev => ({
+        setCourse((prev) => ({
           ...prev,
-          sections: prev.sections.map(section => 
-            section._id === sectionId 
-              ? { ...section, sectionVideoUrl: response.data.section.sectionVideoUrl }
+          sections: prev.sections.map((section) =>
+            section._id === sectionId
+              ? {
+                  ...section,
+                  sectionVideoUrl: response.data.section.sectionVideoUrl,
+                }
               : section
-          )
+          ),
         }));
-        setSectionVideoInput(prev => ({ ...prev, [sectionId]: false }));
-        setSectionVideoFiles(prev => ({ ...prev, [sectionId]: null }));
-        setSectionVideoPreview(prev => ({ ...prev, [sectionId]: null }));
+        setSectionVideoInput((prev) => ({ ...prev, [sectionId]: false }));
+        setSectionVideoFiles((prev) => ({ ...prev, [sectionId]: null }));
+        setSectionVideoPreview((prev) => ({ ...prev, [sectionId]: null }));
       }
     } catch (err) {
       console.error("Error uploading section videos:", err);
@@ -1487,13 +1881,16 @@ const Course = () => {
       if (response.data.success) {
         toast.success("Section Video Removed Successfully");
         // Update the course state with the updated section
-        setCourse(prev => ({
+        setCourse((prev) => ({
           ...prev,
-          sections: prev.sections.map(section => 
-            section._id === sectionId 
-              ? { ...section, sectionVideoUrl: response.data.section.sectionVideoUrl }
+          sections: prev.sections.map((section) =>
+            section._id === sectionId
+              ? {
+                  ...section,
+                  sectionVideoUrl: response.data.section.sectionVideoUrl,
+                }
               : section
-          )
+          ),
         }));
       }
     } catch (err) {
@@ -1507,19 +1904,19 @@ const Course = () => {
   // Course Access Management Function
   async function grantCourseAccess() {
     if (!emailInput.trim()) {
-      toast.error('Please enter at least one email address');
+      toast.error("Please enter at least one email address");
       return;
     }
 
     try {
       setGrantingAccess(true);
-      
+
       // Parse comma-separated emails and clean them
       const emailArray = emailInput
-        .split(',')
-        .map(email => email.trim())
-        .filter(email => email.length > 0)
-        .filter(email => {
+        .split(",")
+        .map((email) => email.trim())
+        .filter((email) => email.length > 0)
+        .filter((email) => {
           // Basic email validation
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(email)) {
@@ -1530,7 +1927,7 @@ const Course = () => {
         });
 
       if (emailArray.length === 0) {
-        toast.error('No valid email addresses found');
+        toast.error("No valid email addresses found");
         return;
       }
 
@@ -1538,25 +1935,29 @@ const Course = () => {
         `${import.meta.env.VITE_BASE_URL}/user/giveCourseAccess`,
         {
           courseId: courseId,
-          emailArray: emailArray
+          emailArray: emailArray,
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
-          }
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
         }
       );
       console.log(response);
       if (response.data.success) {
-        toast.success(`Course access granted to ${emailArray.length} user${emailArray.length !== 1 ? 's' : ''}`);
-        setEmailInput('');
+        toast.success(
+          `Course access granted to ${emailArray.length} user${
+            emailArray.length !== 1 ? "s" : ""
+          }`
+        );
+        setEmailInput("");
         setShowAccessManagement(false);
       } else {
-        toast.error(response.data.msg || 'Failed to grant course access');
+        toast.error(response.data.msg || "Failed to grant course access");
       }
     } catch (error) {
-      console.error('Error granting course access:', error);
-      toast.error('An error occurred while granting course access');
+      console.error("Error granting course access:", error);
+      toast.error("An error occurred while granting course access");
     } finally {
       setGrantingAccess(false);
     }
@@ -1565,48 +1966,46 @@ const Course = () => {
   // Admin Access Management Function
   async function grantAdminAccess() {
     if (!adminEmailInput.trim()) {
-      toast.error('Please enter an email address');
+      toast.error("Please enter an email address");
       return;
     }
 
     try {
       setGrantingAdminAccess(true);
-      
+
       // Basic email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(adminEmailInput.trim())) {
-        toast.error('Please enter a valid email address');
+        toast.error("Please enter a valid email address");
         return;
       }
 
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/user/giveAdminAccess`,
         {
-          email: adminEmailInput.trim()
+          email: adminEmailInput.trim(),
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
-          }
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
         }
       );
-      
+
       if (response.data.success) {
         toast.success(`Admin access granted to ${adminEmailInput.trim()}`);
-        setAdminEmailInput('');
+        setAdminEmailInput("");
         setShowAdminManagement(false);
       } else {
-        toast.error(response.data.msg || 'Failed to grant admin access');
+        toast.error(response.data.msg || "Failed to grant admin access");
       }
     } catch (error) {
-      console.error('Error granting admin access:', error);
-      toast.error('An error occurred while granting admin access');
+      console.error("Error granting admin access:", error);
+      toast.error("An error occurred while granting admin access");
     } finally {
       setGrantingAdminAccess(false);
     }
   }
-
-
 
   return (
     <>
@@ -1621,7 +2020,10 @@ const Course = () => {
       <div className="min-h-screen bg-gray-50">
         {/* Fullscreen Hero Image Section */}
         <section className="relative pt-16">
-          <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900" style={{height: 'calc(100vh - 4rem)'}}>
+          <div
+            className="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900"
+            style={{ height: "calc(100vh - 4rem)" }}
+          >
             <img
               src={
                 course.courseThumbnailImage ||
@@ -1974,7 +2376,8 @@ const Course = () => {
                           Email Addresses
                         </label>
                         <p className="text-xs text-gray-500 mb-3">
-                          Enter email addresses separated by commas. Users with these emails will get access to this course.
+                          Enter email addresses separated by commas. Users with
+                          these emails will get access to this course.
                         </p>
                         <textarea
                           value={emailInput}
@@ -1989,25 +2392,34 @@ const Course = () => {
                       {emailInput.trim() && (
                         <div className="mb-4">
                           <p className="text-sm font-medium text-gray-700 mb-2">
-                            Email Preview ({emailInput.split(',').filter(email => email.trim().length > 0).length} emails):
+                            Email Preview (
+                            {
+                              emailInput
+                                .split(",")
+                                .filter((email) => email.trim().length > 0)
+                                .length
+                            }{" "}
+                            emails):
                           </p>
                           <div className="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto">
                             <div className="flex flex-wrap gap-2">
                               {emailInput
-                                .split(',')
-                                .map(email => email.trim())
-                                .filter(email => email.length > 0)
+                                .split(",")
+                                .map((email) => email.trim())
+                                .filter((email) => email.length > 0)
                                 .map((email, index) => (
                                   <span
                                     key={index}
                                     className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
                                       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-                                        ? 'bg-green-100 text-green-800 border border-green-200'
-                                        : 'bg-red-100 text-red-800 border border-red-200'
+                                        ? "bg-green-100 text-green-800 border border-green-200"
+                                        : "bg-red-100 text-red-800 border border-red-200"
                                     }`}
                                   >
                                     {email}
-                                    {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? (
+                                    {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                                      email
+                                    ) ? (
                                       <svg
                                         className="w-3 h-3 ml-1"
                                         fill="currentColor"
@@ -2048,9 +2460,24 @@ const Course = () => {
                         >
                           {grantingAccess ? (
                             <>
-                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                               </svg>
                               Granting Access...
                             </>
@@ -2078,7 +2505,7 @@ const Course = () => {
                           <button
                             onClick={() => {
                               setShowAccessManagement(false);
-                              setEmailInput('');
+                              setEmailInput("");
                             }}
                             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
                           >
@@ -2130,16 +2557,20 @@ const Course = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900">Admin Access Management</h3>
-                      <p className="text-purple-600 text-sm">Grant admin privileges to specific users</p>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        Admin Access Management
+                      </h3>
+                      <p className="text-purple-600 text-sm">
+                        Grant admin privileges to specific users
+                      </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowAdminManagement(!showAdminManagement)}
                     className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
                       showAdminManagement
-                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        : 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
+                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        : "bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                     }`}
                   >
                     {showAdminManagement ? (
@@ -2183,15 +2614,22 @@ const Course = () => {
                 {showAdminManagement && (
                   <div className="mt-6 p-6 bg-white rounded-lg border border-purple-200 shadow-sm">
                     <div className="mb-6">
-                      <h4 className="text-lg font-medium text-gray-900 mb-2">Grant Admin Access</h4>
+                      <h4 className="text-lg font-medium text-gray-900 mb-2">
+                        Grant Admin Access
+                      </h4>
                       <p className="text-gray-600 text-sm">
-                        Enter an email address to grant admin privileges. The user will be able to manage courses, sections, and chapters.
+                        Enter an email address to grant admin privileges. The
+                        user will be able to manage courses, sections, and
+                        chapters.
                       </p>
                     </div>
 
                     <div className="space-y-4">
                       <div>
-                        <label htmlFor="adminEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label
+                          htmlFor="adminEmail"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
                           User Email Address
                         </label>
                         <input
@@ -2205,19 +2643,41 @@ const Course = () => {
                         />
                         {adminEmailInput && (
                           <div className="mt-2 flex items-center">
-                            {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmailInput) ? (
+                            {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                              adminEmailInput
+                            ) ? (
                               <div className="flex items-center text-green-600">
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                <svg
+                                  className="w-4 h-4 mr-1"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
-                                <span className="text-sm">Valid email address</span>
+                                <span className="text-sm">
+                                  Valid email address
+                                </span>
                               </div>
                             ) : (
                               <div className="flex items-center text-red-600">
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                <svg
+                                  className="w-4 h-4 mr-1"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
-                                <span className="text-sm">Invalid email format</span>
+                                <span className="text-sm">
+                                  Invalid email format
+                                </span>
                               </div>
                             )}
                           </div>
@@ -2240,9 +2700,14 @@ const Course = () => {
                             />
                           </svg>
                           <div>
-                            <h5 className="text-sm font-medium text-yellow-800 mb-1">Important Notice</h5>
+                            <h5 className="text-sm font-medium text-yellow-800 mb-1">
+                              Important Notice
+                            </h5>
                             <p className="text-sm text-yellow-700">
-                              Admin privileges grant full access to the platform including course management, user management, and system settings. Only grant admin access to trusted users.
+                              Admin privileges grant full access to the platform
+                              including course management, user management, and
+                              system settings. Only grant admin access to
+                              trusted users.
                             </p>
                           </div>
                         </div>
@@ -2251,14 +2716,35 @@ const Course = () => {
                       <div className="flex space-x-3 pt-4">
                         <button
                           onClick={grantAdminAccess}
-                          disabled={!adminEmailInput.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmailInput) || grantingAdminAccess}
+                          disabled={
+                            !adminEmailInput.trim() ||
+                            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                              adminEmailInput
+                            ) ||
+                            grantingAdminAccess
+                          }
                           className="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                         >
                           {grantingAdminAccess ? (
                             <>
-                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                               </svg>
                               Granting Admin Access...
                             </>
@@ -2286,7 +2772,7 @@ const Course = () => {
                           <button
                             onClick={() => {
                               setShowAdminManagement(false);
-                              setAdminEmailInput('');
+                              setAdminEmailInput("");
                             }}
                             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
                           >
@@ -2436,24 +2922,48 @@ const Course = () => {
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <svg
+                        className="w-5 h-5 text-purple-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900">Course Gallery</h3>
-                      <p className="text-sm text-gray-600">Visual introduction to the course content</p>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        Course Gallery
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Visual introduction to the course content
+                      </p>
                     </div>
                   </div>
 
                   {/* Admin Add Images Button */}
                   {profile.isAdmin && !introductionImageInput && (
-                    <button 
+                    <button
                       onClick={() => setIntroductionImageInput(true)}
                       className="bg-purple-600 text-white px-4 py-2 rounded-md font-medium hover:bg-purple-700 transition-colors duration-200 flex items-center"
                     >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
                       </svg>
                       Add Images
                     </button>
@@ -2468,27 +2978,51 @@ const Course = () => {
                       <div className="space-y-4">
                         <div className="flex justify-center">
                           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            <svg
+                              className="w-6 h-6 text-purple-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                              />
                             </svg>
                           </div>
                         </div>
                         <div>
-                          <p className="text-lg font-medium text-gray-900 mb-1">Upload course gallery images</p>
-                          <p className="text-sm text-gray-600">Select multiple images to showcase your course</p>
+                          <p className="text-lg font-medium text-gray-900 mb-1">
+                            Upload course gallery images
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Select multiple images to showcase your course
+                          </p>
                         </div>
                         <div>
                           <label className="cursor-pointer">
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              multiple 
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
                               onChange={handleIntroductionImageFiles}
                               className="hidden"
                             />
                             <span className="bg-purple-600 text-white px-6 py-2 rounded-md font-medium hover:bg-purple-700 transition-colors duration-200 inline-flex items-center">
-                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              <svg
+                                className="w-4 h-4 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4v16m8-8H4"
+                                />
                               </svg>
                               Choose Images
                             </span>
@@ -2498,86 +3032,143 @@ const Course = () => {
                     </div>
 
                     {/* Preview Section */}
-                    {introductionImageFiles && introductionImageFiles.length > 0 && (
-                      <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-                        <div className="flex items-center mb-4">
-                          <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <h4 className="text-lg font-medium text-gray-900">Preview ({introductionImageFiles.length} images selected)</h4>
-                        </div>
-                        
-                        {/* Image Previews Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
-                          {introductionImagePreview && introductionImagePreview.map((preview, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={preview}
-                                alt={`Preview ${index + 1}`}
-                                className="w-full h-24 object-cover rounded-lg border border-gray-200"
-                              />
-                              <div className="absolute top-1 left-1 bg-purple-600/90 text-white px-2 py-1 rounded text-xs font-medium">
-                                {index + 1}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <button
-                            onClick={addIntroductionImages}
-                            disabled={updatingThumbnail}
-                            className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
-                          >
-                            {updatingThumbnail ? (
-                              <>
-                                <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Uploading Images...
-                              </>
-                            ) : (
-                              <>
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                                Upload Images
-                              </>
-                            )}
-                          </button>
-                          
-                          {!updatingThumbnail && (
-                            <button
-                              onClick={() => {
-                                setIntroductionImageInput(false);
-                                setIntroductionImageFiles(null);
-                                setIntroductionImagePreview(null);
-                              }}
-                              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
+                    {introductionImageFiles &&
+                      introductionImageFiles.length > 0 && (
+                        <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+                          <div className="flex items-center mb-4">
+                            <svg
+                              className="w-5 h-5 text-green-500 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                              Cancel
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <h4 className="text-lg font-medium text-gray-900">
+                              Preview ({introductionImageFiles.length} images
+                              selected)
+                            </h4>
+                          </div>
+
+                          {/* Image Previews Grid */}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+                            {introductionImagePreview &&
+                              introductionImagePreview.map((preview, index) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={preview}
+                                    alt={`Preview ${index + 1}`}
+                                    className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                                  />
+                                  <div className="absolute top-1 left-1 bg-purple-600/90 text-white px-2 py-1 rounded text-xs font-medium">
+                                    {index + 1}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                              onClick={addIntroductionImages}
+                              disabled={updatingThumbnail}
+                              className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                            >
+                              {updatingThumbnail ? (
+                                <>
+                                  <svg
+                                    className="animate-spin w-4 h-4 mr-2"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                  </svg>
+                                  Uploading Images...
+                                </>
+                              ) : (
+                                <>
+                                  <svg
+                                    className="w-4 h-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                                    />
+                                  </svg>
+                                  Upload Images
+                                </>
+                              )}
                             </button>
-                          )}
+
+                            {!updatingThumbnail && (
+                              <button
+                                onClick={() => {
+                                  setIntroductionImageInput(false);
+                                  setIntroductionImageFiles(null);
+                                  setIntroductionImagePreview(null);
+                                }}
+                                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
+                              >
+                                <svg
+                                  className="w-4 h-4 mr-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                                Cancel
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 )}
 
                 {/* Current Gallery Images */}
-                {course.courseIntroductionImages && course.courseIntroductionImages.length > 0 ? (
+                {course.courseIntroductionImages &&
+                course.courseIntroductionImages.length > 0 ? (
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <p className="text-sm text-gray-600">
-                        {course.courseIntroductionImages.length} {course.courseIntroductionImages.length === 1 ? 'image' : 'images'} in gallery
+                        {course.courseIntroductionImages.length}{" "}
+                        {course.courseIntroductionImages.length === 1
+                          ? "image"
+                          : "images"}{" "}
+                        in gallery
                       </p>
                       {profile.isAdmin && (
-                        <span className="text-xs text-gray-500">Click on an image to remove it</span>
+                        <span className="text-xs text-gray-500">
+                          Click on an image to remove it
+                        </span>
                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2591,10 +3182,10 @@ const Course = () => {
                             alt={`Course gallery ${index + 1}`}
                             className="w-full h-48 object-cover"
                           />
-                          
+
                           {/* Image Overlay */}
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200"></div>
-                          
+
                           {/* Image Number Badge */}
                           <div className="absolute top-3 left-3 bg-white/90 text-gray-800 px-2 py-1 rounded-md text-xs font-medium">
                             {index + 1}
@@ -2606,8 +3197,18 @@ const Course = () => {
                               onClick={() => handleRemoveImage(image)}
                               className="absolute top-3 right-3 bg-red-600 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-700 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
                               </svg>
                             </button>
                           )}
@@ -2619,19 +3220,43 @@ const Course = () => {
                   /* No Images State */
                   <div className="text-center py-12">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <svg
+                        className="w-8 h-8 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                     </div>
-                    <h4 className="text-lg font-medium text-gray-700 mb-2">No Gallery Images</h4>
-                    <p className="text-gray-500 mb-4">Add some images to showcase your course visually</p>
+                    <h4 className="text-lg font-medium text-gray-700 mb-2">
+                      No Gallery Images
+                    </h4>
+                    <p className="text-gray-500 mb-4">
+                      Add some images to showcase your course visually
+                    </p>
                     {profile?.isAdmin && !introductionImageInput && (
-                      <button 
+                      <button
                         onClick={() => setIntroductionImageInput(true)}
                         className="inline-flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
                       >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
                         </svg>
                         Add First Images
                       </button>
@@ -2717,6 +3342,7 @@ const Course = () => {
                     addSectionVideos={addSectionVideos}
                     removeSectionVideo={removeSectionVideo}
                     updatingThumbnail={updatingThumbnail}
+                    setCourse={setCourse}
                   />
                 ))
               ) : (

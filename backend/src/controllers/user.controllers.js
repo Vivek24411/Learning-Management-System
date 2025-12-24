@@ -1246,3 +1246,39 @@ module.exports.giveAdminAccess = async (req, res, next) => {
     msg: "Admin access granted successfully",
   });
 };
+
+module.exports.deleteSectionLink = async(req,res)=>{
+  const error = validationResult(req)
+  if(!error.isEmpty()){
+    return res.json({success:false, msg:error.array()});
+  }
+
+  const {sectionId, label} = req.body;
+
+  const section = await sectionModel.findById(sectionId);
+
+  section.externalLinks = section.externalLinks.filter((ext)=>{
+    return ext.label !== label;
+  })
+
+  await section.save();
+
+  return res.json({success:true, externalLinks:section.externalLinks})
+}
+
+module.exports.addSectionLink = async(req,res)=>{
+  const error = validationResult(req);
+
+  if(!error.isEmpty()){
+    return res.json({success:false, msg:error.array()})
+  }
+
+  const {sectionId, sectionLink} = req.body;
+
+
+  const section = await sectionModel.findById(sectionId);
+  section.externalLinks = [...section.externalLinks, ...sectionLink];
+  await section.save();
+
+  return res.json({success:true, externalLinks: section.externalLinks});
+}
