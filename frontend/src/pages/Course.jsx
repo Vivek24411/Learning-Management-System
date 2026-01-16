@@ -1820,41 +1820,86 @@ const Course = () => {
       }
 
       setUpdatingThumbnail(true);
-      const formData = new FormData();
-      sectionVideoFiles[sectionId].forEach((file) => {
-        formData.append("sectionVideo", file);
-      });
-      formData.append("sectionId", sectionId);
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/user/addSectionVideos`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
-          },
+      console.log(sectionVideoFiles);
+      
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/user/generateUrl`,{
+        headers:{
+          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
+        },
+        params:{
+          fileName: sectionVideoFiles[sectionId][0].name,
+          fileType: sectionVideoFiles[sectionId][0].type
         }
-      );
-
+      })
       console.log(response);
-      if (response.data.success) {
-        toast.success("Section Videos Added Successfully");
-        // Update the course state with the updated section
-        setCourse((prev) => ({
-          ...prev,
-          sections: prev.sections.map((section) =>
-            section._id === sectionId
-              ? {
-                  ...section,
-                  sectionVideoUrl: response.data.section.sectionVideoUrl,
-                }
-              : section
-          ),
-        }));
-        setSectionVideoInput((prev) => ({ ...prev, [sectionId]: false }));
-        setSectionVideoFiles((prev) => ({ ...prev, [sectionId]: null }));
-        setSectionVideoPreview((prev) => ({ ...prev, [sectionId]: null }));
+      
+      if(response.data.success){
+        const {uploadUrl, fileKey} = response.data.data;
+        const response2 = await axios.put(uploadUrl, sectionVideoFiles[sectionId][0], {
+          headers: { "Content-Type":  sectionVideoFiles[sectionId][0].type },
+        });
+
+        console.log(response2);
+
+        const s3Url = `https://${import.meta.env.VITE_BUCKETNAME}.s3.${import.meta.env.VITE_REGION}.amazonaws.com/${fileKey}`;
+
+        console.log(s3Url);
+        
+
+        const response1 = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/saveSectionVideoUrl`,{
+          videoUrl: s3Url,
+          sectionId
+        },{
+          headers:{
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
+          }
+        })
+
+        console.log(response1);
+        
+        if(response1.data.success){
+          toast.success("Video Saved Successfully");
+        }else{
+          toast.error(response1.data.msg);
+        }
+      }else{
+        toast.error(response.data.msg);
       }
+      // const formData = new FormData();
+      // sectionVideoFiles[sectionId].forEach((file) => {
+      //   formData.append("sectionVideo", file);
+      // });
+      // formData.append("sectionId", sectionId);
+
+      // const response = await axios.post(
+      //   `${import.meta.env.VITE_BASE_URL}/user/addSectionVideos`,
+      //   formData,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+      //     },
+      //   }
+      // );
+
+      // console.log(response);
+      // if (response.data.success) {
+      //   toast.success("Section Videos Added Successfully");
+      //   // Update the course state with the updated section
+      //   setCourse((prev) => ({
+      //     ...prev,
+      //     sections: prev.sections.map((section) =>
+      //       section._id === sectionId
+      //         ? {
+      //             ...section,
+      //             sectionVideoUrl: response.data.section.sectionVideoUrl,
+      //           }
+      //         : section
+      //     ),
+      //   }));
+      //   setSectionVideoInput((prev) => ({ ...prev, [sectionId]: false }));
+      //   setSectionVideoFiles((prev) => ({ ...prev, [sectionId]: null }));
+      //   setSectionVideoPreview((prev) => ({ ...prev, [sectionId]: null }));
+      // }
     } catch (err) {
       console.error("Error uploading section videos:", err);
       toast.error("An error occurred while uploading the section videos.");

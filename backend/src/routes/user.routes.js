@@ -1,10 +1,11 @@
 const express = require("express");
 const userRouter = express.Router();
 const {body, query} = require("express-validator");
-const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, removeSectionVideo, addSectionVideos, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos, giveAccessToCourse, giveAdminAccess, deleteSectionLink, addSectionLink } = require("../controllers/user.controllers");
+const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, removeSectionVideo, addSectionVideos, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos, giveAccessToCourse, giveAdminAccess, deleteSectionLink, addSectionLink, generateUrl, saveSectionVideoUrl } = require("../controllers/user.controllers");
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const { uploadCourseThumbnail } = require("../middlewares/upload");
 const upload = require("../middlewares/upload");
+const videoUpload = require("../middlewares/videoUpload");
 
 
 userRouter.post("/sendOTP",[
@@ -174,7 +175,7 @@ userRouter.post("/removeSectionVideo",adminAuth,[
     body("videoURL").isString().isLength({min:1})
 ],removeSectionVideo)
 
-userRouter.post("/addSectionVideos",adminAuth,upload.array("sectionVideo", 5),[
+userRouter.post("/addSectionVideos",adminAuth,upload.array("sectionVideo",5),[
     body("sectionId").isMongoId()
 ],addSectionVideos)
 
@@ -238,5 +239,11 @@ userRouter.post("/addSectionLink",[
     body("sectionId").isMongoId(),
     body("sectionLink").isArray()
 ],addSectionLink)
+
+userRouter.get("/generateUrl",generateUrl);
+
+userRouter.post("/saveSectionVideoUrl",adminAuth,[
+
+],saveSectionVideoUrl)
 
 module.exports = userRouter;

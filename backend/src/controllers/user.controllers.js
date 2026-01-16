@@ -9,6 +9,8 @@ const sectionModel = require("../models/section.model");
 const Razorpay = require("razorpay");
 const orderModel = require("../models/order.model");
 const crypto = require("crypto");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { getPresignedUrl } = require("../config/s3Service");
 
 function checkValidation(req, res) {
   const error = validationResult(req);
@@ -1247,38 +1249,74 @@ module.exports.giveAdminAccess = async (req, res, next) => {
   });
 };
 
-module.exports.deleteSectionLink = async(req,res)=>{
-  const error = validationResult(req)
-  if(!error.isEmpty()){
-    return res.json({success:false, msg:error.array()});
+module.exports.deleteSectionLink = async (req, res) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
   }
 
-  const {sectionId, label} = req.body;
+  const { sectionId, label } = req.body;
 
   const section = await sectionModel.findById(sectionId);
 
-  section.externalLinks = section.externalLinks.filter((ext)=>{
+  section.externalLinks = section.externalLinks.filter((ext) => {
     return ext.label !== label;
-  })
+  });
 
   await section.save();
 
-  return res.json({success:true, externalLinks:section.externalLinks})
-}
+  return res.json({ success: true, externalLinks: section.externalLinks });
+};
 
-module.exports.addSectionLink = async(req,res)=>{
+module.exports.addSectionLink = async (req, res) => {
   const error = validationResult(req);
 
-  if(!error.isEmpty()){
-    return res.json({success:false, msg:error.array()})
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
   }
 
-  const {sectionId, sectionLink} = req.body;
-
+  const { sectionId, sectionLink } = req.body;
 
   const section = await sectionModel.findById(sectionId);
   section.externalLinks = [...section.externalLinks, ...sectionLink];
   await section.save();
 
-  return res.json({success:true, externalLinks: section.externalLinks});
+  return res.json({ success: true, externalLinks: section.externalLinks });
+};
+
+module.exports.generateUrl = async (req, res, next) => {
+  const { fileName, fileType } = req.query;
+  console.log(fileName);
+  console.log(fileType);
+  
+  
+  try {
+    const data = await getPresignedUrl(fileName, fileType);
+    console.log(data);
+    
+    res.json({ success: true, data });
+  } catch (error) {
+    res.json({ success: false, msg: error.message });
+  }
+};
+
+module.exports.saveSectionVideoUrl = async(req,res)=>{
+  const error = validationResult(req);
+  if(!error.isEmpty()){
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const {sectionId,videoUrl}=req.body;
+
+  console.log(sectionId,videoUrl);
+  
+
+  const section=await sectionModel.findById(sectionId);
+  if(!section){
+    return res.json({ success: false, msg: "Section not found" });
+  }
+
+  section.sectionVideoUrl.push(videoUrl);
+  await section.save();
+  return res.json({ success: true, msg: "Video URLs saved successfully" });
 }

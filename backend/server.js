@@ -6,7 +6,10 @@ const app = require("./src/app");
 
 const server = http.createServer(app);
 
-server.listen(process.env.PORT,(()=>{
+
+server.timeout = 300000;
+
+server.listen(process.env.PORT, () => {
     console.log("Server is running on port 3000");
-}))
+});
 
