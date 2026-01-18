@@ -653,12 +653,13 @@ const SectionItem = ({
 
       {/* Chapters List with Smooth Animation */}
       <div
-        className={`transition-all duration-500 ease-in-out ${
+        className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${
           isExpanded
-            ? "max-h-[2000px] opacity-100"
-            : "max-h-0 opacity-0 overflow-hidden"
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
         }`}
       >
+        <div className="overflow-hidden">
         <div className="p-6 space-y-6">
           {/* Section Videos */}
           {section.sectionVideoUrl && section.sectionVideoUrl.length > 0 && (
@@ -1347,7 +1348,8 @@ const SectionItem = ({
               )}
             </div>
           )}
-        </div>
+          </div>
+      </div>
       </div>
     </div>
   );
