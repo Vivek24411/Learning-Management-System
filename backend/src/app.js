@@ -10,7 +10,7 @@ dbConnection();
 
 app.use(cors({
     origin: (origin, callback)=>{
-        if(!origin || origin === "https://learning-management-system-mocha-seven.vercel.app" || origin === "https://edvance.devx6.live" || origin.startsWith("http://localhost") || origin === "https://iitr.ac.in" || origin === "https://www.iitr.ac.in") {
+        if(!origin || origin === "https://learning-management-system-mocha-seven.vercel.app" || origin === "https://edvance.devx6.live" || origin ==="https://iitr.ac.in/edvance/v1" || origin.startsWith("http://localhost" || origin === "https://iitr.ac.in" || origin === "https://www.iitr.ac.in")) {
             callback(null, true);
         } else {
             callback(new Error("Not allowed"), false);
