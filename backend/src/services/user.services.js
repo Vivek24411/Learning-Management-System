@@ -10,7 +10,7 @@ module.exports.sendOTP = async(email,OTP)=>{
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const {data,error} = await resend.emails.send({
-        from: "Edvance <noreply@devx6.live>",
+        from: "Edvance <noreply@expediva.in>",
         to: email,
         subject: "Edvance - Your OTP Verification Code",
         text : `Your OTP verification code is: ${OTP}`,
