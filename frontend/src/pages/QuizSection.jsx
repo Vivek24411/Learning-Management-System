@@ -116,7 +116,7 @@ const QuizSection = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Page Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#7A7F3F] rounded-2xl mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#6366F1] rounded-2xl mb-4">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -135,7 +135,7 @@ const QuizSection = () => {
                 <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-[#7A7F3F] rounded-lg flex items-center justify-center">
+                      <div className="w-8 h-8 bg-[#6366F1] rounded-lg flex items-center justify-center">
                         <span className="text-white font-semibold text-sm">{index + 1}</span>
                       </div>
                       <h3 className="text-lg font-semibold text-gray-900">Question {index + 1}</h3>
@@ -163,7 +163,7 @@ const QuizSection = () => {
                     </label>
                     <textarea
                       rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none"
                       placeholder="Enter your question here..."
                       value={quiz.question}
                       onClick={() => emptyOnClick(index, "question")}
@@ -185,7 +185,7 @@ const QuizSection = () => {
                         
                         <input
                           type="text"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                           placeholder={`Option ${String.fromCharCode(64 + optionNum)}`}
                           value={quiz[optionNum]}
                           onClick={() => emptyOnClick(index, optionNum.toString())}
@@ -248,7 +248,7 @@ const QuizSection = () => {
             <button
               onClick={addQuiz}
               disabled={loading}
-              className="inline-flex items-center justify-center px-8 py-3 bg-[#7A7F3F] text-white rounded-lg font-medium hover:bg-[#6A6F35] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center px-8 py-3 bg-[#6366F1] text-white rounded-lg font-medium hover:bg-[#4F46E5] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>

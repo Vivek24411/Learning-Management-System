@@ -145,13 +145,13 @@ const AddSection = () => {
           {/* Main Form Card */}
           <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 border border-stone-200 overflow-hidden">
             {/* Form Header */}
-            <div className="bg-gradient-to-r from-[#7A7F3F]/15 via-[#7A7F3F]/10 to-[#7A7F3F]/5 px-8 py-6 border-b border-stone-200 relative overflow-hidden">
+            <div className="bg-gradient-to-r from-[#6366F1]/15 via-[#6366F1]/10 to-[#4F46E5]/5 px-8 py-6 border-b border-stone-200 relative overflow-hidden">
               {/* Decorative background pattern */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#7A7F3F]/10 to-transparent rounded-full -mt-16 -mr-16"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#6366F1]/10 to-transparent rounded-full -mt-16 -mr-16"></div>
 
               <div className="relative z-10 flex items-center space-x-4">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#7A7F3F] to-[#7A7F3F]/80 rounded-2xl flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#6366F1] to-[#4F46E5]/80 rounded-2xl flex items-center justify-center shadow-lg">
                     <svg
                       className="w-6 h-6 text-white"
                       fill="none"
@@ -184,7 +184,7 @@ const AddSection = () => {
               <div className="space-y-3">
                 <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
                   <svg
-                    className="w-5 h-5 mr-2 text-[#7A7F3F]"
+                    className="w-5 h-5 mr-2 text-[#6366F1]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -205,7 +205,7 @@ const AddSection = () => {
                     value={sectionTitle}
                     onChange={(e) => setSectionTitle(e.target.value)}
                     placeholder="Enter a clear and descriptive section title"
-                    className="w-full px-6 py-4 bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:border-[#7A7F3F] focus:ring-4 focus:ring-[#7A7F3F]/20 focus:bg-white transition-all duration-300 text-lg font-medium shadow-sm hover:shadow-md"
+                    className="w-full px-6 py-4 bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/20 focus:bg-white transition-all duration-300 text-lg font-medium shadow-sm hover:shadow-md"
                     required
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-4">
@@ -233,7 +233,7 @@ const AddSection = () => {
               <div className="space-y-3">
                 <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
                   <svg
-                    className="w-5 h-5 mr-2 text-[#7A7F3F]"
+                    className="w-5 h-5 mr-2 text-[#6366F1]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -256,7 +256,7 @@ const AddSection = () => {
                     onChange={(e) => setSectionDescription(e.target.value)}
                     placeholder="Provide a detailed description of what students will learn in this section..."
                     rows={5}
-                    className="w-full px-6 py-4 bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:border-[#7A7F3F] focus:ring-4 focus:ring-[#7A7F3F]/20 focus:bg-white transition-all duration-300 text-lg resize-none shadow-sm hover:shadow-md"
+                    className="w-full px-6 py-4 bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/20 focus:bg-white transition-all duration-300 text-lg resize-none shadow-sm hover:shadow-md"
                   />
                   <div className="absolute top-4 right-4">
                     <svg
@@ -283,7 +283,7 @@ const AddSection = () => {
               <div className="space-y-3">
                 <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
                   <svg
-                    className="w-5 h-5 mr-2 text-[#7A7F3F]"
+                    className="w-5 h-5 mr-2 text-[#6366F1]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -301,7 +301,7 @@ const AddSection = () => {
                   </span>
                 </label>
 
-                <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#7A7F3F]/50 transition-colors duration-200 bg-gradient-to-br from-stone-50 to-amber-50/30">
+                <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#6366F1]/50 transition-colors duration-200 bg-gradient-to-br from-stone-50 to-amber-50/30">
                   <input
                     type="file"
                     accept="video/*"
@@ -313,7 +313,7 @@ const AddSection = () => {
                   />
                   <label htmlFor="video-upload" className="cursor-pointer">
                     <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-[#7A7F3F] to-[#7A7F3F]/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                      <div className="w-16 h-16 bg-gradient-to-br from-[#6366F1] to-[#4F46E5]/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                         <svg
                           className="w-8 h-8 text-white"
                           fill="none"
@@ -332,7 +332,7 @@ const AddSection = () => {
                         Upload Section Videos
                       </h3>
                       <p className="text-gray-600 text-center mb-4">
-                        <span className="font-semibold text-[#7A7F3F]">
+                        <span className="font-semibold text-[#6366F1]">
                           Click to browse
                         </span>{" "}
                         or drag and drop your video files
@@ -488,7 +488,7 @@ const AddSection = () => {
               <div className="space-y-3">
                 <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
                   <svg
-                    className="w-5 h-5 mr-2 text-[#7A7F3F]"
+                    className="w-5 h-5 mr-2 text-[#6366F1]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -676,7 +676,7 @@ const AddSection = () => {
                   className={`flex-1 px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] flex items-center justify-center ${
                     isSubmitting || !sectionTitle.trim()
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70"
+                      : "bg-gradient-to-r from-[#6366F1] to-[#4F46E5]/80 text-white hover:from-[#6366F1]/90 hover:to-[#4F46E5]/70"
                   }`}
                 >
                   {isSubmitting ? (

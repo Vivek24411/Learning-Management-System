@@ -119,9 +119,9 @@ const EditChapter = () => {
         <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
           <div className="text-center bg-white rounded-lg p-8 shadow-sm border border-gray-200 max-w-md mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-100"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-200"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce delay-100"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce delay-200"></div>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading Chapter</h3>
             <p className="text-gray-600">Please wait while we load the chapter data...</p>
@@ -146,7 +146,7 @@ const EditChapter = () => {
             <p className="text-gray-600 mb-6">Unable to load chapter data. Please try again.</p>
             <button
               onClick={() => navigate(-1)}
-              className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200"
+              className="bg-[#6366F1] text-white px-6 py-3 rounded font-semibold hover:bg-[#4F46E5] transition-colors duration-200"
             >
               Go Back
             </button>
@@ -184,7 +184,7 @@ const EditChapter = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-[#7A7F3F] rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-[#6366F1] rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
@@ -207,7 +207,7 @@ const EditChapter = () => {
                   id="chapterName"
                   value={chapter.chapterName || ""}
                   onChange={(e) => handleInputChange('chapterName', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent transition-colors duration-200 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-colors duration-200 ${
                     errors.chapterName ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Enter chapter name..."
@@ -232,7 +232,7 @@ const EditChapter = () => {
                   rows="3"
                   value={chapter.shortDescription || ""}
                   onChange={(e) => handleInputChange('shortDescription', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none transition-colors duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none transition-colors duration-200"
                   placeholder="Brief description of what this chapter covers (optional)..."
                 />
                 <div className="flex items-center justify-between mt-1">
@@ -255,7 +255,7 @@ const EditChapter = () => {
                   rows="5"
                   value={chapter.chapterSummary || ""}
                   onChange={(e) => handleInputChange('chapterSummary', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none transition-colors duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none transition-colors duration-200"
                   placeholder="Detailed summary of the chapter content, key learning points, and outcomes (optional)..."
                 />
                 <div className="flex items-center justify-between mt-1">
@@ -281,7 +281,7 @@ const EditChapter = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full sm:w-auto px-8 py-3 bg-[#7A7F3F] text-white rounded-lg font-medium hover:bg-[#6A6F35] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full sm:w-auto px-8 py-3 bg-[#6366F1] text-white rounded-lg font-medium hover:bg-[#4F46E5] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {saving ? (
                     <>

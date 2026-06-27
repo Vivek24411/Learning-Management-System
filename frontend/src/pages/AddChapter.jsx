@@ -8,7 +8,7 @@ import axios from 'axios';
 const InputField = ({ label, name, type = "text", placeholder, value, onChange, error, required = true, rows = null, accept = null }) => (
   <div className="space-y-3">
     <label htmlFor={name} className="flex items-center text-lg font-semibold text-gray-900 mb-3">
-      <svg className="w-5 h-5 mr-2 text-[#7A7F3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 mr-2 text-[#6366F1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a1.994 1.994 0 01-1.414.586H7a4 4 0 01-4-4V7a4 4 0 014-4z" />
       </svg>
       {label}
@@ -22,7 +22,7 @@ const InputField = ({ label, name, type = "text", placeholder, value, onChange, 
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={`w-full px-6 py-4 bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:border-[#7A7F3F] focus:ring-4 focus:ring-[#7A7F3F]/20 focus:bg-white transition-all duration-300 text-lg resize-none shadow-sm hover:shadow-md ${
+        className={`w-full px-6 py-4 bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/20 focus:bg-white transition-all duration-300 text-lg resize-none shadow-sm hover:shadow-md ${
           error ? 'border-red-300 bg-red-50' : ''
         }`}
       />
@@ -44,7 +44,7 @@ const InputField = ({ label, name, type = "text", placeholder, value, onChange, 
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={`w-full px-6 py-4 bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:border-[#7A7F3F] focus:ring-4 focus:ring-[#7A7F3F]/20 focus:bg-white transition-all duration-300 text-lg font-medium shadow-sm hover:shadow-md ${
+        className={`w-full px-6 py-4 bg-gradient-to-r from-stone-50 to-amber-50/30 border-2 border-stone-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/20 focus:bg-white transition-all duration-300 text-lg font-medium shadow-sm hover:shadow-md ${
           error ? 'border-red-300 bg-red-50' : ''
         }`}
       />
@@ -335,13 +335,13 @@ const AddChapter = () => {
           <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 border border-stone-200 overflow-hidden">
             
             {/* Form Header */}
-            <div className="bg-gradient-to-r from-[#7A7F3F]/15 via-[#7A7F3F]/10 to-[#7A7F3F]/5 px-8 py-6 border-b border-stone-200 relative overflow-hidden">
+            <div className="bg-gradient-to-r from-[#6366F1]/15 via-[#6366F1]/10 to-[#4F46E5]/5 px-8 py-6 border-b border-stone-200 relative overflow-hidden">
               {/* Decorative background pattern */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#7A7F3F]/10 to-transparent rounded-full -mt-16 -mr-16"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#6366F1]/10 to-transparent rounded-full -mt-16 -mr-16"></div>
               
               <div className="relative z-10 flex items-center space-x-4">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#7A7F3F] to-[#7A7F3F]/80 rounded-2xl flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#6366F1] to-[#4F46E5]/80 rounded-2xl flex items-center justify-center shadow-lg">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -382,14 +382,14 @@ const AddChapter = () => {
               {/* Chapter Thumbnail */}
               <div className="space-y-3">
                 <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
-                  <svg className="w-5 h-5 mr-2 text-[#7A7F3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2 text-[#6366F1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   Chapter Thumbnail Image
                  
                 </label>
                 
-                <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#7A7F3F]/50 transition-colors duration-200">
+                <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#6366F1]/50 transition-colors duration-200">
                   <InputField
                     name="chapterThumbnailImage"
                     type="file"
@@ -413,7 +413,7 @@ const AddChapter = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="text-gray-600 text-center">
-                          <span className="font-semibold text-[#7A7F3F]">Click to upload</span> chapter thumbnail
+                          <span className="font-semibold text-[#6366F1]">Click to upload</span> chapter thumbnail
                           <br />
                           <span className="text-sm">PNG, JPG, GIF up to 5MB</span>
                         </p>
@@ -434,14 +434,14 @@ const AddChapter = () => {
               {/* Chapter Files */}
               <div className="space-y-3">
                 <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
-                  <svg className="w-5 h-5 mr-2 text-[#7A7F3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2 text-[#6366F1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Chapter Files
                   <span className="text-gray-400 text-sm font-normal ml-2">(PDF, DOC - Max 10 files)</span>
                 </label>
                 
-                <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#7A7F3F]/50 transition-colors duration-200">
+                <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#6366F1]/50 transition-colors duration-200">
                   <InputField
                     name="chapterFiles"
                     type="file"
@@ -454,7 +454,7 @@ const AddChapter = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                       <p className="text-gray-600 text-center">
-                        <span className="font-semibold text-[#7A7F3F]">Click to upload files</span>
+                        <span className="font-semibold text-[#6366F1]">Click to upload files</span>
                         <br />
                         <span className="text-sm">PDF, DOC, DOCX up to 10MB each</span>
                       </p>
@@ -506,7 +506,7 @@ const AddChapter = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="flex items-center text-lg font-semibold text-gray-900">
-                    <svg className="w-5 h-5 mr-2 text-[#7A7F3F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 mr-2 text-[#6366F1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                     Chapter Video Files
@@ -516,7 +516,7 @@ const AddChapter = () => {
                   <button
                     type="button"
                     onClick={addVideoEntry}
-                    className="bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white px-4 py-2 rounded-xl text-sm font-medium hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center transform hover:scale-105"
+                    className="bg-gradient-to-r from-[#6366F1] to-[#4F46E5]/80 text-white px-4 py-2 rounded-xl text-sm font-medium hover:from-[#6366F1]/90 hover:to-[#4F46E5]/70 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center transform hover:scale-105"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -549,14 +549,14 @@ const AddChapter = () => {
                         placeholder="Enter video title"
                         value={video.videoTitle}
                         onChange={(e) => updateVideoDetail(index, 'videoTitle', e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-stone-200 rounded-xl focus:border-[#7A7F3F] focus:ring-2 focus:ring-[#7A7F3F]/20 transition-all duration-200"
+                        className="w-full px-4 py-3 border-2 border-stone-200 rounded-xl focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20 transition-all duration-200"
                       />
                     </div>
                     
                     {/* Video File Upload */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Video File</label>
-                      <div className="border-2 border-dashed border-stone-300 rounded-xl p-6 hover:border-[#7A7F3F]/50 transition-colors duration-200">
+                      <div className="border-2 border-dashed border-stone-300 rounded-xl p-6 hover:border-[#6366F1]/50 transition-colors duration-200">
                         <input
                           type="file"
                           accept="video/*"
@@ -587,7 +587,7 @@ const AddChapter = () => {
                               </svg>
                               <div className="text-center">
                                 <p className="text-gray-600">
-                                  <span className="font-semibold text-[#7A7F3F]">Click to upload video file</span>
+                                  <span className="font-semibold text-[#6366F1]">Click to upload video file</span>
                                 </p>
                                 <p className="text-sm text-gray-500">MP4, AVI, MOV up to 100MB</p>
                               </div>
@@ -600,7 +600,7 @@ const AddChapter = () => {
                     {/* Video Thumbnail */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Video Thumbnail</label>
-                      <div className="border-2 border-dashed border-stone-300 rounded-xl p-4 hover:border-[#7A7F3F]/50 transition-colors duration-200">
+                      <div className="border-2 border-dashed border-stone-300 rounded-xl p-4 hover:border-[#6366F1]/50 transition-colors duration-200">
                         <input
                           type="file"
                           accept="image/*"
@@ -637,7 +637,7 @@ const AddChapter = () => {
               <div className="space-y-3">
                 <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
                   <svg
-                    className="w-5 h-5 mr-2 text-[#7A7F3F]"
+                    className="w-5 h-5 mr-2 text-[#6366F1]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -814,7 +814,7 @@ const AddChapter = () => {
                   className={`flex-1 px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] flex items-center justify-center ${
                     isSubmitting || !formData.chapterName.trim()
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70'
+                      : 'bg-gradient-to-r from-[#6366F1] to-[#4F46E5]/80 text-white hover:from-[#6366F1]/90 hover:to-[#4F46E5]/70'
                   }`}
                 >
                   {isSubmitting ? (

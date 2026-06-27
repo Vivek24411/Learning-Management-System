@@ -18,8 +18,8 @@ const InputField = ({ label, name, type = "text", placeholder, value, onChange, 
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent transition-all duration-200 resize-none ${
-          error ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white hover:border-[#7A7F3F]/50'
+        className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-all duration-200 resize-none ${
+          error ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white hover:border-[#6366F1]/50'
         }`}
       />
     ) : (
@@ -30,8 +30,8 @@ const InputField = ({ label, name, type = "text", placeholder, value, onChange, 
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent transition-all duration-200 ${
-          error ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white hover:border-[#7A7F3F]/50'
+        className={`w-full px-4 py-3 border rounded-2xl focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-all duration-200 ${
+          error ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white hover:border-[#6366F1]/50'
         }`}
       />
     )}
@@ -241,7 +241,7 @@ const AddCourse = () => {
           {/* Page Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Add New <span className="text-[#7A7F3F]">Course</span>
+              Add New <span className="text-[#6366F1]">Course</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Share your yoga wisdom with the community. Create a transformative learning experience.
@@ -315,7 +315,7 @@ const AddCourse = () => {
                   <label className="block text-sm font-semibold text-gray-700">
                     Course Thumbnail Image <span className="text-red-500">*</span>
                   </label>
-                  <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#7A7F3F]/50 transition-colors duration-200">
+                  <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#6366F1]/50 transition-colors duration-200">
                     <input
                       type="file"
                       accept="image/*"
@@ -339,7 +339,7 @@ const AddCourse = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
                           <p className="text-gray-600 text-center">
-                            <span className="font-semibold text-[#7A7F3F]">Click to upload</span> or drag and drop
+                            <span className="font-semibold text-[#6366F1]">Click to upload</span> or drag and drop
                             <br />
                             <span className="text-sm">PNG, JPG, GIF up to 5MB</span>
                           </p>
@@ -362,7 +362,7 @@ const AddCourse = () => {
                   <label className="block text-sm font-semibold text-gray-700">
                     Course Introduction Images <span className="text-gray-500">(Optional - Max 5)</span>
                   </label>
-                  <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#7A7F3F]/50 transition-colors duration-200">
+                  <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#6366F1]/50 transition-colors duration-200">
                     <input
                       type="file"
                       accept="image/*"
@@ -377,7 +377,7 @@ const AddCourse = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <p className="text-gray-600 text-center">
-                          <span className="font-semibold text-[#7A7F3F]">Click to upload multiple images</span>
+                          <span className="font-semibold text-[#6366F1]">Click to upload multiple images</span>
                           <br />
                           <span className="text-sm">PNG, JPG, GIF up to 5MB each</span>
                         </p>
@@ -413,10 +413,10 @@ const AddCourse = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className={`w-full bg-gradient-to-r from-[#7A7F3F] to-[#7A7F3F]/80 text-white py-4 px-8 rounded-full font-semibold text-lg transition-all duration-200 ${
+                    className={`w-full bg-gradient-to-r from-[#6366F1] to-[#4F46E5]/80 text-white py-4 px-8 rounded-full font-semibold text-lg transition-all duration-200 ${
                       isSubmitting 
                         ? 'opacity-70 cursor-not-allowed' 
-                        : 'hover:from-[#7A7F3F]/90 hover:to-[#7A7F3F]/70 transform hover:scale-[1.02] shadow-lg hover:shadow-xl'
+                        : 'hover:from-[#6366F1]/90 hover:to-[#4F46E5]/70 transform hover:scale-[1.02] shadow-lg hover:shadow-xl'
                     }`}
                   >
                     {isSubmitting ? (

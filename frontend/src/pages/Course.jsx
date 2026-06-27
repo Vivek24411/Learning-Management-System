@@ -60,7 +60,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer h-[580px] flex flex-col">
+    <div className="bg-surface rounded-lg border border-gray-100 hover:border-border hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer h-[580px] flex flex-col">
       {/* Chapter Thumbnail */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
         {chapter.chapterThumbnailImage ? (
@@ -70,13 +70,13 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#7A7F3F] to-[#6A6F35] flex items-center justify-center relative overflow-hidden">
+          <div className="w-full h-full bg-gradient-to-br from-[#6366F1] to-[#4F46E5] flex items-center justify-center relative overflow-hidden">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white rounded-full translate-x-12 translate-y-12"></div>
-              <div className="absolute top-1/2 left-1/3 w-4 h-4 bg-white rounded-full"></div>
-              <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-white rounded-full"></div>
+              <div className="absolute top-0 left-0 w-32 h-32 bg-surface rounded-full -translate-x-16 -translate-y-16"></div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-surface rounded-full translate-x-12 translate-y-12"></div>
+              <div className="absolute top-1/2 left-1/3 w-4 h-4 bg-surface rounded-full"></div>
+              <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-surface rounded-full"></div>
             </div>
           </div>
         )}
@@ -84,7 +84,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
         {/* Chapter Status Badge */}
         <div className="absolute top-3 right-3">
           {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
-            <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium flex items-center">
+            <div className="bg-green-600 text-ink px-2 py-1 rounded text-xs font-medium flex items-center">
               <svg
                 className="w-3 h-3 mr-1"
                 fill="currentColor"
@@ -99,7 +99,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
               Available
             </div>
           ) : (
-            <div className="bg-red-600 text-white px-2 py-1 rounded text-xs font-medium flex items-center">
+            <div className="bg-red-600 text-ink px-2 py-1 rounded text-xs font-medium flex items-center">
               <svg
                 className="w-3 h-3 mr-1"
                 fill="currentColor"
@@ -119,10 +119,10 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
 
       {/* Chapter Info */}
       <div className="p-6 flex flex-col flex-grow">
-        <h4 className="text-lg font-semibold text-gray-900 mb-2 leading-snug">
+        <h4 className="text-lg font-semibold text-ink mb-2 leading-snug">
           {chapter.chapterName}
         </h4>
-        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 flex-shrink-0">
+        <p className="text-ink-muted text-sm leading-relaxed mb-4 line-clamp-2 flex-shrink-0">
           {chapter.shortDescription ||
             "Explore this chapter to deepen your understanding and practice."}
         </p>
@@ -131,9 +131,9 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
         <div className="flex-grow">
           {chapter.externalLinks && chapter.externalLinks.length > 0 && (
             <div className="mb-3">
-              <div className="inline-flex items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+              <div className="inline-flex items-center bg-primary/5 border border-primary/20 rounded-full px-3 py-1">
                 <svg
-                  className="w-3 h-3 text-blue-500 mr-1"
+                  className="w-3 h-3 text-primary mr-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -145,7 +145,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
                     d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                   />
                 </svg>
-                <span className="text-xs font-medium text-blue-700">
+                <span className="text-xs font-medium text-primary">
                   {chapter.externalLinks.length} Resource
                   {chapter.externalLinks.length !== 1 ? "s" : ""}
                 </span>
@@ -160,7 +160,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
             <div className="mb-4">
               <button
                 onClick={() => navigate(`/editChapter/${chapter._id}`)}
-                className="w-full bg-blue-50 text-blue-700 py-2.5 px-4 rounded-md font-medium hover:bg-blue-100 transition-colors duration-200 flex items-center justify-center border border-blue-200"
+                className="w-full bg-primary/5 text-primary py-2.5 px-4 rounded-md font-medium hover:bg-primary/10 transition-colors duration-200 flex items-center justify-center border border-primary/20"
               >
                 <svg
                   className="w-4 h-4 mr-2"
@@ -204,15 +204,15 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
           {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
             <button
               onClick={handleChapterClick}
-              className="w-full bg-[#7A7F3F] text-white py-2.5 px-4 rounded-md font-medium hover:bg-[#6A6F35] transition-colors duration-200"
+              className="w-full bg-primary text-surface py-2.5 px-4 rounded-md font-medium hover:bg-primary-hover transition-colors duration-200"
             >
               Start Learning
             </button>
           ) : (
-            <div className="w-full bg-gray-50 border border-gray-200 rounded p-3 text-center">
+            <div className="w-full bg-bg border border-border rounded p-3 text-center">
               <div className="flex items-center justify-center mb-1">
                 <svg
-                  className="w-4 h-4 text-gray-400 mr-1"
+                  className="w-4 h-4 text-ink-muted/50 mr-1"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -222,7 +222,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="text-gray-600 font-medium text-sm">
+                <span className="text-ink-muted font-medium text-sm">
                   Requires enrollment
                 </span>
               </div>
@@ -261,7 +261,7 @@ const SectionItem = ({
     url: "",
   }]);
   const [showSectionLinkInput, setShowSectionLinkInput] = useState(false);
-
+ const { courseId } = useParams();
   async function handleDeleteSection(sectionId) {
     const response = await axios.get(
       `${import.meta.env.VITE_BASE_URL}/user/deleteSection`,
@@ -384,15 +384,15 @@ const SectionItem = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-surface rounded-lg shadow-sm border border-border">
       {/* Section Header */}
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex-grow">
             <div className="flex items-center mb-3">
-              <div className="w-10 h-10 bg-[#7A7F3F] rounded-lg flex items-center justify-center mr-4">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-4">
                 <svg
-                  className="w-5 h-5 text-white"
+                  className="w-5 h-5 text-ink"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -405,22 +405,22 @@ const SectionItem = ({
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">
+              <h3 className="text-xl font-semibold text-ink">
                 {section.sectionTitle}
               </h3>
             </div>
 
             {section.sectionDescription && (
-              <p className="text-gray-600 leading-relaxed mb-3 ml-14">
+              <p className="text-ink-muted leading-relaxed mb-3 ml-14">
                 {section.sectionDescription}
               </p>
             )}
 
             {/* Section Info Indicators */}
             <div className="flex items-center space-x-3 ml-14">
-              <div className="bg-gray-50 border border-gray-200 rounded px-3 py-1 flex items-center">
+              <div className="bg-bg border border-border rounded px-3 py-1 flex items-center">
                 <svg
-                  className="w-4 h-4 text-gray-500 mr-2"
+                  className="w-4 h-4 text-ink-muted/70 mr-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -432,7 +432,7 @@ const SectionItem = ({
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 712-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-ink-muted">
                   {section.chapters ? section.chapters.length : 0}
                   {section.chapters?.length === 1 ? " Chapter" : " Chapters"}
                 </span>
@@ -466,9 +466,9 @@ const SectionItem = ({
 
               {/* External Links indicator */}
               {section.externalLinks && section.externalLinks.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded px-3 py-1 flex items-center">
+                <div className="bg-primary/5 border border-primary/20 rounded px-3 py-1 flex items-center">
                   <svg
-                    className="w-4 h-4 text-blue-500 mr-2"
+                    className="w-4 h-4 text-primary mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -480,7 +480,7 @@ const SectionItem = ({
                       d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                     />
                   </svg>
-                  <span className="text-sm font-medium text-blue-700">
+                  <span className="text-sm font-medium text-primary">
                     {section.externalLinks.length}
                     {section.externalLinks.length === 1 ? " Link" : " Links"}
                   </span>
@@ -511,7 +511,7 @@ const SectionItem = ({
                     </button>
                     <button
                       onClick={() => navigate(`/editSection/${section._id}`)}
-                      className="bg-blue-50 border border-blue-200 text-blue-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-blue-100 transition-colors duration-200 flex items-center"
+                      className="bg-primary/5 border border-primary/20 text-primary rounded-md px-3 py-2 text-sm font-medium hover:bg-primary/10 transition-colors duration-200 flex items-center"
                     >
                       <svg
                         className="w-4 h-4 mr-1"
@@ -605,7 +605,7 @@ const SectionItem = ({
             {isAdmin && (
               <button
                 onClick={() => onAddChapter(section._id)}
-                className="bg-[#7A7F3F] text-white px-3 py-2 rounded text-sm font-medium hover:bg-[#6A6F35] transition-colors duration-200 flex items-center"
+                className="bg-primary text-surface px-3 py-2 rounded text-sm font-medium hover:bg-primary-hover transition-colors duration-200 flex items-center"
               >
                 <svg
                   className="w-4 h-4 mr-1"
@@ -627,8 +627,8 @@ const SectionItem = ({
             {/* Expand/Collapse Button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`p-2 rounded hover:bg-gray-50 transition-colors duration-200 ${
-                isExpanded ? "text-[#7A7F3F]" : "text-gray-500"
+              className={`p-2 rounded hover:bg-bg transition-colors duration-200 ${
+                isExpanded ? "text-primary" : "text-ink-muted/70"
               }`}
             >
               <svg
@@ -662,9 +662,9 @@ const SectionItem = ({
         <div className="overflow-hidden">
         <div className="p-6 space-y-6">
           {/* Section Videos */}
-          {section.sectionVideoUrl && section.sectionVideoUrl.length > 0 && (
+          {(profile.isAdmin ||profile.coursePurchased.includes(courseId)) && section.sectionVideoUrl && section.sectionVideoUrl.length > 0 && (
             <div className="mb-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <h4 className="text-lg font-semibold text-ink mb-4 flex items-center">
                 <svg
                   className="w-5 h-5 mr-2 text-red-600"
                   fill="none"
@@ -680,14 +680,14 @@ const SectionItem = ({
                 </svg>
                 Section Videos ({section.sectionVideoUrl.length})
               </h4>
-              <h6 className="text-gray-500 text-xs mb-3">
+              <h6 className="text-ink-muted/70 text-xs mb-3">
                 Double Tap On Video To Enter Fullscreen
               </h6>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {section.sectionVideoUrl.map((videoUrl, index) => (
                   <div
                     key={index}
-                    className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 relative"
+                    className="bg-bg rounded-lg border border-border overflow-hidden hover:shadow-md transition-shadow duration-200 relative"
                   >
                     <div className="aspect-video bg-gray-900 relative">
                       <video
@@ -714,7 +714,7 @@ const SectionItem = ({
                           );
                         }}
                       />
-                      <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
+                      <div className="absolute top-2 left-2 bg-black/70 text-ink px-2 py-1 rounded text-xs font-medium">
                         Video {index + 1}
                       </div>
 
@@ -724,7 +724,7 @@ const SectionItem = ({
                           onClick={() =>
                             removeSectionVideo(section._id, videoUrl, index)
                           }
-                          className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white p-1 rounded-full transition-colors duration-200 backdrop-blur-sm"
+                          className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-ink p-1 rounded-full transition-colors duration-200 backdrop-blur-sm"
                           title="Remove video"
                         >
                           <svg
@@ -745,7 +745,7 @@ const SectionItem = ({
                     </div>
                     <div className="p-4">
                       <div className="flex items-center justify-center">
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-ink-muted">
                           <svg
                             className="w-4 h-4 mr-1 text-red-500"
                             fill="currentColor"
@@ -771,7 +771,7 @@ const SectionItem = ({
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center mr-3">
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-5 h-5 text-ink"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -784,11 +784,11 @@ const SectionItem = ({
                         />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900">
+                    <h3 className="text-xl font-semibold text-ink">
                       Section Video Gallery
                     </h3>
                   </div>
-                  <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
+                  <div className="text-sm text-ink-muted bg-surface px-3 py-1 rounded-full border">
                     {section.sectionVideoUrl
                       ? section.sectionVideoUrl.length
                       : 0}{" "}
@@ -804,7 +804,7 @@ const SectionItem = ({
                         [section._id]: true,
                       }))
                     }
-                    className="flex items-center bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors duration-200"
+                    className="flex items-center bg-red-600 text-ink px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors duration-200"
                   >
                     <svg
                       className="w-4 h-4 mr-2"
@@ -823,7 +823,7 @@ const SectionItem = ({
                   </button>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-white rounded-lg p-4 border-2 border-dashed border-red-300">
+                    <div className="bg-surface rounded-lg p-4 border-2 border-dashed border-red-300">
                       <div className="text-center">
                         <svg
                           className="mx-auto h-12 w-12 text-red-400 mb-4"
@@ -838,10 +838,10 @@ const SectionItem = ({
                             strokeLinejoin="round"
                           />
                         </svg>
-                        <p className="text-lg font-medium text-gray-900 mb-1">
+                        <p className="text-lg font-medium text-ink mb-1">
                           Upload section videos
                         </p>
-                        <p className="text-sm text-gray-500 mb-4">
+                        <p className="text-sm text-ink-muted/70 mb-4">
                           Select multiple video files to add to this section
                         </p>
                         <input
@@ -856,7 +856,7 @@ const SectionItem = ({
                         />
                         <label
                           htmlFor={`sectionVideo-${section._id}`}
-                          className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 cursor-pointer transition-colors duration-200"
+                          className="inline-flex items-center px-4 py-2 bg-red-600 text-ink rounded-lg font-medium hover:bg-red-700 cursor-pointer transition-colors duration-200"
                         >
                           <svg
                             className="w-4 h-4 mr-2"
@@ -879,9 +879,9 @@ const SectionItem = ({
                     {/* Video Preview Grid */}
                     {sectionVideoFiles[section._id] &&
                       sectionVideoFiles[section._id].length > 0 && (
-                        <div className="bg-white rounded-lg p-4 border">
+                        <div className="bg-surface rounded-lg p-4 border">
                           <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-lg font-medium text-gray-900">
+                            <h4 className="text-lg font-medium text-ink">
                               Preview ({sectionVideoFiles[section._id].length}{" "}
                               videos selected)
                             </h4>
@@ -898,7 +898,7 @@ const SectionItem = ({
                                       muted
                                     />
                                     <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                      <div className="bg-white/90 text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
+                                      <div className="bg-surface/90 text-ink px-3 py-1 rounded-full text-sm font-medium">
                                         Video {index + 1}
                                       </div>
                                     </div>
@@ -913,12 +913,12 @@ const SectionItem = ({
                             <button
                               onClick={() => addSectionVideos(section._id)}
                               disabled={updatingThumbnail}
-                              className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                              className="flex-1 bg-red-600 text-ink px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                             >
                               {updatingThumbnail ? (
                                 <>
                                   <svg
-                                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-ink"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                   >
@@ -972,7 +972,7 @@ const SectionItem = ({
                                   [section._id]: null,
                                 }));
                               }}
-                              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200"
+                              className="px-4 py-2 bg-gray-100 text-ink-muted rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200"
                             >
                               Cancel
                             </button>
@@ -988,12 +988,12 @@ const SectionItem = ({
           {/* Section Link Management - Admin Only */}
           {profile?.isAdmin && (
             <div className="mb-6">
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
+              <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-6 border border-primary/20">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3">
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-5 h-5 text-ink"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1006,11 +1006,11 @@ const SectionItem = ({
                         />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900">
+                    <h3 className="text-xl font-semibold text-ink">
                       Section External Links
                     </h3>
                   </div>
-                  <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
+                  <div className="text-sm text-ink-muted bg-surface px-3 py-1 rounded-full border">
                     {section.externalLinks ? section.externalLinks.length : 0} links
                   </div>
                 </div>
@@ -1018,7 +1018,7 @@ const SectionItem = ({
                 {!showSectionLinkInput ? (
                   <button
                     onClick={() => setShowSectionLinkInput(true)}
-                    className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
+                    className="flex items-center bg-surface border border-border text-ink-muted px-4 py-2 rounded-lg font-medium hover:bg-bg transition-colors duration-200"
                   >
                     <svg
                       className="w-4 h-4 mr-2"
@@ -1037,13 +1037,13 @@ const SectionItem = ({
                   </button>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-white rounded-lg p-4 border-2 border-dashed border-blue-300">
+                    <div className="bg-surface rounded-lg p-4 border-2 border-dashed border-primary/30">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-lg font-medium text-gray-900">Add External Links</h4>
+                          <h4 className="text-lg font-medium text-ink">Add External Links</h4>
                           <button
                             onClick={() => addSectionInput()}
-                            className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center"
+                            className="text-primary hover:text-primary font-medium text-sm flex items-center"
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1053,9 +1053,9 @@ const SectionItem = ({
                         </div>
 
                         {sectionLink.map((link, index) => (
-                          <div key={index} className="bg-gray-50 rounded-lg p-4 border">
+                          <div key={index} className="bg-bg rounded-lg p-4 border">
                             <div className="flex items-start justify-between mb-3">
-                              <h5 className="font-medium text-gray-900">Link {index + 1}</h5>
+                              <h5 className="font-medium text-ink">Link {index + 1}</h5>
                               {sectionLink.length > 1 && (
                                 <button
                                   onClick={() => removeSectionInput(index)}
@@ -1070,7 +1070,7 @@ const SectionItem = ({
                             </div>
                             <div className="space-y-3">
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-ink-muted mb-1">
                                   Link Label
                                 </label>
                                 <input
@@ -1082,11 +1082,11 @@ const SectionItem = ({
                                     setSectionLink(newLinks);
                                   }}
                                   placeholder="Enter link label (e.g., Documentation, Tutorial)"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-ink-muted mb-1">
                                   Link URL
                                 </label>
                                 <input
@@ -1098,7 +1098,7 @@ const SectionItem = ({
                                     setSectionLink(newLinks);
                                   }}
                                   placeholder="https://example.com"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                               </div>
                             </div>
@@ -1110,12 +1110,12 @@ const SectionItem = ({
                           <button
                             onClick={addSection}
                             disabled={submitting}
-                            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                            className="flex-1 bg-surface border border-border text-ink-muted px-4 py-2 rounded-lg font-medium hover:bg-bg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                           >
                             {submitting ? (
                               <>
                                 <svg
-                                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-ink"
                                   fill="none"
                                   viewBox="0 0 24 24"
                                 >
@@ -1159,7 +1159,7 @@ const SectionItem = ({
                               setShowSectionLinkInput(false);
                               setSectionLink([{ label: "", url: "" }]);
                             }}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200"
+                            className="px-4 py-2 bg-gray-100 text-ink-muted rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200"
                           >
                             Cancel
                           </button>
@@ -1173,11 +1173,11 @@ const SectionItem = ({
           )}
 
           {/* External Links Display */}
-          {section.externalLinks && section.externalLinks.length > 0 && (
+          {(profile.isAdmin ||profile.coursePurchased.includes(courseId)) && section.externalLinks && section.externalLinks.length > 0 && (
             <div className="mb-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <h4 className="text-lg font-semibold text-ink mb-4 flex items-center">
                 <svg
-                  className="w-5 h-5 mr-2 text-blue-600"
+                  className="w-5 h-5 mr-2 text-primary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1195,7 +1195,7 @@ const SectionItem = ({
                 {section.externalLinks.map((link, index) => (
                   <div
                     key={index}
-                    className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-blue-200 hover:shadow-md transition-all duration-200 group relative"
+                    className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20 hover:from-primary/10 hover:to-primary/20 hover:shadow-md transition-all duration-200 group relative"
                   >
                     <a
                       href={link.url}
@@ -1205,9 +1205,9 @@ const SectionItem = ({
                     >
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-hover rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                             <svg
-                              className="w-5 h-5 text-white"
+                              className="w-5 h-5 text-ink"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -1222,13 +1222,13 @@ const SectionItem = ({
                           </div>
                         </div>
                         <div className="flex-grow min-w-0">
-                          <h5 className="font-semibold text-gray-900 group-hover:text-blue-800 transition-colors duration-200 mb-1">
+                          <h5 className="font-semibold text-ink group-hover:text-primary-hover transition-colors duration-200 mb-1">
                             {link.label || `External Link ${index + 1}`}
                           </h5>
-                          <p className="text-sm text-blue-700 truncate font-medium">
+                          <p className="text-sm text-primary truncate font-medium">
                             {link.url}
                           </p>
-                          <div className="flex items-center mt-2 text-xs text-blue-600">
+                          <div className="flex items-center mt-2 text-xs text-primary">
                             <svg
                               className="w-3 h-3 mr-1"
                               fill="none"
@@ -1256,7 +1256,7 @@ const SectionItem = ({
                           e.stopPropagation();
                           removeSectionLink(link.label);
                         }}
-                        className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 rounded-full transition-colors duration-200 backdrop-blur-sm opacity-0 group-hover:opacity-100"
+                        className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-ink p-1.5 rounded-full transition-colors duration-200 backdrop-blur-sm opacity-0 group-hover:opacity-100"
                         title="Remove link"
                       >
                         <svg
@@ -1303,10 +1303,10 @@ const SectionItem = ({
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-ink-muted/70">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
                 <svg
-                  className="w-8 h-8 text-gray-400"
+                  className="w-8 h-8 text-ink-muted/50"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1319,16 +1319,16 @@ const SectionItem = ({
                   />
                 </svg>
               </div>
-              <h4 className="text-lg font-medium text-gray-700 mb-2">
+              <h4 className="text-lg font-medium text-ink-muted mb-2">
                 No chapters available yet
               </h4>
-              <p className="text-gray-500 mb-4">
+              <p className="text-ink-muted/70 mb-4">
                 This section is waiting for content to be added.
               </p>
               {isAdmin && (
                 <button
                   onClick={() => onAddChapter(section._id)}
-                  className="inline-flex items-center bg-[#7A7F3F] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#7A7F3F]/90 transition-colors duration-200"
+                  className="inline-flex items-center bg-primary text-surface px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors duration-200"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -1653,17 +1653,17 @@ const Course = () => {
             { name: "About", path: "about" },
           ]}
         />
-        <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
-          <div className="text-center bg-white rounded-lg p-8 shadow-sm border border-gray-200 max-w-md mx-auto">
+        <div className="min-h-screen bg-bg pt-20 flex items-center justify-center">
+          <div className="text-center bg-surface rounded-lg p-8 shadow-sm border border-border max-w-md mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-100"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-200"></div>
+              <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
+              <div className="w-3 h-3 bg-primary rounded-full animate-bounce delay-100"></div>
+              <div className="w-3 h-3 bg-primary rounded-full animate-bounce delay-200"></div>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-ink mb-2">
               Loading Course
             </h3>
-            <p className="text-gray-600">
+            <p className="text-ink-muted">
               Please wait while we load the course content...
             </p>
           </div>
@@ -1682,7 +1682,7 @@ const Course = () => {
             { name: "About", path: "about" },
           ]}
         />
-        <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+        <div className="min-h-screen bg-bg pt-20 flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-6">
             <div className="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-6">
               <svg
@@ -1699,22 +1699,22 @@ const Course = () => {
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+            <h3 className="text-xl font-semibold text-ink mb-3">
               Course Not Found
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-ink-muted mb-6">
               The course you're looking for doesn't exist or has been moved.
             </p>
             <div className="space-y-3">
               <button
                 onClick={() => navigate("/")}
-                className="w-full bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200"
+                className="w-full bg-primary text-surface px-6 py-3 rounded font-semibold hover:bg-primary-hover transition-colors duration-200"
               >
                 Back to Home
               </button>
               <button
                 onClick={() => navigate("/#courses")}
-                className="w-full bg-white text-gray-700 px-6 py-3 rounded font-medium border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                className="w-full bg-surface text-ink-muted px-6 py-3 rounded font-medium border border-border hover:bg-bg transition-colors duration-200"
               >
                 Browse All Courses
               </button>
@@ -2069,7 +2069,7 @@ const Course = () => {
         ]}
       />
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-bg">
         {/* Fullscreen Hero Image Section */}
         <section className="relative pt-16">
           <div
@@ -2090,13 +2090,13 @@ const Course = () => {
         </section>
 
         {/* Course Info Section - Below Thumbnail */}
-        <section className="py-12 bg-white">
+        <section className="py-12 bg-surface">
           <div className="max-w-4xl mx-auto px-6">
             <div className="text-center">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink mb-6 leading-tight">
                 {course.courseName}
               </h1>
-              <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-lg sm:text-xl text-ink-muted max-w-3xl mx-auto leading-relaxed">
                 {course.shortDescription}
               </p>
             </div>
@@ -2105,14 +2105,14 @@ const Course = () => {
 
         {/* Admin Thumbnail Update Section */}
         {profile.isAdmin && (
-          <section className="py-8 bg-gray-50 border-b border-gray-200">
+          <section className="py-8 bg-bg border-b border-border">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                       <svg
-                        className="w-5 h-5 text-blue-600"
+                        className="w-5 h-5 text-primary"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -2126,10 +2126,10 @@ const Course = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-ink">
                         Course Thumbnail
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-ink-muted">
                         Update the course thumbnail image
                       </p>
                     </div>
@@ -2138,7 +2138,7 @@ const Course = () => {
                   {!showThumbnailInput && (
                     <button
                       onClick={() => setShowThumbnailInput(true)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center"
+                      className="bg-surface border border-border text-ink-muted px-4 py-2 rounded-md font-medium hover:bg-bg transition-colors duration-200 flex items-center"
                     >
                       <svg
                         className="w-4 h-4 mr-2"
@@ -2162,12 +2162,12 @@ const Course = () => {
                 {showThumbnailInput && (
                   <div className="space-y-6">
                     {/* File Upload Area */}
-                    <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center hover:border-blue-300 transition-colors duration-200">
+                    <div className="border-2 border-dashed border-primary/20 rounded-lg p-6 text-center hover:border-primary/30 transition-colors duration-200">
                       <div className="space-y-4">
                         <div className="flex justify-center">
                           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                             <svg
-                              className="w-6 h-6 text-blue-600"
+                              className="w-6 h-6 text-primary"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -2182,10 +2182,10 @@ const Course = () => {
                           </div>
                         </div>
                         <div>
-                          <p className="text-lg font-medium text-gray-900 mb-1">
+                          <p className="text-lg font-medium text-ink mb-1">
                             Upload new thumbnail
                           </p>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-ink-muted">
                             PNG, JPG, GIF up to 10MB
                           </p>
                         </div>
@@ -2197,7 +2197,7 @@ const Course = () => {
                               onChange={(e) => inputThumbnailFile(e)}
                               className="hidden"
                             />
-                            <span className="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors duration-200 inline-flex items-center">
+                            <span className="bg-surface border border-border text-ink-muted px-6 py-2 rounded-md font-medium hover:bg-bg transition-colors duration-200 inline-flex items-center">
                               <svg
                                 className="w-4 h-4 mr-2"
                                 fill="none"
@@ -2220,7 +2220,7 @@ const Course = () => {
 
                     {/* Preview Section */}
                     {courseThumbnailFile && (
-                      <div className="bg-white rounded-lg border border-gray-200 p-6">
+                      <div className="bg-surface rounded-lg border border-border p-6">
                         <div className="flex items-center mb-4">
                           <svg
                             className="w-5 h-5 text-green-500 mr-2"
@@ -2235,7 +2235,7 @@ const Course = () => {
                               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                           </svg>
-                          <h4 className="text-lg font-medium text-gray-900">
+                          <h4 className="text-lg font-medium text-ink">
                             Preview
                           </h4>
                         </div>
@@ -2243,7 +2243,7 @@ const Course = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {/* Current Thumbnail */}
                           <div>
-                            <p className="text-sm font-medium text-gray-700 mb-2">
+                            <p className="text-sm font-medium text-ink-muted mb-2">
                               Current Thumbnail
                             </p>
                             <div className="relative">
@@ -2253,9 +2253,9 @@ const Course = () => {
                                   "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
                                 }
                                 alt="Current Course Thumbnail"
-                                className="w-full h-48 object-contain bg-gray-100 rounded-lg border border-gray-200"
+                                className="w-full h-48 object-contain bg-gray-100 rounded-lg border border-border"
                               />
-                              <div className="absolute top-2 left-2 bg-gray-800/70 text-white px-2 py-1 rounded text-xs">
+                              <div className="absolute top-2 left-2 bg-gray-800/70 text-ink px-2 py-1 rounded text-xs">
                                 Current
                               </div>
                             </div>
@@ -2263,16 +2263,16 @@ const Course = () => {
 
                           {/* New Thumbnail Preview */}
                           <div>
-                            <p className="text-sm font-medium text-gray-700 mb-2">
+                            <p className="text-sm font-medium text-ink-muted mb-2">
                               New Thumbnail
                             </p>
                             <div className="relative">
                               <img
                                 src={courseThumbnailPreview}
                                 alt="New Course Thumbnail Preview"
-                                className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                                className="w-full h-48 object-cover rounded-lg border border-border"
                               />
-                              <div className="absolute top-2 left-2 bg-green-600/90 text-white px-2 py-1 rounded text-xs">
+                              <div className="absolute top-2 left-2 bg-green-600/90 text-ink px-2 py-1 rounded text-xs">
                                 New
                               </div>
                             </div>
@@ -2284,7 +2284,7 @@ const Course = () => {
                           <button
                             onClick={updateCourseThumbnail}
                             disabled={updatingThumbnail}
-                            className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                            className="flex-1 bg-green-600 text-ink px-6 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                           >
                             {updatingThumbnail ? (
                               <>
@@ -2336,7 +2336,7 @@ const Course = () => {
                                 setCourseThumbnailFile(null);
                                 setCourseThumbnailPreview(null);
                               }}
-                              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
+                              className="px-6 py-3 border border-border text-ink-muted rounded-lg font-medium hover:bg-bg transition-colors duration-200 flex items-center justify-center"
                             >
                               <svg
                                 className="w-4 h-4 mr-2"
@@ -2366,7 +2366,7 @@ const Course = () => {
 
         {/* Admin Course Access Management Section */}
         {profile.isAdmin && (
-          <section className="py-8 bg-white border-b border-gray-200">
+          <section className="py-8 bg-surface border-b border-border">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -2387,10 +2387,10 @@ const Course = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-ink">
                         Grant Course Access
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-ink-muted">
                         Give specific users access to this course by email
                       </p>
                     </div>
@@ -2399,7 +2399,7 @@ const Course = () => {
                   {!showAccessManagement && (
                     <button
                       onClick={() => setShowAccessManagement(true)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700 transition-colors duration-200 flex items-center"
+                      className="bg-green-600 text-ink px-4 py-2 rounded-md font-medium hover:bg-green-700 transition-colors duration-200 flex items-center"
                     >
                       <svg
                         className="w-4 h-4 mr-2"
@@ -2422,12 +2422,12 @@ const Course = () => {
                 {showAccessManagement && (
                   <div className="space-y-6">
                     {/* Email Input Section */}
-                    <div className="bg-white rounded-lg border border-green-200 p-6">
+                    <div className="bg-surface rounded-lg border border-green-200 p-6">
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-ink-muted mb-2">
                           Email Addresses
                         </label>
-                        <p className="text-xs text-gray-500 mb-3">
+                        <p className="text-xs text-ink-muted/70 mb-3">
                           Enter email addresses separated by commas. Users with
                           these emails will get access to this course.
                         </p>
@@ -2436,14 +2436,14 @@ const Course = () => {
                           onChange={(e) => setEmailInput(e.target.value)}
                           placeholder="user1@example.com, user2@example.com, user3@example.com"
                           rows={4}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                         />
                       </div>
 
                       {/* Email Preview */}
                       {emailInput.trim() && (
                         <div className="mb-4">
-                          <p className="text-sm font-medium text-gray-700 mb-2">
+                          <p className="text-sm font-medium text-ink-muted mb-2">
                             Email Preview (
                             {
                               emailInput
@@ -2453,7 +2453,7 @@ const Course = () => {
                             }{" "}
                             emails):
                           </p>
-                          <div className="bg-gray-50 rounded-md p-3 max-h-32 overflow-y-auto">
+                          <div className="bg-bg rounded-md p-3 max-h-32 overflow-y-auto">
                             <div className="flex flex-wrap gap-2">
                               {emailInput
                                 .split(",")
@@ -2508,12 +2508,12 @@ const Course = () => {
                         <button
                           onClick={grantCourseAccess}
                           disabled={!emailInput.trim() || grantingAccess}
-                          className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                          className="flex-1 bg-green-600 text-ink px-6 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                         >
                           {grantingAccess ? (
                             <>
                               <svg
-                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-ink"
                                 fill="none"
                                 viewBox="0 0 24 24"
                               >
@@ -2559,7 +2559,7 @@ const Course = () => {
                               setShowAccessManagement(false);
                               setEmailInput("");
                             }}
-                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
+                            className="px-6 py-3 border border-border text-ink-muted rounded-lg font-medium hover:bg-bg transition-colors duration-200 flex items-center justify-center"
                           >
                             <svg
                               className="w-4 h-4 mr-2"
@@ -2588,7 +2588,7 @@ const Course = () => {
 
         {/* Admin Access Management Section */}
         {profile.isAdmin && (
-          <section className="py-8 bg-white border-b border-gray-200">
+          <section className="py-8 bg-surface border-b border-border">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-100 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -2609,7 +2609,7 @@ const Course = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900">
+                      <h3 className="text-xl font-semibold text-ink">
                         Admin Access Management
                       </h3>
                       <p className="text-purple-600 text-sm">
@@ -2621,8 +2621,8 @@ const Course = () => {
                     onClick={() => setShowAdminManagement(!showAdminManagement)}
                     className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center ${
                       showAdminManagement
-                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        : "bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                        ? "bg-gray-100 text-ink-muted hover:bg-gray-200"
+                        : "bg-purple-600 text-ink hover:bg-purple-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                     }`}
                   >
                     {showAdminManagement ? (
@@ -2664,12 +2664,12 @@ const Course = () => {
                 </div>
 
                 {showAdminManagement && (
-                  <div className="mt-6 p-6 bg-white rounded-lg border border-purple-200 shadow-sm">
+                  <div className="mt-6 p-6 bg-surface rounded-lg border border-purple-200 shadow-sm">
                     <div className="mb-6">
-                      <h4 className="text-lg font-medium text-gray-900 mb-2">
+                      <h4 className="text-lg font-medium text-ink mb-2">
                         Grant Admin Access
                       </h4>
-                      <p className="text-gray-600 text-sm">
+                      <p className="text-ink-muted text-sm">
                         Enter an email address to grant admin privileges. The
                         user will be able to manage courses, sections, and
                         chapters.
@@ -2680,7 +2680,7 @@ const Course = () => {
                       <div>
                         <label
                           htmlFor="adminEmail"
-                          className="block text-sm font-medium text-gray-700 mb-2"
+                          className="block text-sm font-medium text-ink-muted mb-2"
                         >
                           User Email Address
                         </label>
@@ -2690,7 +2690,7 @@ const Course = () => {
                           value={adminEmailInput}
                           onChange={(e) => setAdminEmailInput(e.target.value)}
                           placeholder="user@example.com"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200 text-sm"
+                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200 text-sm"
                           disabled={grantingAdminAccess}
                         />
                         {adminEmailInput && (
@@ -2775,12 +2775,12 @@ const Course = () => {
                             ) ||
                             grantingAdminAccess
                           }
-                          className="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                          className="flex-1 bg-purple-600 text-ink px-6 py-3 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                         >
                           {grantingAdminAccess ? (
                             <>
                               <svg
-                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-ink"
                                 fill="none"
                                 viewBox="0 0 24 24"
                               >
@@ -2826,7 +2826,7 @@ const Course = () => {
                               setShowAdminManagement(false);
                               setAdminEmailInput("");
                             }}
-                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
+                            className="px-6 py-3 border border-border text-ink-muted rounded-lg font-medium hover:bg-bg transition-colors duration-200 flex items-center justify-center"
                           >
                             <svg
                               className="w-4 h-4 mr-2"
@@ -2856,12 +2856,12 @@ const Course = () => {
         {/* Course Overview Section */}
         <section className="py-12">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <div className="bg-surface rounded-lg shadow-sm border border-border p-8">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                <h2 className="text-2xl font-bold text-ink mb-4">
                   Course Overview
                 </h2>
-                <p className="text-lg text-gray-700 leading-relaxed">
+                <p className="text-lg text-ink-muted leading-relaxed">
                   {course.shortDescription}
                 </p>
               </div>
@@ -2887,15 +2887,15 @@ const Course = () => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="bg-surface border border-border rounded-lg p-6">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="text-center sm:text-left">
-                      <div className="text-2xl font-bold text-gray-900 mb-1">
+                      <div className="text-2xl font-bold text-ink mb-1">
                         {course.price === 0
                           ? "Free"
                           : `₹${course.price.toFixed(2)}`}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-ink-muted">
                         {course.price === 0
                           ? "No cost to enroll"
                           : "One-time payment"}
@@ -2905,7 +2905,7 @@ const Course = () => {
                     <button
                       onClick={enrollCourse}
                       disabled={enrolling}
-                      className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      className="bg-primary text-surface px-6 py-3 rounded font-semibold hover:bg-primary-hover transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                     >
                       {enrolling ? (
                         <>
@@ -2958,19 +2958,19 @@ const Course = () => {
 
         {/* Course Introduction Section */}
         {course.courseIntroduction && (
-          <section className="py-12 bg-gray-50">
+          <section className="py-12 bg-bg">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <div className="bg-surface rounded-lg shadow-sm border border-border p-8 mb-8">
+                <h2 className="text-2xl font-bold text-ink mb-6">
                   Course Introduction
                 </h2>
-                <div className="text-gray-700 leading-relaxed">
+                <div className="text-ink-muted leading-relaxed">
                   <p className="text-base">{course.courseIntroduction}</p>
                 </div>
               </div>
 
               {/* Course Gallery Section */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+              <div className="bg-surface rounded-lg shadow-sm border border-border p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
@@ -2989,10 +2989,10 @@ const Course = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900">
+                      <h3 className="text-xl font-semibold text-ink">
                         Course Gallery
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-ink-muted">
                         Visual introduction to the course content
                       </p>
                     </div>
@@ -3002,7 +3002,7 @@ const Course = () => {
                   {profile.isAdmin && !introductionImageInput && (
                     <button
                       onClick={() => setIntroductionImageInput(true)}
-                      className="bg-purple-600 text-white px-4 py-2 rounded-md font-medium hover:bg-purple-700 transition-colors duration-200 flex items-center"
+                      className="bg-purple-600 text-ink px-4 py-2 rounded-md font-medium hover:bg-purple-700 transition-colors duration-200 flex items-center"
                     >
                       <svg
                         className="w-4 h-4 mr-2"
@@ -3046,10 +3046,10 @@ const Course = () => {
                           </div>
                         </div>
                         <div>
-                          <p className="text-lg font-medium text-gray-900 mb-1">
+                          <p className="text-lg font-medium text-ink mb-1">
                             Upload course gallery images
                           </p>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-ink-muted">
                             Select multiple images to showcase your course
                           </p>
                         </div>
@@ -3062,7 +3062,7 @@ const Course = () => {
                               onChange={handleIntroductionImageFiles}
                               className="hidden"
                             />
-                            <span className="bg-purple-600 text-white px-6 py-2 rounded-md font-medium hover:bg-purple-700 transition-colors duration-200 inline-flex items-center">
+                            <span className="bg-purple-600 text-ink px-6 py-2 rounded-md font-medium hover:bg-purple-700 transition-colors duration-200 inline-flex items-center">
                               <svg
                                 className="w-4 h-4 mr-2"
                                 fill="none"
@@ -3086,7 +3086,7 @@ const Course = () => {
                     {/* Preview Section */}
                     {introductionImageFiles &&
                       introductionImageFiles.length > 0 && (
-                        <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+                        <div className="bg-bg rounded-lg border border-border p-6">
                           <div className="flex items-center mb-4">
                             <svg
                               className="w-5 h-5 text-green-500 mr-2"
@@ -3101,7 +3101,7 @@ const Course = () => {
                                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                               />
                             </svg>
-                            <h4 className="text-lg font-medium text-gray-900">
+                            <h4 className="text-lg font-medium text-ink">
                               Preview ({introductionImageFiles.length} images
                               selected)
                             </h4>
@@ -3115,9 +3115,9 @@ const Course = () => {
                                   <img
                                     src={preview}
                                     alt={`Preview ${index + 1}`}
-                                    className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                                    className="w-full h-24 object-cover rounded-lg border border-border"
                                   />
-                                  <div className="absolute top-1 left-1 bg-purple-600/90 text-white px-2 py-1 rounded text-xs font-medium">
+                                  <div className="absolute top-1 left-1 bg-purple-600/90 text-ink px-2 py-1 rounded text-xs font-medium">
                                     {index + 1}
                                   </div>
                                 </div>
@@ -3129,7 +3129,7 @@ const Course = () => {
                             <button
                               onClick={addIntroductionImages}
                               disabled={updatingThumbnail}
-                              className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                              className="flex-1 bg-green-600 text-ink px-6 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                             >
                               {updatingThumbnail ? (
                                 <>
@@ -3181,7 +3181,7 @@ const Course = () => {
                                   setIntroductionImageFiles(null);
                                   setIntroductionImagePreview(null);
                                 }}
-                                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
+                                className="px-6 py-3 border border-border text-ink-muted rounded-lg font-medium hover:bg-bg transition-colors duration-200 flex items-center justify-center"
                               >
                                 <svg
                                   className="w-4 h-4 mr-2"
@@ -3210,7 +3210,7 @@ const Course = () => {
                 course.courseIntroductionImages.length > 0 ? (
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-ink-muted">
                         {course.courseIntroductionImages.length}{" "}
                         {course.courseIntroductionImages.length === 1
                           ? "image"
@@ -3218,7 +3218,7 @@ const Course = () => {
                         in gallery
                       </p>
                       {profile.isAdmin && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-ink-muted/70">
                           Click on an image to remove it
                         </span>
                       )}
@@ -3239,7 +3239,7 @@ const Course = () => {
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200"></div>
 
                           {/* Image Number Badge */}
-                          <div className="absolute top-3 left-3 bg-white/90 text-gray-800 px-2 py-1 rounded-md text-xs font-medium">
+                          <div className="absolute top-3 left-3 bg-surface/90 text-gray-800 px-2 py-1 rounded-md text-xs font-medium">
                             {index + 1}
                           </div>
 
@@ -3247,7 +3247,7 @@ const Course = () => {
                           {profile.isAdmin && (
                             <button
                               onClick={() => handleRemoveImage(image)}
-                              className="absolute top-3 right-3 bg-red-600 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-700 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0"
+                              className="absolute top-3 right-3 bg-red-600 text-ink p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-700 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0"
                             >
                               <svg
                                 className="w-4 h-4"
@@ -3273,7 +3273,7 @@ const Course = () => {
                   <div className="text-center py-12">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
                       <svg
-                        className="w-8 h-8 text-gray-400"
+                        className="w-8 h-8 text-ink-muted/50"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -3286,16 +3286,16 @@ const Course = () => {
                         />
                       </svg>
                     </div>
-                    <h4 className="text-lg font-medium text-gray-700 mb-2">
+                    <h4 className="text-lg font-medium text-ink-muted mb-2">
                       No Gallery Images
                     </h4>
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-ink-muted/70 mb-4">
                       Add some images to showcase your course visually
                     </p>
                     {profile?.isAdmin && !introductionImageInput && (
                       <button
                         onClick={() => setIntroductionImageInput(true)}
-                        className="inline-flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
+                        className="inline-flex items-center bg-purple-600 text-ink px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
                       >
                         <svg
                           className="w-4 h-4 mr-2"
@@ -3323,11 +3323,11 @@ const Course = () => {
         {/* Course Details Section */}
         <section className="py-12">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <div className="bg-surface rounded-lg shadow-sm border border-border p-8">
+              <h2 className="text-2xl font-bold text-ink mb-6">
                 Course Details
               </h2>
-              <div className="text-gray-700 leading-relaxed">
+              <div className="text-ink-muted leading-relaxed">
                 <div className="text-base whitespace-pre-line">
                   {course.longDescription}
                 </div>
@@ -3337,14 +3337,14 @@ const Course = () => {
         </section>
 
         {/* Sections & Chapters Display */}
-        <section className="py-12 bg-gray-50">
+        <section className="py-12 bg-bg">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl font-bold text-ink mb-2">
                   Course Content
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-ink-muted">
                   Explore the structured learning path designed for your
                   success.
                 </p>
@@ -3354,7 +3354,7 @@ const Course = () => {
               {isAdmin && (
                 <button
                   onClick={handleAddSection}
-                  className="bg-[#7A7F3F] text-white px-4 py-2 rounded font-medium hover:bg-[#6A6F35] transition-colors duration-200 flex items-center"
+                  className="bg-primary text-surface px-4 py-2 rounded font-medium hover:bg-primary-hover transition-colors duration-200 flex items-center"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -3398,10 +3398,10 @@ const Course = () => {
                   />
                 ))
               ) : (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                <div className="bg-surface rounded-lg shadow-sm border border-border p-12 text-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-6">
                     <svg
-                      className="w-8 h-8 text-gray-400"
+                      className="w-8 h-8 text-ink-muted/50"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -3414,21 +3414,21 @@ const Course = () => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  <h3 className="text-xl font-semibold text-ink mb-3">
                     No Content Available Yet
                   </h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  <p className="text-ink-muted mb-6 max-w-md mx-auto">
                     This course is currently being prepared. Content will be
                     available soon.
                   </p>
                   {profile.isAdmin && (
                     <div>
-                      <p className="text-sm text-gray-500 mb-4">
+                      <p className="text-sm text-ink-muted/70 mb-4">
                         As an admin, you can start building this course:
                       </p>
                       <button
                         onClick={handleAddSection}
-                        className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200 flex items-center mx-auto"
+                        className="bg-primary text-surface px-6 py-3 rounded font-semibold hover:bg-primary-hover transition-colors duration-200 flex items-center mx-auto"
                       >
                         <svg
                           className="w-4 h-4 mr-2"

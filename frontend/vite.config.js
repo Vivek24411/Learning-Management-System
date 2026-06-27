@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react(),
         tailwindcss(),
   ],
+  base: '/edvance',
   optimizeDeps: {
     include: ['react-pdf'],
   },

@@ -1,57 +1,80 @@
 @import "tailwindcss";
-
+@theme {
+  --color-bg: #FAF6EE;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F2ECDD;
+  --color-border: #E5DCC8;
+  --color-ink: #221C16;
+  --color-ink-muted: #6B5F52;
+  --color-primary: #7A1F2B;
+  --color-primary-hover: #5E1620;
+  --color-accent: #B8902F;
+  --color-success: #3F7D52;
+  --color-danger: #A8412B;
+  
+  --font-sans: "Inter", sans-serif;
+  --font-serif: "Fraunces", serif;
+}
 
 body {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, .brand {
+  font-family: var(--font-serif);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-3);
 }
 
 /* Video Protection Styles */
 video {
-  /* Disable right-click context menu */
   pointer-events: auto !important;
-  
-  /* Prevent text selection */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  
-  /* Prevent dragging */
   -webkit-user-drag: none;
   -khtml-user-drag: none;
   -moz-user-drag: none;
   -o-user-drag: none;
   user-drag: none;
-  
-  /* Disable highlighting */
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Disable video download in older browsers */
 video::-webkit-media-controls {
   overflow: hidden !important;
 }
-
 video::-webkit-media-controls-enclosure {
   overflow: hidden;
 }
-
-/* Hide download button in some browsers */
 video::-webkit-media-controls-download-button {
   display: none;
 }
-
 video::-webkit-media-controls-fullscreen-button {
   display: none;
 }
-
-/* Firefox specific */
 video::-moz-media-controls {
   visibility: hidden;
 }
 
-/* Prevent inspect element on video specifically */
 video.protected {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -62,12 +85,10 @@ video.protected {
   pointer-events: auto;
 }
 
-/* Additional protection for video containers */
 .video-container {
   position: relative;
   overflow: hidden;
 }
-
 .video-container::before {
   content: "";
   position: absolute;
@@ -80,40 +101,30 @@ video.protected {
   pointer-events: none;
 }
 
-/* Fullscreen video protection */
 video:fullscreen {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 }
-
 video:-webkit-full-screen {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
 video:-moz-full-screen {
   -moz-user-select: none;
 }
-
 video:-ms-fullscreen {
   -ms-user-select: none;
 }
-
-/* Hide download controls even in fullscreen */
 video:fullscreen::-webkit-media-controls-download-button {
   display: none !important;
 }
-
 video:-webkit-full-screen::-webkit-media-controls-download-button {
   display: none !important;
 }
-
-/* Prevent right-click in fullscreen */
 video:fullscreen::before {
   content: "";
   position: absolute;

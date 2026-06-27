@@ -92,9 +92,9 @@ const TakeSectionQuiz = () => {
         <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
           <div className="text-center bg-white rounded-lg p-8 shadow-sm border border-gray-200 max-w-md mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-100"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-200"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce delay-100"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce delay-200"></div>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading Quiz</h3>
             <p className="text-gray-600">Please wait while we prepare your quiz...</p>
@@ -108,20 +108,20 @@ const TakeSectionQuiz = () => {
     return (
       <>
         <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
-        <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
-          <div className="text-center max-w-md mx-auto px-6">
-            <div className="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <div className="min-h-screen bg-bg pt-20 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-8 py-12 bg-surface border border-border rounded-lg shadow-sm">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-bg border border-border rounded-full mb-6 shadow-sm">
+              <svg className="w-8 h-8 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">No Quiz Available</h3>
-            <p className="text-gray-600 mb-6">This {type} doesn't have a quiz yet. Check back later!</p>
+            <h3 className="text-xl font-serif font-medium text-ink mb-3">Assessment Pending</h3>
+            <p className="text-ink-muted mb-8 leading-relaxed">The evaluation module for this {type} is currently being refined by our instructors. Please check back later.</p>
             <button
               onClick={() => navigate(-1)}
-              className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200"
+              className="inline-flex items-center bg-primary text-surface px-6 py-2.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors duration-200"
             >
-              Go Back
+              Return to Course
             </button>
           </div>
         </div>
@@ -195,7 +195,7 @@ const TakeSectionQuiz = () => {
                       setScore(null);
                       setAnsweredQuizData(quizData.map(q => ({ ...q, chosenAnswer: null })));
                     }}
-                    className="bg-[#7A7F3F] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#6A6F35] transition-colors duration-200"
+                    className="bg-[#6366F1] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#4F46E5] transition-colors duration-200"
                   >
                     Retake Quiz
                   </button>
@@ -222,7 +222,7 @@ const TakeSectionQuiz = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Quiz Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#7A7F3F] rounded-2xl mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#6366F1] rounded-2xl mb-4">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
@@ -254,7 +254,7 @@ const TakeSectionQuiz = () => {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
-                className="bg-[#7A7F3F] h-2 rounded-full transition-all duration-300"
+                className="bg-[#6366F1] h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(answeredQuizData.filter(q => q.chosenAnswer).length / quizData.length) * 100}%` }}
               ></div>
             </div>
@@ -270,7 +270,7 @@ const TakeSectionQuiz = () => {
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                       answeredQuizData[index]?.chosenAnswer 
                         ? 'bg-green-100 text-green-700' 
-                        : 'bg-[#7A7F3F] text-white'
+                        : 'bg-[#6366F1] text-white'
                     }`}>
                       {answeredQuizData[index]?.chosenAnswer ? (
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -298,14 +298,14 @@ const TakeSectionQuiz = () => {
                         onClick={() => chooseAnswer(index, optionNum)}
                         className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
                           answeredQuizData[index]?.chosenAnswer === optionNum
-                            ? 'border-[#7A7F3F] bg-[#7A7F3F]/5 text-[#7A7F3F]'
+                            ? 'border-[#6366F1] bg-[#6366F1]/5 text-[#6366F1]'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                       >
                         <div className="flex items-center space-x-3">
                           <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                             answeredQuizData[index]?.chosenAnswer === optionNum
-                              ? 'border-[#7A7F3F] bg-[#7A7F3F]'
+                              ? 'border-[#6366F1] bg-[#6366F1]'
                               : 'border-gray-300'
                           }`}>
                             {answeredQuizData[index]?.chosenAnswer === optionNum && (
@@ -315,7 +315,7 @@ const TakeSectionQuiz = () => {
                           <div className="flex items-center space-x-3">
                             <span className={`text-sm font-medium ${
                               answeredQuizData[index]?.chosenAnswer === optionNum 
-                                ? 'text-[#7A7F3F]' 
+                                ? 'text-[#6366F1]' 
                                 : 'text-gray-500'
                             }`}>
                               {String.fromCharCode(64 + optionNum)}
@@ -336,7 +336,7 @@ const TakeSectionQuiz = () => {
             <button
               onClick={submitQuiz}
               disabled={submitting || answeredQuizData.filter(q => q.chosenAnswer).length === 0}
-              className="inline-flex items-center justify-center px-8 py-4 bg-[#7A7F3F] text-white rounded-lg font-semibold text-lg hover:bg-[#6A6F35] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center px-8 py-4 bg-[#6366F1] text-white rounded-lg font-semibold text-lg hover:bg-[#4F46E5] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <>

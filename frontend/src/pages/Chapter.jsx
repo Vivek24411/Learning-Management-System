@@ -9,7 +9,7 @@ import { UserContextData } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
 // Configure PDF.js worker to use local file to avoid CORS issues
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf-worker/pdf.worker.min.js';
+pdfjs.GlobalWorkerOptions.workerSrc = '/edvance/pdf-worker/pdf.worker.min.js';
 
 // PDF Viewer Component
 const PDFViewer = ({ pdfUrl, title }) => {
@@ -169,7 +169,7 @@ const PDFViewer = ({ pdfUrl, title }) => {
             onClick={toggleScrollMode}
             className={`flex items-center justify-center px-3 py-2 rounded-md transition-all duration-200 text-xs sm:text-sm ${
               isScrollMode 
-                ? 'bg-[#7A7F3F] text-white' 
+                ? 'bg-[#6366F1] text-white' 
                 : isFullscreen 
                   ? 'bg-gray-700 text-white hover:bg-gray-600' 
                   : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -271,7 +271,7 @@ const PDFViewer = ({ pdfUrl, title }) => {
       <div className={`flex flex-col items-center ${isFullscreen ? 'h-5/6 overflow-hidden' : ''}`}>
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7A7F3F]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1]"></div>
             <span className={`ml-2 ${isFullscreen ? 'text-white' : 'text-gray-600'}`}>Loading PDF...</span>
           </div>
         )}
@@ -325,7 +325,7 @@ const PDFViewer = ({ pdfUrl, title }) => {
             <button
               onClick={goToPrevPage}
               disabled={pageNumber <= 1}
-              className="flex items-center justify-center px-4 py-2 bg-[#7A7F3F] text-white rounded-md hover:bg-[#6B7035] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto"
+              className="flex items-center justify-center px-4 py-2 bg-[#6366F1] text-white rounded-md hover:bg-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto"
             >
               <svg className="w-4 h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -336,7 +336,7 @@ const PDFViewer = ({ pdfUrl, title }) => {
             <button
               onClick={goToNextPage}
               disabled={pageNumber >= numPages}
-              className="flex items-center justify-center px-4 py-2 bg-[#7A7F3F] text-white rounded-md hover:bg-[#6B7035] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto"
+              className="flex items-center justify-center px-4 py-2 bg-[#6366F1] text-white rounded-md hover:bg-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto"
             >
               Next
               <svg className="w-4 h-4 ml-1 sm:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -884,10 +884,10 @@ const Chapter = () => {
     return (
       <>
         <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
-        <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="min-h-screen bg-bg pt-20">
           <div className="max-w-4xl mx-auto px-6 py-8">
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7A7F3F]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1]"></div>
               <span className="ml-3 text-gray-600">Loading chapter...</span>
             </div>
           </div>
@@ -904,7 +904,7 @@ const Chapter = () => {
     return (
       <>
         <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
-        <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="min-h-screen bg-bg pt-20">
           <div className="max-w-4xl mx-auto px-6 py-8">
             <div className="text-center py-20">
               <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -923,7 +923,7 @@ const Chapter = () => {
     return (
       <>
         <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
-        <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="min-h-screen bg-bg pt-20">
           <div className="max-w-4xl mx-auto px-6 py-8">
             <div className="text-center py-20">
               <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -953,7 +953,7 @@ const Chapter = () => {
   return (
    <>
    <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
-   <div className="min-h-screen bg-gray-50 pt-20">
+   <div className="min-h-screen bg-bg pt-20">
      <div className="max-w-4xl mx-auto px-6 py-8 space-y-10">
        
        {/* Chapter Header */}
@@ -992,7 +992,7 @@ const Chapter = () => {
                </h3>
                <button
                  onClick={() => setShowThumbnailUpload(!showThumbnailUpload)}
-                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                 className="px-4 py-2 bg-surface border border-border text-ink-muted rounded-md hover:bg-bg transition-colors duration-200 text-sm font-medium"
                  disabled={managementLoading}
                >
                  {showThumbnailUpload ? 'Cancel' : 'Update Thumbnail'}
@@ -1039,7 +1039,7 @@ const Chapter = () => {
        </div>
 
        {/* External Links Section */}
-       {chapter.externalLinks && chapter.externalLinks.length > 0 && (
+       {chapter.externalLinks && chapter.externalLinks[0].uri && (
          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
            <h3 className="text-xl font-medium text-gray-900 mb-6 flex items-center">
              <svg
@@ -1055,10 +1055,11 @@ const Chapter = () => {
                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                />
              </svg>
-             External Resources ({chapter.externalLinks.length})
+             {chapter.externalLinks[0].uri && <h3>External Resources ({chapter.externalLinks.length})</h3>}
+             
            </h3>
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-             {chapter.externalLinks.map((link, index) => (
+             {chapter.externalLinks[0].uri && chapter.externalLinks.map((link, index) => (
                <a
                  key={index}
                  href={link.url}
@@ -1183,21 +1184,21 @@ const Chapter = () => {
              </div>
            </div>
          ) : (
-           /* No Quiz Available State */
-           <div className="text-center py-12">
-             <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
-               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-               </svg>
-             </div>
-             <h4 className="text-lg font-medium text-gray-700 mb-2">No Quiz Available</h4>
-             <p className="text-gray-500 mb-4">
-               There's no quiz available for this chapter yet.
-             </p>
-             {profile?.isAdmin && (
-               <button 
-                 onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
-                 className="inline-flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
+          /* No Quiz Available State */
+          <div className="text-center py-16 px-6 bg-surface border border-border rounded-lg shadow-sm">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-bg border border-border rounded-full mb-6 shadow-sm">
+              <svg className="w-8 h-8 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+            <h4 className="text-xl font-serif font-medium text-ink mb-2">Assessment Pending</h4>
+            <p className="text-ink-muted mb-6 max-w-md mx-auto">
+              The evaluation module for this chapter is currently being refined by our instructors. Please check back later.
+            </p>
+            {profile?.isAdmin && (
+              <button 
+                onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
+                className="inline-flex items-center bg-primary text-surface px-5 py-2.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors duration-200"
                >
                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1226,7 +1227,7 @@ const Chapter = () => {
                  <div className="flex flex-col sm:flex-row gap-2">
                    <button
                      onClick={() => setShowFileUpload(!showFileUpload)}
-                     className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                     className="px-3 py-2 bg-surface border border-border text-ink-muted rounded-md hover:bg-bg transition-colors duration-200 text-sm font-medium"
                      disabled={managementLoading}
                    >
                      Add Files
@@ -1297,7 +1298,7 @@ const Chapter = () => {
            {chapter.chapterFile.length > 1 && (
              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-50 rounded-md p-4 border border-gray-200 mb-6 space-y-3 sm:space-y-0">
                <div className="flex items-center justify-center sm:justify-start space-x-3">
-                 <div className="w-2 h-2 bg-[#7A7F3F] rounded-full"></div>
+                 <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
                  <span className="text-gray-900 font-medium text-sm sm:text-base">
                    File {currentFileIndex + 1} of {chapter.chapterFile.length}
                  </span>
@@ -1313,7 +1314,7 @@ const Chapter = () => {
                  <button
                    onClick={nextFile}
                    disabled={currentFileIndex === chapter.chapterFile.length - 1}
-                   className="w-full sm:w-auto px-4 py-2 bg-[#7A7F3F] text-white rounded-md hover:bg-[#6B7035] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+                   className="w-full sm:w-auto px-4 py-2 bg-[#6366F1] text-white rounded-md hover:bg-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
                  >
                    Next File
                  </button>
@@ -1340,7 +1341,7 @@ const Chapter = () => {
                <p className="text-gray-500 mb-4">Add PDF files for this chapter to provide additional learning materials.</p>
                <button
                  onClick={() => setShowFileUpload(true)}
-                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                 className="inline-flex items-center px-4 py-2 bg-surface border border-border text-ink-muted rounded-md hover:bg-bg transition-colors duration-200 text-sm font-medium"
                >
                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1417,7 +1418,7 @@ const Chapter = () => {
                  <div className="flex flex-col sm:flex-row gap-2">
                    <button
                      onClick={() => setShowVideoUpload(!showVideoUpload)}
-                     className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                     className="px-3 py-2 bg-surface border border-border text-ink-muted rounded-md hover:bg-bg transition-colors duration-200 text-sm font-medium"
                      disabled={managementLoading}
                    >
                      Add Videos

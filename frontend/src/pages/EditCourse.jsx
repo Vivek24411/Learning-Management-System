@@ -134,9 +134,9 @@ const EditCourse = () => {
         <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
           <div className="text-center bg-white rounded-lg p-8 shadow-sm border border-gray-200 max-w-md mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-100"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-200"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce delay-100"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce delay-200"></div>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading Course</h3>
             <p className="text-gray-600">Please wait while we load the course data...</p>
@@ -161,7 +161,7 @@ const EditCourse = () => {
             <p className="text-gray-600 mb-6">Unable to load course data. Please try again.</p>
             <button
               onClick={() => navigate(-1)}
-              className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200"
+              className="bg-[#6366F1] text-white px-6 py-3 rounded font-semibold hover:bg-[#4F46E5] transition-colors duration-200"
             >
               Go Back
             </button>
@@ -199,7 +199,7 @@ const EditCourse = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-[#7A7F3F] rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-[#6366F1] rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
@@ -222,7 +222,7 @@ const EditCourse = () => {
                   id="courseName"
                   value={courseData.courseName || ""}
                   onChange={(e) => handleInputChange('courseName', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent transition-colors duration-200 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-colors duration-200 ${
                     errors.courseName ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Enter course name..."
@@ -247,7 +247,7 @@ const EditCourse = () => {
                   rows="3"
                   value={courseData.shortDescription || ""}
                   onChange={(e) => handleInputChange('shortDescription', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none transition-colors duration-200 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none transition-colors duration-200 ${
                     errors.shortDescription ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Brief description of the course..."
@@ -279,7 +279,7 @@ const EditCourse = () => {
                   rows="6"
                   value={courseData.longDescription || ""}
                   onChange={(e) => handleInputChange('longDescription', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none transition-colors duration-200 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none transition-colors duration-200 ${
                     errors.longDescription ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Comprehensive description of the course content, objectives, and outcomes..."
@@ -311,7 +311,7 @@ const EditCourse = () => {
                   rows="4"
                   value={courseData.courseIntroduction || ""}
                   onChange={(e) => handleInputChange('courseIntroduction', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none transition-colors duration-200 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none transition-colors duration-200 ${
                     errors.courseIntroduction ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Introduction to welcome students and explain what they'll learn..."
@@ -349,7 +349,7 @@ const EditCourse = () => {
                     step="0.01"
                     value={courseData.price || ""}
                     onChange={(e) => handleInputChange('price', e.target.value)}
-                    className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent transition-colors duration-200 ${
+                    className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-colors duration-200 ${
                       errors.price ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
                     placeholder="0.00"
@@ -382,7 +382,7 @@ const EditCourse = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full sm:w-auto px-8 py-3 bg-[#7A7F3F] text-white rounded-lg font-medium hover:bg-[#6A6F35] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full sm:w-auto px-8 py-3 bg-[#6366F1] text-white rounded-lg font-medium hover:bg-[#4F46E5] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {saving ? (
                     <>

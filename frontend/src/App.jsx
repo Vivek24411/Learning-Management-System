@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Register from "./pages/Register.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -19,29 +19,35 @@ import ForgotPassword from "./pages/ForgotPassword.jsx";
 import QuizSection from "./pages/QuizSection.jsx";
 import TakeSectionQuiz from "./pages/TakeSectionQuiz.jsx";
 import EditSection from "./pages/EditSection.jsx";
+import { AnimatePresence, motion } from "framer-motion";
+import ScrollToTop from "./components/ScrollToTop.jsx";
 
 
 const App = () => {
+  const location = useLocation();
+
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<ProtectedWrapper><Profile /></ProtectedWrapper>} />
-        <Route path="/course/:courseId" element={<ProtectedWrapper><Course /></ProtectedWrapper>} />
-        <Route path="/chapter/:chapterId" element={<ProtectedWrapper><Chapter /></ProtectedWrapper>} />
-        <Route path="/addCourse" element={<ProtectedWrapper><AddCourse /></ProtectedWrapper>} />
-        <Route path="/editCourse/:courseId" element={<ProtectedWrapper><EditCourse /></ProtectedWrapper>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/addChapter/:sectionId" element={<ProtectedWrapper><AddChapter /></ProtectedWrapper>} />
-        <Route path="/editChapter/:chapterId" element={<ProtectedWrapper><EditChapter /></ProtectedWrapper>} />
-        <Route path="/addSection/:courseId" element={<ProtectedWrapper><AddSection /></ProtectedWrapper>} />
-        <Route path="/quiz/:type/:id" element={<ProtectedWrapper><QuizSection /></ProtectedWrapper>} />
-        <Route path="/takeQuiz/:type/:id" element={<ProtectedWrapper><TakeSectionQuiz /></ProtectedWrapper>} />
-        <Route path="/forgotPassword" element={<ForgotPassword />} />
-        <Route path="/editSection/:sectionId" element={<ProtectedWrapper><EditSection /></ProtectedWrapper>} />
-
-      </Routes>
+      <ScrollToTop />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Home />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={<ProtectedWrapper><Profile /></ProtectedWrapper>} />
+          <Route path="/course/:courseId" element={<ProtectedWrapper><Course /></ProtectedWrapper>} />
+          <Route path="/chapter/:chapterId" element={<ProtectedWrapper><Chapter /></ProtectedWrapper>} />
+          <Route path="/addCourse" element={<ProtectedWrapper><AddCourse /></ProtectedWrapper>} />
+          <Route path="/editCourse/:courseId" element={<ProtectedWrapper><EditCourse /></ProtectedWrapper>} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/addChapter/:sectionId" element={<ProtectedWrapper><AddChapter /></ProtectedWrapper>} />
+          <Route path="/editChapter/:chapterId" element={<ProtectedWrapper><EditChapter /></ProtectedWrapper>} />
+          <Route path="/addSection/:courseId" element={<ProtectedWrapper><AddSection /></ProtectedWrapper>} />
+          <Route path="/quiz/:type/:id" element={<ProtectedWrapper><QuizSection /></ProtectedWrapper>} />
+          <Route path="/takeQuiz/:type/:id" element={<ProtectedWrapper><TakeSectionQuiz /></ProtectedWrapper>} />
+          <Route path="/forgotPassword" element={<ForgotPassword />} />
+          <Route path="/editSection/:sectionId" element={<ProtectedWrapper><EditSection /></ProtectedWrapper>} />
+        </Routes>
+      </AnimatePresence>
       <Footer/>
 
       <ToastContainer
@@ -54,6 +60,7 @@ const App = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="dark"
       />
     </>
   );

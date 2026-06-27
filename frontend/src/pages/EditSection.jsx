@@ -117,9 +117,9 @@ const EditSection = () => {
         <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
           <div className="text-center bg-white rounded-lg p-8 shadow-sm border border-gray-200 max-w-md mx-auto">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-100"></div>
-              <div className="w-3 h-3 bg-[#7A7F3F] rounded-full animate-bounce delay-200"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce delay-100"></div>
+              <div className="w-3 h-3 bg-[#6366F1] rounded-full animate-bounce delay-200"></div>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading Section</h3>
             <p className="text-gray-600">Please wait while we load the section data...</p>
@@ -144,7 +144,7 @@ const EditSection = () => {
             <p className="text-gray-600 mb-6">Unable to load section data. Please try again.</p>
             <button
               onClick={() => navigate(-1)}
-              className="bg-[#7A7F3F] text-white px-6 py-3 rounded font-semibold hover:bg-[#6A6F35] transition-colors duration-200"
+              className="bg-[#6366F1] text-white px-6 py-3 rounded font-semibold hover:bg-[#4F46E5] transition-colors duration-200"
             >
               Go Back
             </button>
@@ -182,7 +182,7 @@ const EditSection = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-[#7A7F3F] rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-[#6366F1] rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
@@ -205,7 +205,7 @@ const EditSection = () => {
                   id="sectionTitle"
                   value={section.sectionTitle || ""}
                   onChange={(e) => handleInputChange('sectionTitle', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent transition-colors duration-200 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-colors duration-200 ${
                     errors.sectionTitle ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Enter section name..."
@@ -230,7 +230,7 @@ const EditSection = () => {
                   rows="4"
                   value={section.sectionDescription || ""}
                   onChange={(e) => handleInputChange('sectionDescription', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7A7F3F] focus:border-transparent resize-none transition-colors duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none transition-colors duration-200"
                   placeholder="Brief description of what this section covers (optional)..."
                 />
                 <div className="flex items-center justify-between mt-1">
@@ -256,7 +256,7 @@ const EditSection = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full sm:w-auto px-8 py-3 bg-[#7A7F3F] text-white rounded-lg font-medium hover:bg-[#6A6F35] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full sm:w-auto px-8 py-3 bg-[#6366F1] text-white rounded-lg font-medium hover:bg-[#4F46E5] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {saving ? (
                     <>
