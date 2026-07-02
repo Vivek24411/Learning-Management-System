@@ -18,9 +18,8 @@ const Footer = () => {
     }
   }
 
-  // Geometric atom logo (same as header)
   const LogoIcon = () => (
-    <svg className="w-7 h-7 text-primary" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg className="h-7 w-7 text-[#7A4E2D]" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
       <ellipse cx="16" cy="16" rx="14" ry="6" stroke="currentColor" strokeWidth="1.5" transform="rotate(45 16 16)" opacity="0.3"/>
       <ellipse cx="16" cy="16" rx="14" ry="6" stroke="currentColor" strokeWidth="1.5" transform="rotate(-45 16 16)" opacity="0.3"/>

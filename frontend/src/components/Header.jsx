@@ -47,16 +47,15 @@ const Header = ({topics}) => {
     }
   };
 
-  // Geometric atom/circuit "E" logo icon
   const LogoIcon = () => (
-    <svg className="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="14" stroke="#6366F1" strokeWidth="1.5" opacity="0.3"/>
-      <ellipse cx="16" cy="16" rx="14" ry="6" stroke="#6366F1" strokeWidth="1.5" transform="rotate(45 16 16)" opacity="0.3"/>
-      <ellipse cx="16" cy="16" rx="14" ry="6" stroke="#6366F1" strokeWidth="1.5" transform="rotate(-45 16 16)" opacity="0.3"/>
-      <circle cx="16" cy="16" r="3" fill="#6366F1"/>
-      <circle cx="16" cy="2" r="1.5" fill="#6366F1"/>
-      <circle cx="26" cy="22" r="1.5" fill="#6366F1"/>
-      <circle cx="6" cy="22" r="1.5" fill="#6366F1"/>
+    <svg className="h-8 w-8 text-[#7A4E2D]" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+      <ellipse cx="16" cy="16" rx="14" ry="6" stroke="currentColor" strokeWidth="1.5" transform="rotate(45 16 16)" opacity="0.3"/>
+      <ellipse cx="16" cy="16" rx="14" ry="6" stroke="currentColor" strokeWidth="1.5" transform="rotate(-45 16 16)" opacity="0.3"/>
+      <circle cx="16" cy="16" r="3" fill="currentColor"/>
+      <circle cx="16" cy="2" r="1.5" fill="currentColor"/>
+      <circle cx="26" cy="22" r="1.5" fill="currentColor"/>
+      <circle cx="6" cy="22" r="1.5" fill="currentColor"/>
     </svg>
   );
 

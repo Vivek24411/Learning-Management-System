@@ -183,7 +183,7 @@ const Home = () => {
                 animate="visible"
                 className="text-base lg:text-sm text-ink-muted mb-10 max-w-lg leading-relaxed"
               >
-               EdVance is a wisdom portal which sees education not just as passing on of information, but as kindling of the soul that brings out the perfection already in us. Discover profound insights into consciousness, nature, and the self through the classical Indian Knowledge Systems.
+               Edvance is a wisdom portal which sees education not just as passing on of information, but as kindling of the soul that brings out the perfection already in us. 
               </motion.p>
               
               {/* CTAs */}
