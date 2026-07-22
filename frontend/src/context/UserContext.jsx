@@ -35,7 +35,7 @@ const UserContext = ({children}) => {
 
 
   return (
-    <UserContextData.Provider value={{loggedIn, setLoggedIn, profile, fetchProfile }}>
+    <UserContextData.Provider value={{loggedIn, setLoggedIn, profile, setProfile, fetchProfile }}>
         {children}
     </UserContextData.Provider>
   )

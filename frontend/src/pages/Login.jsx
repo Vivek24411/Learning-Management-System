@@ -16,7 +16,9 @@ const Login = () => {
     const navigate = useNavigate();
     const {setLoggedIn} = useContext(UserContextData);
 
-  async function handleLogin(){
+  async function handleLogin(e){
+       if(e) e.preventDefault();
+       if(!email || !password) return;
        try{
            setLoading(true);
            const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/login`, {
@@ -92,7 +94,7 @@ const Login = () => {
                   </div>
 
                   {/* Login Form */}
-                  <div className="space-y-6">
+                  <form onSubmit={handleLogin} className="space-y-6">
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-ink-muted mb-2">
                         Email Address
@@ -145,8 +147,8 @@ const Login = () => {
                     </div>
 
                     <motion.button
+                      type="submit"
                       whileTap={{ scale: 0.97 }}
-                      onClick={handleLogin}
                       disabled={loading || !email || !password}
                       className="w-full bg-primary hover:bg-primary-hover text-surface py-3 px-6 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                     >
@@ -167,7 +169,7 @@ const Login = () => {
                         </>
                       )}
                     </motion.button>
-                  </div>
+                  </form>
 
                   {/* Footer */}
                   <div className="mt-8 text-center text-sm text-ink-muted">

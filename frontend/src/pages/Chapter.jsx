@@ -8,6 +8,18 @@ import { useContext } from 'react';
 import { UserContextData } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
+// Themed placeholder for videos with no creator-supplied thumbnail.
+const DEFAULT_VIDEO_POSTER =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360'>
+      <rect width='640' height='360' fill='#F2ECDD'/>
+      <circle cx='320' cy='168' r='46' fill='#7A1F2B'/>
+      <path d='M305 145 l42 23 l-42 23 z' fill='#FFFFFF'/>
+      <text x='320' y='255' font-family='Georgia, serif' font-size='24' fill='#6B5F52' text-anchor='middle'>Lesson Video</text>
+    </svg>`
+  );
+
 // Configure PDF.js worker to use local file to avoid CORS issues
 pdfjs.GlobalWorkerOptions.workerSrc = '/edvance/pdf-worker/pdf.worker.min.js';
 
@@ -472,25 +484,25 @@ const VideoPlayer = ({ videoDetails }) => {
               Your browser does not support the video tag.
             </video>
 
-            {/* Thumbnail Overlay */}
-            {showThumbnail && currentVideo.videoThumbnail && (
-              <div 
+            {/* Thumbnail Overlay — falls back to a themed default poster */}
+            {showThumbnail && (
+              <div
                 className="relative w-full h-64 md:h-80 lg:h-96 cursor-pointer"
                 onClick={handlePlayVideo}
               >
                 <img
-                  src={currentVideo.videoThumbnail}
+                  src={currentVideo.videoThumbnail || DEFAULT_VIDEO_POSTER}
                   alt={currentVideo.title || 'Video thumbnail'}
                   className="w-full h-full object-cover"
                 />
-                
+
                 {/* Dark overlay */}
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-all duration-300"></div>
-                
+
                 {/* Play Button */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-16 h-16 bg-white/95 hover:bg-white rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all duration-200">
-                    <svg className="w-6 h-6 text-red-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-primary ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z"/>
                     </svg>
                   </div>
@@ -499,20 +511,6 @@ const VideoPlayer = ({ videoDetails }) => {
                 {/* Video Duration Badge (optional) */}
                 <div className="absolute bottom-4 right-4 bg-black/80 text-white px-2 py-1 rounded text-sm font-medium">
                   Click to Play
-                </div>
-              </div>
-            )}
-
-            {/* Video Loading State */}
-            {!showThumbnail && !currentVideo.videoThumbnail && (
-              <div className="w-full h-64 md:h-80 lg:h-96 bg-gray-900 flex items-center justify-center">
-                <div className="text-white text-center">
-                  <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </div>
-                  <p>Loading video...</p>
                 </div>
               </div>
             )}

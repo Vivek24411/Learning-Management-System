@@ -4,9 +4,22 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { UserContextData } from "../context/UserContext";
 import Header from "../components/Header";
+import QuizReview from "../components/QuizReview";
+
+// Themed placeholder shown on videos that have no creator-supplied thumbnail.
+const DEFAULT_VIDEO_POSTER =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360'>
+      <rect width='640' height='360' fill='#F2ECDD'/>
+      <circle cx='320' cy='168' r='46' fill='#7A1F2B'/>
+      <path d='M305 145 l42 23 l-42 23 z' fill='#FFFFFF'/>
+      <text x='320' y='255' font-family='Georgia, serif' font-size='24' fill='#6B5F52' text-anchor='middle'>Lesson Video</text>
+    </svg>`
+  );
 
 // Chapter Item Component
-const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
+const ChapterItem = ({ chapter, onViewChapter, sectionId, canManage, canView }) => {
   const handleChapterClick = () => {
     onViewChapter(chapter._id);
   };
@@ -62,29 +75,35 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
   return (
     <div className="bg-surface rounded-lg border border-gray-100 hover:border-border hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 overflow-hidden group cursor-pointer h-[580px] flex flex-col">
       {/* Chapter Thumbnail */}
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
+      <div className="relative h-48 overflow-hidden bg-surface-muted flex-shrink-0">
         {chapter.chapterThumbnailImage ? (
           <img
             src={chapter.chapterThumbnailImage}
             alt={chapter.chapterName}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover"
+            loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#6366F1] to-[#4F46E5] flex items-center justify-center relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-surface rounded-full -translate-x-16 -translate-y-16"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-surface rounded-full translate-x-12 translate-y-12"></div>
-              <div className="absolute top-1/2 left-1/3 w-4 h-4 bg-surface rounded-full"></div>
-              <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-surface rounded-full"></div>
+          /* Themed default placeholder using the brand palette */
+          <div className="w-full h-full bg-gradient-to-br from-primary to-primary-hover flex flex-col items-center justify-center relative overflow-hidden px-5 text-center">
+            <div className="absolute inset-0 opacity-[0.08]">
+              <div className="absolute top-0 left-0 w-40 h-40 bg-surface rounded-full -translate-x-20 -translate-y-20"></div>
+              <div className="absolute bottom-0 right-0 w-28 h-28 bg-accent rounded-full translate-x-10 translate-y-10"></div>
+              <div className="absolute top-1/2 left-1/4 w-3 h-3 bg-surface rounded-full"></div>
             </div>
+            <svg className="w-10 h-10 text-accent mb-2 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span className="relative text-surface/95 font-serif text-sm leading-snug line-clamp-2">
+              {chapter.chapterName}
+            </span>
           </div>
         )}
 
         {/* Chapter Status Badge */}
         <div className="absolute top-3 right-3">
-          {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
-            <div className="bg-green-600 text-ink px-2 py-1 rounded text-xs font-medium flex items-center">
+          {canView ? (
+            <div className="bg-success text-surface px-2.5 py-1 rounded-full text-xs font-medium flex items-center shadow-sm">
               <svg
                 className="w-3 h-3 mr-1"
                 fill="currentColor"
@@ -99,7 +118,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
               Available
             </div>
           ) : (
-            <div className="bg-red-600 text-ink px-2 py-1 rounded text-xs font-medium flex items-center">
+            <div className="bg-ink/80 text-surface px-2.5 py-1 rounded-full text-xs font-medium flex items-center shadow-sm backdrop-blur-sm">
               <svg
                 className="w-3 h-3 mr-1"
                 fill="currentColor"
@@ -156,7 +175,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
 
         {/* Bottom Actions - Fixed at bottom */}
         <div className="mt-auto flex flex-col gap-2">
-          {profile?.isAdmin && (
+          {canManage && (
             <div className="mb-4">
               <button
                 onClick={() => navigate(`/editChapter/${chapter._id}`)}
@@ -201,7 +220,7 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
           )}
 
           {/* Chapter Action Button */}
-          {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
+          {canView ? (
             <button
               onClick={handleChapterClick}
               className="w-full bg-primary text-surface py-2.5 px-4 rounded-md font-medium hover:bg-primary-hover transition-colors duration-200"
@@ -238,7 +257,8 @@ const ChapterItem = ({ chapter, onViewChapter, sectionId }) => {
 const SectionItem = ({
   section,
   onViewChapter,
-  isAdmin,
+  canManage,
+  canView,
   onAddChapter,
   sectionVideoInput,
   setSectionVideoInput,
@@ -417,58 +437,12 @@ const SectionItem = ({
             )}
 
             {/* Section Info Indicators */}
-            <div className="flex items-center space-x-3 ml-14">
-              <div className="bg-bg border border-border rounded px-3 py-1 flex items-center">
-                <svg
-                  className="w-4 h-4 text-ink-muted/70 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 712-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <span className="text-sm font-medium text-ink-muted">
-                  {section.chapters ? section.chapters.length : 0}
-                  {section.chapters?.length === 1 ? " Chapter" : " Chapters"}
-                </span>
-              </div>
-
-              {/* Video count indicator */}
-              {section.sectionVideoUrl &&
-                section.sectionVideoUrl.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded px-3 py-1 flex items-center">
-                    <svg
-                      className="w-4 h-4 text-red-500 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-red-700">
-                      {section.sectionVideoUrl.length}
-                      {section.sectionVideoUrl.length === 1
-                        ? " Video"
-                        : " Videos"}
-                    </span>
-                  </div>
-                )}
-
-              {/* External Links indicator */}
-              {section.externalLinks && section.externalLinks.length > 0 && (
-                <div className="bg-primary/5 border border-primary/20 rounded px-3 py-1 flex items-center">
+            <div className="ml-14 space-y-3">
+              {/* Count chips */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="bg-bg border border-border rounded-full px-3 py-1 flex items-center">
                   <svg
-                    className="w-4 h-4 text-primary mr-2"
+                    className="w-4 h-4 text-ink-muted/70 mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -477,68 +451,21 @@ const SectionItem = ({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <span className="text-sm font-medium text-primary">
-                    {section.externalLinks.length}
-                    {section.externalLinks.length === 1 ? " Link" : " Links"}
+                  <span className="text-sm font-medium text-ink-muted">
+                    {section.chapters ? section.chapters.length : 0}
+                    {section.chapters?.length === 1 ? " Chapter" : " Chapters"}
                   </span>
                 </div>
-              )}
 
-              <div>
-                {profile?.isAdmin && (
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => navigate(`/quiz/section/${section._id}`)}
-                      className="bg-purple-50 border border-purple-200 text-purple-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-purple-100 transition-colors duration-200 flex items-center"
-                    >
+                {/* Video count indicator */}
+                {section.sectionVideoUrl &&
+                  section.sectionVideoUrl.length > 0 && (
+                    <div className="bg-accent/10 border border-accent/30 rounded-full px-3 py-1 flex items-center">
                       <svg
-                        className="w-4 h-4 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                        />
-                      </svg>
-                      Add Quiz
-                    </button>
-                    <button
-                      onClick={() => navigate(`/editSection/${section._id}`)}
-                      className="bg-primary/5 border border-primary/20 text-primary rounded-md px-3 py-2 text-sm font-medium hover:bg-primary/10 transition-colors duration-200 flex items-center"
-                    >
-                      <svg
-                        className="w-4 h-4 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
-                      Edit Section
-                    </button>
-                    <button
-                      onClick={() =>
-                        setSectionVideoInput((prev) => ({
-                          ...prev,
-                          [section._id]: !prev[section._id],
-                        }))
-                      }
-                      className="bg-red-50 border border-red-200 text-red-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-red-100 transition-colors duration-200 flex items-center"
-                    >
-                      <svg
-                        className="w-4 h-4 mr-1"
+                        className="w-4 h-4 text-accent mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -550,38 +477,20 @@ const SectionItem = ({
                           d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
                         />
                       </svg>
-                      Manage Videos
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSection(section._id)}
-                      className="bg-red-50 border border-red-200 text-red-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-red-100 transition-colors duration-200 flex items-center"
-                    >
-                      <svg
-                        className="w-4 h-4 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-              {section.sectionQuiz && section.sectionQuiz.length > 0 && (
-                <div>
-                  <button
-                    onClick={() => navigate(`/takeQuiz/section/${section._id}`)}
-                    className="bg-green-50 border border-green-200 text-green-700 rounded-md px-3 py-2 text-sm font-medium hover:bg-green-100 transition-colors duration-200 flex items-center"
-                  >
+                      <span className="text-sm font-medium text-accent">
+                        {section.sectionVideoUrl.length}
+                        {section.sectionVideoUrl.length === 1
+                          ? " Video"
+                          : " Videos"}
+                      </span>
+                    </div>
+                  )}
+
+                {/* External Links indicator */}
+                {section.externalLinks && section.externalLinks.length > 0 && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-full px-3 py-1 flex items-center">
                     <svg
-                      className="w-4 h-4 mr-1"
+                      className="w-4 h-4 text-primary mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -590,10 +499,73 @@ const SectionItem = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                       />
                     </svg>
-                    Take Quiz
+                    <span className="text-sm font-medium text-primary">
+                      {section.externalLinks.length}
+                      {section.externalLinks.length === 1 ? " Link" : " Links"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Student: take-quiz action */}
+              {!canManage && section.sectionQuiz && section.sectionQuiz.length > 0 && (
+                <button
+                  onClick={() => navigate(`/takeQuiz/section/${section._id}`)}
+                  className="bg-success/10 border border-success/30 text-success rounded-md px-3 py-2 text-sm font-medium hover:bg-success/20 transition-colors duration-200 flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Take Quiz
+                </button>
+              )}
+
+              {/* Manage: grouped action buttons */}
+              {canManage && (
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/60">
+                  <button
+                    onClick={() => navigate(`/quiz/section/${section._id}`)}
+                    className="bg-surface border border-border text-ink-muted rounded-md px-3 py-2 text-sm font-medium hover:bg-bg hover:text-ink transition-colors duration-200 flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Add Quiz
+                  </button>
+                  <button
+                    onClick={() => navigate(`/editSection/${section._id}`)}
+                    className="bg-surface border border-border text-ink-muted rounded-md px-3 py-2 text-sm font-medium hover:bg-bg hover:text-ink transition-colors duration-200 flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Section
+                  </button>
+                  <button
+                    onClick={() =>
+                      setSectionVideoInput((prev) => ({
+                        ...prev,
+                        [section._id]: !prev[section._id],
+                      }))
+                    }
+                    className="bg-surface border border-border text-ink-muted rounded-md px-3 py-2 text-sm font-medium hover:bg-bg hover:text-ink transition-colors duration-200 flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Manage Videos
+                  </button>
+                  <button
+                    onClick={() => handleDeleteSection(section._id)}
+                    className="bg-surface border border-danger/30 text-danger rounded-md px-3 py-2 text-sm font-medium hover:bg-danger/10 transition-colors duration-200 flex items-center ml-auto"
+                  >
+                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
                   </button>
                 </div>
               )}
@@ -602,7 +574,7 @@ const SectionItem = ({
 
           <div className="flex items-center space-x-3">
             {/* Admin Add Chapter Button */}
-            {isAdmin && (
+            {canManage && (
               <button
                 onClick={() => onAddChapter(section._id)}
                 className="bg-primary text-surface px-3 py-2 rounded text-sm font-medium hover:bg-primary-hover transition-colors duration-200 flex items-center"
@@ -662,11 +634,11 @@ const SectionItem = ({
         <div className="overflow-hidden">
         <div className="p-6 space-y-6">
           {/* Section Videos */}
-          {(profile.isAdmin ||profile.coursePurchased.includes(courseId)) && section.sectionVideoUrl && section.sectionVideoUrl.length > 0 && (
+          {canView && section.sectionVideoUrl && section.sectionVideoUrl.length > 0 && (
             <div className="mb-6">
               <h4 className="text-lg font-semibold text-ink mb-4 flex items-center">
                 <svg
-                  className="w-5 h-5 mr-2 text-red-600"
+                  className="w-5 h-5 mr-2 text-primary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -694,6 +666,7 @@ const SectionItem = ({
                         src={videoUrl}
                         controls
                         preload="metadata"
+                        poster={DEFAULT_VIDEO_POSTER}
                         className="w-full h-full object-cover protected"
                         controlsList="nodownload noremoteplayback"
                         disablePictureInPicture
@@ -719,12 +692,12 @@ const SectionItem = ({
                       </div>
 
                       {/* Admin Remove Button */}
-                      {profile?.isAdmin && (
+                      {canManage && (
                         <button
                           onClick={() =>
                             removeSectionVideo(section._id, videoUrl, index)
                           }
-                          className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-ink p-1 rounded-full transition-colors duration-200 backdrop-blur-sm"
+                          className="absolute top-2 right-2 bg-danger/90 hover:bg-danger text-surface p-1 rounded-full transition-colors duration-200 backdrop-blur-sm"
                           title="Remove video"
                         >
                           <svg
@@ -747,7 +720,7 @@ const SectionItem = ({
                       <div className="flex items-center justify-center">
                         <div className="flex items-center text-sm text-ink-muted">
                           <svg
-                            className="w-4 h-4 mr-1 text-red-500"
+                            className="w-4 h-4 mr-1 text-primary"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                           >
@@ -764,12 +737,12 @@ const SectionItem = ({
           )}
 
           {/* Section Video Management - Admin Only */}
-          {profile?.isAdmin && (
+          {canManage && (
             <div className="mb-6">
-              <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-6 border border-red-200">
+              <div className="bg-gradient-to-r from-primary/5 to-surface rounded-lg p-6 border border-border">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center mr-3">
+                    <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3">
                       <svg
                         className="w-5 h-5 text-ink"
                         fill="none"
@@ -804,7 +777,7 @@ const SectionItem = ({
                         [section._id]: true,
                       }))
                     }
-                    className="flex items-center bg-red-600 text-ink px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors duration-200"
+                    className="flex items-center bg-primary text-surface px-4 py-2 rounded-lg font-medium hover:bg-primary-hover transition-colors duration-200"
                   >
                     <svg
                       className="w-4 h-4 mr-2"
@@ -823,10 +796,10 @@ const SectionItem = ({
                   </button>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-surface rounded-lg p-4 border-2 border-dashed border-red-300">
+                    <div className="bg-surface rounded-lg p-4 border-2 border-dashed border-primary/30">
                       <div className="text-center">
                         <svg
-                          className="mx-auto h-12 w-12 text-red-400 mb-4"
+                          className="mx-auto h-12 w-12 text-primary/40 mb-4"
                           stroke="currentColor"
                           fill="none"
                           viewBox="0 0 48 48"
@@ -856,7 +829,7 @@ const SectionItem = ({
                         />
                         <label
                           htmlFor={`sectionVideo-${section._id}`}
-                          className="inline-flex items-center px-4 py-2 bg-red-600 text-ink rounded-lg font-medium hover:bg-red-700 cursor-pointer transition-colors duration-200"
+                          className="inline-flex items-center px-4 py-2 bg-primary text-surface rounded-lg font-medium hover:bg-primary-hover cursor-pointer transition-colors duration-200"
                         >
                           <svg
                             className="w-4 h-4 mr-2"
@@ -913,7 +886,7 @@ const SectionItem = ({
                             <button
                               onClick={() => addSectionVideos(section._id)}
                               disabled={updatingThumbnail}
-                              className="flex-1 bg-red-600 text-ink px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                              className="flex-1 bg-primary text-surface px-4 py-2 rounded-lg font-medium hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
                             >
                               {updatingThumbnail ? (
                                 <>
@@ -986,7 +959,7 @@ const SectionItem = ({
           )}
 
           {/* Section Link Management - Admin Only */}
-          {profile?.isAdmin && (
+          {canManage && (
             <div className="mb-6">
               <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-6 border border-primary/20">
                 <div className="flex items-center justify-between mb-4">
@@ -1173,7 +1146,7 @@ const SectionItem = ({
           )}
 
           {/* External Links Display */}
-          {(profile.isAdmin ||profile.coursePurchased.includes(courseId)) && section.externalLinks && section.externalLinks.length > 0 && (
+          {canView && section.externalLinks && section.externalLinks.length > 0 && (
             <div className="mb-6">
               <h4 className="text-lg font-semibold text-ink mb-4 flex items-center">
                 <svg
@@ -1249,7 +1222,7 @@ const SectionItem = ({
                     </a>
                     
                     {/* Admin Remove Button */}
-                    {profile?.isAdmin && (
+                    {canManage && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -1298,6 +1271,8 @@ const SectionItem = ({
                     chapter={chapter}
                     onViewChapter={onViewChapter}
                     sectionId={section._id}
+                    canManage={canManage}
+                    canView={canView}
                   />
                 </div>
               ))}
@@ -1325,7 +1300,7 @@ const SectionItem = ({
               <p className="text-ink-muted/70 mb-4">
                 This section is waiting for content to be added.
               </p>
-              {isAdmin && (
+              {canManage && (
                 <button
                   onClick={() => onAddChapter(section._id)}
                   className="inline-flex items-center bg-primary text-surface px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors duration-200"
@@ -1384,6 +1359,17 @@ const Course = () => {
   const [adminEmailInput, setAdminEmailInput] = useState("");
   const [grantingAdminAccess, setGrantingAdminAccess] = useState(false);
 
+  // Request-access enrollment states
+  const [enrollmentRequestStatus, setEnrollmentRequestStatus] = useState("none");
+  const [enrollmentRequests, setEnrollmentRequests] = useState([]);
+  const [handlingRequestId, setHandlingRequestId] = useState(null);
+
+  // Student scores (owner / admin view)
+  const [studentScores, setStudentScores] = useState([]);
+  const [showStudentScores, setShowStudentScores] = useState(false);
+  const [loadingScores, setLoadingScores] = useState(false);
+  const [expandedAttempt, setExpandedAttempt] = useState(null);
+
   const { courseId } = useParams();
   const { profile, setProfile, fetchProfile } = useContext(UserContextData);
   const navigate = useNavigate();
@@ -1403,6 +1389,7 @@ const Course = () => {
       console.log(response);
       if (response.data.success) {
         setCourse(response.data.course);
+        setEnrollmentRequestStatus(response.data.enrollmentRequestStatus || "none");
       } else {
         toast.error(response.data.message);
       }
@@ -1411,6 +1398,104 @@ const Course = () => {
       toast.error("An error occurred while fetching the course.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Student asks the instructor for access to a "request access" course
+  async function requestEnrollment() {
+    try {
+      setEnrolling(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/requestEnrollment`,
+        { courseId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+      if (response.data.success) {
+        toast.success(response.data.msg);
+        setEnrollmentRequestStatus("pending");
+      } else {
+        toast.error(response.data.msg);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
+  // Owner: load pending enrollment requests for this course
+  async function fetchEnrollmentRequests() {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/user/getEnrollmentRequests`,
+        {
+          params: { courseId },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+      if (response.data.success) {
+        setEnrollmentRequests(response.data.requests);
+      }
+    } catch (error) {
+      console.error("Error fetching enrollment requests:", error);
+    }
+  }
+
+  // Owner: approve or reject a single request
+  async function handleEnrollmentRequest(requestId, decision) {
+    try {
+      setHandlingRequestId(requestId);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/handleEnrollmentRequest`,
+        { requestId, decision },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+      if (response.data.success) {
+        toast.success(response.data.msg);
+        setEnrollmentRequests((prev) => prev.filter((r) => r._id !== requestId));
+      } else {
+        toast.error(response.data.msg);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setHandlingRequestId(null);
+    }
+  }
+
+  // Owner/Admin: load student quiz scores for this course
+  async function fetchStudentScores() {
+    try {
+      setLoadingScores(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/user/getCourseStudentScores`,
+        {
+          params: { courseId },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+      if (response.data.success) {
+        setStudentScores(response.data.report);
+        setShowStudentScores(true);
+      } else {
+        toast.error(response.data.msg);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoadingScores(false);
     }
   }
 
@@ -1638,6 +1723,16 @@ const Course = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Owners of a "request access" course see incoming requests straight away
+  useEffect(() => {
+    if (!course || !profile) return;
+    const owner =
+      course.creator && String(course.creator) === String(profile._id);
+    if (owner && course.enrollmentType === "request") {
+      fetchEnrollmentRequests();
+    }
+  }, [course, profile]);
+
   if (localStorage.getItem("edvance_token") === null) {
     toast.info("Please login to access the course details.");
     navigate("/login");
@@ -1725,7 +1820,13 @@ const Course = () => {
     );
   }
 
-  const isAdmin = profile && profile.isAdmin;
+  // A course can be managed by any admin or by the creator who owns it.
+  const isOwner =
+    profile && course && course.creator && String(course.creator) === String(profile._id);
+  const canManage = Boolean(profile && (profile.isAdmin || isOwner));
+  const canView = Boolean(
+    canManage || (profile && profile.coursePurchased.includes(courseId))
+  );
 
   const handleRemoveImage = async (imageURL) => {
     try {
@@ -2103,8 +2204,221 @@ const Course = () => {
           </div>
         </section>
 
+        {/* Enrollment Requests — course owner only */}
+        {isOwner && course.enrollmentType === "request" && (
+          <section className="py-8 bg-bg border-b border-border">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-100 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                      <svg
+                        className="w-5 h-5 text-amber-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-ink">
+                        Enrollment Requests
+                      </h3>
+                      <p className="text-sm text-ink-muted">
+                        Approve or reject learners asking to join this course
+                      </p>
+                    </div>
+                  </div>
+                  <span className="bg-amber-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                    {enrollmentRequests.length} pending
+                  </span>
+                </div>
+
+                {enrollmentRequests.length === 0 ? (
+                  <p className="text-sm text-ink-muted py-4 text-center">
+                    No pending requests right now.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {enrollmentRequests.map((request) => (
+                      <div
+                        key={request._id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border rounded-lg p-4"
+                      >
+                        <div>
+                          <div className="font-semibold text-ink">
+                            {request.user?.name || "Unknown learner"}
+                          </div>
+                          <div className="text-sm text-ink-muted">
+                            {request.user?.email}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() =>
+                              handleEnrollmentRequest(request._id, "approve")
+                            }
+                            disabled={handlingRequestId === request._id}
+                            className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-green-700 transition-colors duration-200 disabled:opacity-50"
+                          >
+                            Give Access
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleEnrollmentRequest(request._id, "reject")
+                            }
+                            disabled={handlingRequestId === request._id}
+                            className="bg-surface border border-border text-danger px-4 py-2 rounded-md text-sm font-semibold hover:bg-bg transition-colors duration-200 disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Student Test Scores — owner / admin */}
+        {canManage && (
+          <section className="py-8 bg-bg border-b border-border">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="bg-gradient-to-r from-sky-50 to-cyan-50 rounded-lg border border-sky-100 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center mr-3">
+                      <svg
+                        className="w-5 h-5 text-sky-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-ink">
+                        Student Test Scores
+                      </h3>
+                      <p className="text-sm text-ink-muted">
+                        See how your students performed on this course's quizzes
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() =>
+                      showStudentScores
+                        ? setShowStudentScores(false)
+                        : fetchStudentScores()
+                    }
+                    disabled={loadingScores}
+                    className="bg-sky-600 text-white px-4 py-2 rounded-md font-medium hover:bg-sky-700 transition-colors duration-200 disabled:opacity-50"
+                  >
+                    {loadingScores
+                      ? "Loading..."
+                      : showStudentScores
+                      ? "Hide Scores"
+                      : "View Scores"}
+                  </button>
+                </div>
+
+                {showStudentScores &&
+                  (studentScores.length === 0 ? (
+                    <p className="text-sm text-ink-muted py-4 text-center">
+                      No students have attempted a quiz in this course yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {studentScores.map((student, i) => (
+                        <div
+                          key={i}
+                          className="bg-surface border border-border rounded-lg p-4"
+                        >
+                          <div className="font-semibold text-ink">
+                            {student.name}
+                          </div>
+                          <div className="text-sm text-ink-muted mb-3">
+                            {student.email}
+                          </div>
+                          <div className="space-y-2">
+                            {student.attempts.map((attempt, j) => {
+                              const key = `${i}-${j}`;
+                              const open = expandedAttempt === key;
+                              const pct = attempt.total
+                                ? Math.round((attempt.score / attempt.total) * 100)
+                                : 0;
+                              return (
+                                <div
+                                  key={j}
+                                  className="border border-border rounded-lg overflow-hidden"
+                                >
+                                  <button
+                                    onClick={() =>
+                                      setExpandedAttempt(open ? null : key)
+                                    }
+                                    className="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-bg transition-colors duration-200 text-left"
+                                  >
+                                    <span className="text-sm text-ink-muted min-w-0 truncate">
+                                      <span className="text-xs uppercase tracking-wide text-accent mr-2">
+                                        {attempt.type}
+                                      </span>
+                                      {attempt.title}
+                                    </span>
+                                    <span className="flex items-center gap-2 shrink-0">
+                                      <span
+                                        className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                          pct >= 70
+                                            ? "bg-success/10 text-success"
+                                            : "bg-danger/10 text-danger"
+                                        }`}
+                                      >
+                                        {attempt.score}
+                                        {attempt.total ? `/${attempt.total}` : ""}
+                                      </span>
+                                      <svg
+                                        className={`w-4 h-4 text-ink-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                      </svg>
+                                    </span>
+                                  </button>
+                                  {open && (
+                                    <div className="p-3 bg-bg border-t border-border">
+                                      <QuizReview review={attempt.review} />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Admin Thumbnail Update Section */}
-        {profile.isAdmin && (
+        {canManage && (
           <section className="py-8 bg-bg border-b border-border">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 p-6">
@@ -2365,7 +2679,7 @@ const Course = () => {
         )}
 
         {/* Admin Course Access Management Section */}
-        {profile.isAdmin && (
+        {canManage && (
           <section className="py-8 bg-surface border-b border-border">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100 p-6">
@@ -2861,13 +3175,26 @@ const Course = () => {
                 <h2 className="text-2xl font-bold text-ink mb-4">
                   Course Overview
                 </h2>
+                {course.creatorName && (
+                  <div className="flex items-center gap-2 mb-4 text-sm">
+                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary font-semibold">
+                      {course.creatorName.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="text-ink-muted">
+                      Taught by{" "}
+                      <span className="font-semibold text-ink">
+                        {course.creatorName}
+                      </span>
+                    </span>
+                  </div>
+                )}
                 <p className="text-lg text-ink-muted leading-relaxed">
                   {course.shortDescription}
                 </p>
               </div>
 
               {/* Price and Enroll Section */}
-              {profile.coursePurchased.includes(courseId) || profile.isAdmin ? (
+              {canView ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex items-center justify-center">
                     <svg
@@ -2886,6 +3213,83 @@ const Course = () => {
                     </span>
                   </div>
                 </div>
+              ) : course.enrollmentType === "request" ? (
+                /* Request-access course: ask the instructor for approval */
+                <div className="bg-surface border border-border rounded-lg p-6">
+                  <div className="space-y-4">
+                    {enrollmentRequestStatus === "pending" ? (
+                      <div className="flex items-center justify-center text-center py-1">
+                        <svg
+                          className="w-6 h-6 text-amber-500 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <span className="text-lg font-semibold text-amber-600">
+                          Request Pending — awaiting instructor approval
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="text-center sm:text-left">
+                          <div className="text-2xl font-bold text-ink mb-1">
+                            {course.price > 0
+                              ? `₹${Number(course.price).toFixed(2)}`
+                              : "Request Access"}
+                          </div>
+                          <div className="text-sm text-ink-muted">
+                            {enrollmentRequestStatus === "rejected"
+                              ? "Your previous request was declined. You may request again."
+                              : course.price > 0
+                              ? "Fee payable via the enrollment form. Access is granted by the instructor once confirmed."
+                              : "The instructor reviews and approves each learner."}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={requestEnrollment}
+                          disabled={enrolling}
+                          className="bg-primary text-surface px-6 py-3 rounded font-semibold hover:bg-primary-hover transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        >
+                          {enrolling ? "Sending..." : "Request Enrollment"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Enrollment form stays visible even after requesting */}
+                    {course.googleFormLink && (
+                      <a
+                        href={course.googleFormLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full bg-surface border border-primary text-primary px-6 py-3 rounded font-semibold hover:bg-primary/5 transition-colors duration-200"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        Fill the enrollment form
+                        {course.price > 0 ? " & pay" : ""}
+                      </a>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <div className="bg-surface border border-border rounded-lg p-6">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -2893,7 +3297,7 @@ const Course = () => {
                       <div className="text-2xl font-bold text-ink mb-1">
                         {course.price === 0
                           ? "Free"
-                          : `₹${course.price.toFixed(2)}`}
+                          : `₹${Number(course.price || 0).toFixed(2)}`}
                       </div>
                       <div className="text-sm text-ink-muted">
                         {course.price === 0
@@ -2999,7 +3403,7 @@ const Course = () => {
                   </div>
 
                   {/* Admin Add Images Button */}
-                  {profile.isAdmin && !introductionImageInput && (
+                  {canManage && !introductionImageInput && (
                     <button
                       onClick={() => setIntroductionImageInput(true)}
                       className="bg-purple-600 text-ink px-4 py-2 rounded-md font-medium hover:bg-purple-700 transition-colors duration-200 flex items-center"
@@ -3023,7 +3427,7 @@ const Course = () => {
                 </div>
 
                 {/* Image Upload Interface */}
-                {profile.isAdmin && introductionImageInput && (
+                {canManage && introductionImageInput && (
                   <div className="space-y-6 mb-8">
                     {/* File Upload Area */}
                     <div className="border-2 border-dashed border-purple-200 rounded-lg p-6 text-center hover:border-purple-300 transition-colors duration-200">
@@ -3217,7 +3621,7 @@ const Course = () => {
                           : "images"}{" "}
                         in gallery
                       </p>
-                      {profile.isAdmin && (
+                      {canManage && (
                         <span className="text-xs text-ink-muted/70">
                           Click on an image to remove it
                         </span>
@@ -3244,7 +3648,7 @@ const Course = () => {
                           </div>
 
                           {/* Admin Remove Button */}
-                          {profile.isAdmin && (
+                          {canManage && (
                             <button
                               onClick={() => handleRemoveImage(image)}
                               className="absolute top-3 right-3 bg-red-600 text-ink p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-700 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0"
@@ -3292,7 +3696,7 @@ const Course = () => {
                     <p className="text-ink-muted/70 mb-4">
                       Add some images to showcase your course visually
                     </p>
-                    {profile?.isAdmin && !introductionImageInput && (
+                    {canManage && !introductionImageInput && (
                       <button
                         onClick={() => setIntroductionImageInput(true)}
                         className="inline-flex items-center bg-purple-600 text-ink px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
@@ -3351,7 +3755,7 @@ const Course = () => {
               </div>
 
               {/* Admin Add Section Button */}
-              {isAdmin && (
+              {canManage && (
                 <button
                   onClick={handleAddSection}
                   className="bg-primary text-surface px-4 py-2 rounded font-medium hover:bg-primary-hover transition-colors duration-200 flex items-center"
@@ -3382,7 +3786,8 @@ const Course = () => {
                     key={section._id}
                     section={section}
                     onViewChapter={handleViewChapter}
-                    isAdmin={isAdmin}
+                    canManage={canManage}
+                    canView={canView}
                     onAddChapter={handleAddChapter}
                     sectionVideoInput={sectionVideoInput}
                     setSectionVideoInput={setSectionVideoInput}
@@ -3421,7 +3826,7 @@ const Course = () => {
                     This course is currently being prepared. Content will be
                     available soon.
                   </p>
-                  {profile.isAdmin && (
+                  {canManage && (
                     <div>
                       <p className="text-sm text-ink-muted/70 mb-4">
                         As an admin, you can start building this course:

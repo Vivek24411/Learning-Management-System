@@ -20,6 +20,15 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isCreator: {
+    type: Boolean,
+    default: false,
+  },
+  creatorRequestStatus: {
+    type: String,
+    enum: ["none", "pending", "approved", "rejected"],
+    default: "none",
+  },
   coursePurchased: {
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }],
     default: [],

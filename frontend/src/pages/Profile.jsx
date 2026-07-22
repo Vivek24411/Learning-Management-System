@@ -1,12 +1,115 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 import Header from '../components/Header'
+import QuizReview from '../components/QuizReview'
 import { UserContextData } from '../context/UserContext';
 import { useContext } from 'react';
 import { motion } from 'framer-motion';
 
 
 const Profile = () => {
-  const { profile } = useContext(UserContextData);
+  const { profile, fetchProfile } = useContext(UserContextData);
+
+  const [scores, setScores] = useState([]);
+  const [loadingScores, setLoadingScores] = useState(false);
+  const [expandedScore, setExpandedScore] = useState(null);
+  const [creatorRequests, setCreatorRequests] = useState([]);
+  const [requesting, setRequesting] = useState(false);
+  const [handlingUserId, setHandlingUserId] = useState(null);
+
+  const authHeader = {
+    Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+  };
+
+  async function fetchMyScores() {
+    try {
+      setLoadingScores(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/user/getMyScores`,
+        { headers: authHeader }
+      );
+      if (response.data.success) {
+        setScores(response.data.scores);
+      }
+    } catch (error) {
+      console.error("Error fetching scores:", error);
+    } finally {
+      setLoadingScores(false);
+    }
+  }
+
+  async function fetchCreatorRequests() {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/user/getCreatorRequests`,
+        { headers: authHeader }
+      );
+      if (response.data.success) {
+        setCreatorRequests(response.data.requests);
+      }
+    } catch (error) {
+      console.error("Error fetching creator requests:", error);
+    }
+  }
+
+  // Ask the admin for permission to publish courses
+  async function requestCreatorAccess() {
+    try {
+      setRequesting(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/requestCreatorAccess`,
+        {},
+        { headers: authHeader }
+      );
+      if (response.data.success) {
+        toast.success(response.data.msg);
+        await fetchProfile();
+      } else {
+        toast.error(response.data.msg);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setRequesting(false);
+    }
+  }
+
+  // Admin approves / rejects a creator request
+  async function handleCreatorRequest(userId, decision) {
+    try {
+      setHandlingUserId(userId);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/handleCreatorRequest`,
+        { userId, decision },
+        { headers: authHeader }
+      );
+      if (response.data.success) {
+        toast.success(response.data.msg);
+        setCreatorRequests((prev) => prev.filter((r) => r._id !== userId));
+      } else {
+        toast.error(response.data.msg);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setHandlingUserId(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!profile) return;
+    fetchMyScores();
+    if (profile.isAdmin) {
+      fetchCreatorRequests();
+    }
+  }, [profile?._id, profile?.isAdmin]);
+
+  const roleLabel = profile?.isAdmin
+    ? "Admin Account"
+    : profile?.isCreator
+    ? "Creator Account"
+    : "Student Account";
 
   return (
     <>
@@ -112,14 +215,44 @@ const Profile = () => {
                       )}
 
                       {/* Role */}
-                      {profile.isAdmin && (
+                      <div>
+                        <label className="block text-sm font-medium text-ink-muted mb-2">
+                          Account Type
+                        </label>
+                        <div className="px-4 py-3 bg-bg border border-border rounded-lg text-ink font-medium">
+                          {roleLabel}
+                        </div>
+                      </div>
+
+                      {/* Creator access request (non-admin, non-creator) */}
+                      {!profile.isAdmin && !profile.isCreator && (
                         <div>
                           <label className="block text-sm font-medium text-ink-muted mb-2">
-                            Account Type
+                            Teach on Edvance
                           </label>
-                          <div className="px-4 py-3 bg-bg border border-border rounded-lg text-ink font-medium capitalize">
-                           Admin Account
-                          </div>
+                          {profile.creatorRequestStatus === "pending" ? (
+                            <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm font-medium">
+                              Your creator request is pending admin approval.
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {profile.creatorRequestStatus === "rejected" && (
+                                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                                  Your previous request was declined. You may request again.
+                                </div>
+                              )}
+                              <button
+                                onClick={requestCreatorAccess}
+                                disabled={requesting}
+                                className="w-full bg-primary hover:bg-primary-hover text-surface py-3 px-6 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50"
+                              >
+                                {requesting ? "Sending request..." : "Become a Creator"}
+                              </button>
+                              <p className="text-xs text-ink-muted">
+                                Creators can publish and manage their own courses.
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -152,6 +285,129 @@ const Profile = () => {
               </div>
             </div>
           </div>
+
+          {/* ===== My Test Scores ===== */}
+          {profile && (
+            <div className="bg-surface rounded-2xl shadow-sm overflow-hidden border border-border mt-8 p-8">
+              <div className="flex items-center mb-6">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="brand font-serif text-2xl font-bold text-ink">My Test Scores</h2>
+                  <p className="text-ink-muted text-sm">Every quiz you have attempted</p>
+                </div>
+              </div>
+
+              {loadingScores ? (
+                <p className="text-ink-muted text-sm py-4">Loading your scores...</p>
+              ) : scores.length === 0 ? (
+                <p className="text-ink-muted text-sm py-4">
+                  You haven't attempted any quizzes yet. Take a section or chapter quiz to see your scores here.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {scores.map((s, i) => {
+                    const pct = s.total ? Math.round((s.score / s.total) * 100) : 0;
+                    const open = expandedScore === i;
+                    return (
+                      <div key={i} className="border border-border rounded-xl overflow-hidden">
+                        <button
+                          onClick={() => setExpandedScore(open ? null : i)}
+                          className="w-full flex items-center justify-between gap-4 p-4 hover:bg-bg transition-colors duration-200 text-left"
+                        >
+                          <div className="min-w-0">
+                            <div className="font-semibold text-ink truncate">{s.title}</div>
+                            <div className="text-xs text-ink-muted">
+                              {s.type}{s.courseName ? ` · ${s.courseName}` : ""}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span
+                              className={`text-sm font-bold px-3 py-1 rounded-full ${
+                                pct >= 70 ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                              }`}
+                            >
+                              {s.score}{s.total ? ` / ${s.total}` : ""}
+                            </span>
+                            <svg
+                              className={`w-4 h-4 text-ink-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </button>
+                        {open && (
+                          <div className="p-4 bg-bg border-t border-border">
+                            <QuizReview review={s.review} />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ===== Creator Requests (admin only) ===== */}
+          {profile?.isAdmin && (
+            <div className="bg-surface rounded-2xl shadow-sm overflow-hidden border border-border mt-8 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="brand font-serif text-2xl font-bold text-ink">Creator Requests</h2>
+                    <p className="text-ink-muted text-sm">Approve users who want to publish courses</p>
+                  </div>
+                </div>
+                <span className="bg-purple-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                  {creatorRequests.length} pending
+                </span>
+              </div>
+
+              {creatorRequests.length === 0 ? (
+                <p className="text-ink-muted text-sm py-4">No pending creator requests.</p>
+              ) : (
+                <div className="space-y-3">
+                  {creatorRequests.map((request) => (
+                    <div
+                      key={request._id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bg border border-border rounded-lg p-4"
+                    >
+                      <div>
+                        <div className="font-semibold text-ink">{request.name}</div>
+                        <div className="text-sm text-ink-muted">{request.email}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleCreatorRequest(request._id, "approve")}
+                          disabled={handlingUserId === request._id}
+                          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-green-700 transition-colors duration-200 disabled:opacity-50"
+                        >
+                          Give Access
+                        </button>
+                        <button
+                          onClick={() => handleCreatorRequest(request._id, "reject")}
+                          disabled={handlingUserId === request._id}
+                          className="bg-surface border border-border text-danger px-4 py-2 rounded-md text-sm font-semibold hover:bg-bg transition-colors duration-200 disabled:opacity-50"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </motion.div>
     </>

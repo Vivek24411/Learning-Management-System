@@ -59,10 +59,10 @@ const EditCourse = () => {
     
     
     
-    if (courseData.price === undefined || courseData.price === null || courseData.price < 0) {
+    if (courseData.price === undefined || courseData.price === null || courseData.price === "" || courseData.price < 0) {
       newErrors.price = "Price must be a valid number (0 or greater)";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -85,7 +85,9 @@ const EditCourse = () => {
           shortDescription: courseData.shortDescription,
           longDescription: courseData.longDescription,
           courseIntroduction: courseData.courseIntroduction,
-          price: parseFloat(courseData.price)
+          enrollmentType: courseData.enrollmentType || "paid",
+          price: parseFloat(courseData.price) || 0,
+          googleFormLink: courseData.googleFormLink || ""
         },
         {
           headers: {
@@ -333,41 +335,94 @@ const EditCourse = () => {
                 </div>
               </div>
 
-              {/* Price */}
+              {/* Enrollment Type */}
               <div>
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                  Course Price (₹) <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Enrollment Type <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-sm">₹</span>
-                  </div>
-                  <input
-                    type="number"
-                    id="price"
-                    min="0"
-                    step="0.01"
-                    value={courseData.price || ""}
-                    onChange={(e) => handleInputChange('price', e.target.value)}
-                    className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-colors duration-200 ${
-                      errors.price ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('enrollmentType', 'paid')}
+                    className={`text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+                      (courseData.enrollmentType || 'paid') === 'paid'
+                        ? 'border-[#6366F1] bg-[#6366F1]/5'
+                        : 'border-gray-300 hover:border-[#6366F1]/50'
                     }`}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  {errors.price ? (
-                    <p className="text-sm text-red-600 flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {errors.price}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-500">Set to 0 for free courses</p>
-                  )}
+                  >
+                    <div className="font-semibold text-gray-900">💳 Paid / Free Price</div>
+                    <div className="text-sm text-gray-500 mt-1">Instant access after payment (or free).</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('enrollmentType', 'request')}
+                    className={`text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+                      courseData.enrollmentType === 'request'
+                        ? 'border-[#6366F1] bg-[#6366F1]/5'
+                        : 'border-gray-300 hover:border-[#6366F1]/50'
+                    }`}
+                  >
+                    <div className="font-semibold text-gray-900">✋ Request Access</div>
+                    <div className="text-sm text-gray-500 mt-1">You approve or reject each enrollment.</div>
+                  </button>
                 </div>
               </div>
+
+              {/* Price — shown for both types */}
+              <div>
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Price (₹) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 text-sm">₹</span>
+                    </div>
+                    <input
+                      type="number"
+                      id="price"
+                      min="0"
+                      step="0.01"
+                      value={courseData.price ?? ""}
+                      onChange={(e) => handleInputChange('price', e.target.value)}
+                      className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-colors duration-200 ${
+                        errors.price ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    {errors.price ? (
+                      <p className="text-sm text-red-600 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.price}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-500">Set to 0 for free courses</p>
+                    )}
+                  </div>
+              </div>
+
+              {/* Google Form link (request access only) */}
+              {courseData.enrollmentType === 'request' && (
+                <div>
+                  <label htmlFor="googleFormLink" className="block text-sm font-medium text-gray-700 mb-2">
+                    Google Form Link <span className="text-gray-400 text-xs">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="googleFormLink"
+                    value={courseData.googleFormLink || ""}
+                    onChange={(e) => handleInputChange('googleFormLink', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent transition-colors duration-200"
+                    placeholder="https://docs.google.com/forms/..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Learners see this form (for payment / details) before requesting enrollment.
+                  </p>
+                </div>
+              )}
 
               {/* Form Actions */}
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">

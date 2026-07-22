@@ -9,7 +9,8 @@ import { motion } from 'framer-motion';
 const Home = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { profile, loggedIn } = useContext(UserContextData);
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,6 +70,18 @@ const Home = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
+  // Filter by course name OR teacher (creator) name
+  const filteredCourses = courses.filter((course) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (course.courseName || "").toLowerCase().includes(q) ||
+      (course.creatorName || "").toLowerCase().includes(q)
+    );
+  });
+
+  const canCreate = profile && (profile.isAdmin || profile.isCreator);
+
   // --- Animation Variants ---
   const containerVariants = {
     hidden: {},
@@ -104,18 +117,22 @@ const Home = () => {
   const CourseCard = ({ course }) => (
     <div className="bg-surface rounded-xl border border-border overflow-hidden group cursor-pointer flex flex-col h-full transition-all duration-300 hover:border-primary/50 hover:shadow-[0_8px_24px_rgba(34,28,22,0.08)] hover:-translate-y-1">
       {/* Course Image */}
-      <div className="relative h-44 overflow-hidden bg-surface-muted flex-shrink-0">
+      <div className="relative h-48 overflow-hidden bg-surface-muted flex-shrink-0">
         <img
           src={course.courseThumbnailImage || "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
           alt={course.courseName}
-          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-contain"
+          loading="lazy"
         />
-        {/* Gradient overlay on thumbnail bottom */}
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-80 pointer-events-none"/>
-        <div className="absolute top-3 right-3">
-          <span className="bg-primary text-surface px-3 py-1 rounded-full text-xs font-semibold">
-            {course.price === 0 ? 'Free' : `₹${course.price}`}
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+          <span className="bg-primary text-surface px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
+            {course.price > 0 ? `₹${course.price}` : 'Free'}
           </span>
+          {course.enrollmentType === 'request' && (
+            <span className="bg-accent text-surface px-3 py-1 rounded-full text-[10px] font-semibold shadow-sm">
+              Request Access
+            </span>
+          )}
         </div>
       </div>
 
@@ -124,6 +141,14 @@ const Home = () => {
         <h3 className="brand font-serif text-lg font-semibold text-ink mb-2 leading-snug">
           {course.courseName}
         </h3>
+        {course.creatorName && (
+          <p className="text-xs text-accent font-medium mb-2 flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            {course.creatorName}
+          </p>
+        )}
         <p className="text-ink-muted text-sm mb-4 line-clamp-2 leading-relaxed flex-grow">
           {course.shortDescription || "Structured content designed to take you from fundamentals to mastery."}
         </p>
@@ -134,7 +159,9 @@ const Home = () => {
             <svg className="w-3.5 h-3.5 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            {course.publishedDate ? new Date(course.publishedDate).toLocaleDateString() : 'Recently Added'}
+            {course.publishedDate
+              ? new Date(course.publishedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              : 'Recently Added'}
           </div>
           <span className="text-primary text-sm font-medium group-hover:text-primary-hover flex items-center gap-1 transition-colors duration-200">
             View Course
@@ -271,8 +298,8 @@ const Home = () => {
                 </p>
               </div>
               
-              {/* Add Course Button for Admin */}
-              {profile && profile.isAdmin && (
+              {/* Add Course Button for Admins & Creators */}
+              {canCreate && (
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate('/addCourse')}
@@ -285,6 +312,22 @@ const Home = () => {
                 </motion.button>
               )}
             </div>
+
+            {/* Search bar */}
+            <div className="relative max-w-xl">
+              <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-ink-muted">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by course or teacher name..."
+                className="w-full pl-11 pr-4 py-3 bg-surface border border-border rounded-lg text-ink placeholder-ink-muted focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-200"
+              />
+            </div>
           </motion.div>
 
           {/* Courses Grid */}
@@ -296,28 +339,29 @@ const Home = () => {
                 <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{animationDelay: '300ms'}}></div>
               </div>
             </div>
-          ) : courses.length > 0 ? (
+          ) : filteredCourses.length > 0 ? (
             <motion.div
               variants={cardGridVariants}
               initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              className={`grid grid-cols-1 ${courses.length === 1 ? 'max-w-xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'} gap-6`}
+              animate="visible"
+              className={`grid grid-cols-1 ${filteredCourses.length === 1 ? 'max-w-xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'} gap-6`}
             >
-              {courses.map((course, index) => (
+              {filteredCourses.map((course, index) => {
+                const canManageCourse = profile && (profile.isAdmin || (course.creator && course.creator === profile._id));
+                return (
                 <motion.div
                   key={course._id || index}
                   variants={cardVariants}
-                  className={`${profile?.isAdmin ? 'min-h-[460px]' : 'min-h-[400px]'} flex flex-col`}
+                  className={`${canManageCourse ? 'min-h-[460px]' : 'min-h-[400px]'} flex flex-col`}
                 >
-                  <div 
+                  <div
                     onClick={() => navigate(`/course/${course._id}`)}
                     className="flex-grow"
                   >
                     <CourseCard course={course} />
                   </div>
-                  
-                  {profile?.isAdmin && (
+
+                  {canManageCourse && (
                     <div className="mt-4 flex flex-col sm:flex-row gap-2 flex-shrink-0">
                       <button 
                         onClick={(e) => {
@@ -346,7 +390,8 @@ const Home = () => {
                     </div>
                   )}
                 </motion.div>
-              ))}
+                );
+              })}
             </motion.div>
           ) : (
             <div className="text-center py-16 bg-surface border border-border rounded-2xl max-w-2xl mx-auto shadow-sm">
@@ -355,9 +400,13 @@ const Home = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-ink mb-2">No Courses Available</h3>
+              <h3 className="text-lg font-medium text-ink mb-2">
+                {searchQuery ? 'No Matching Courses' : 'No Courses Available'}
+              </h3>
               <p className="text-ink-muted text-sm px-6">
-                New courses are coming soon. Stay tuned for exciting programs!
+                {searchQuery
+                  ? 'Try a different course or teacher name.'
+                  : 'New courses are coming soon. Stay tuned for exciting programs!'}
               </p>
             </div>
           )}

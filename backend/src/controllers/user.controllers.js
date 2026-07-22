@@ -8,6 +8,7 @@ const chapterModel = require("../models/chapter.model");
 const sectionModel = require("../models/section.model");
 const Razorpay = require("razorpay");
 const orderModel = require("../models/order.model");
+const enrollmentRequestModel = require("../models/enrollmentRequest.model");
 const crypto = require("crypto");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { getPresignedUrl } = require("../config/s3Service");
@@ -109,7 +110,7 @@ module.exports.getAllCourses = async (req, res, next) => {
   const courses = await courseModel
     .find()
     .select(
-      "courseName shortDescription price courseThumbnailImage publishedAt"
+      "courseName shortDescription price courseThumbnailImage publishedDate creatorName creator enrollmentType googleFormLink"
     );
   return res.json({ success: true, courses });
 };
@@ -133,7 +134,18 @@ module.exports.getCourse = async (req, res, next) => {
     return res.json({ success: false, msg: "Course not found" });
   }
 
-  return res.json({ success: true, course });
+  // Surface this user's enrollment-request status (for "request access" courses)
+  let enrollmentRequestStatus = "none";
+  if (req.user) {
+    const existingRequest = await enrollmentRequestModel
+      .findOne({ user: req.user._id, course: courseId })
+      .sort({ createdAt: -1 });
+    if (existingRequest) {
+      enrollmentRequestStatus = existingRequest.status;
+    }
+  }
+
+  return res.json({ success: true, course, enrollmentRequestStatus });
 };
 
 module.exports.getChapter = async (req, res, next) => {
@@ -182,6 +194,8 @@ module.exports.addCourse = async (req, res, next) => {
       longDescription,
       courseIntroduction,
       price,
+      enrollmentType,
+      googleFormLink,
     } = req.body;
 
     console.log("Extracted form data:", {
@@ -190,6 +204,8 @@ module.exports.addCourse = async (req, res, next) => {
       longDescription,
       courseIntroduction,
       price,
+      enrollmentType,
+      googleFormLink,
     });
 
     // Check if required files exist
@@ -215,14 +231,22 @@ module.exports.addCourse = async (req, res, next) => {
 
     console.log("Creating course in database...");
 
-    // Prepare data for database
+    const type = enrollmentType === "request" ? "request" : "paid";
+
+    // Both course types may carry a price. For "paid" it is charged in-app via
+    // Razorpay; for "request" it is shown for information and collected through
+    // the Google Form, with the owner approving once payment is confirmed.
     const courseData = {
       courseName,
       shortDescription,
       longDescription,
       courseIntroduction,
       courseThumbnailImage,
-      price: parseFloat(price), // Ensure price is a number
+      price: parseFloat(price) || 0,
+      enrollmentType: type,
+      googleFormLink: type === "request" ? googleFormLink || "" : "",
+      creator: req.user._id,
+      creatorName: req.user.name,
       courseIntroductionImages,
     };
 
@@ -380,6 +404,8 @@ module.exports.editCourse = async (req, res, next) => {
     longDescription,
     courseIntroduction,
     price,
+    enrollmentType,
+    googleFormLink,
   } = req.body;
 
   const course = await courseModel.findById(courseId);
@@ -391,7 +417,21 @@ module.exports.editCourse = async (req, res, next) => {
   course.shortDescription = shortDescription;
   course.longDescription = longDescription;
   course.courseIntroduction = courseIntroduction;
-  course.price = price;
+
+  if (enrollmentType === "paid" || enrollmentType === "request") {
+    course.enrollmentType = enrollmentType;
+  }
+
+  // Both types may show a price; request courses collect it via the Google Form
+  course.price = parseFloat(price) || 0;
+
+  if (course.enrollmentType === "request") {
+    if (googleFormLink !== undefined) {
+      course.googleFormLink = googleFormLink || "";
+    }
+  } else {
+    course.googleFormLink = "";
+  }
 
   await course.save();
 
@@ -524,6 +564,22 @@ module.exports.enrollCourse = async (req, res, next) => {
 
   if (user.coursePurchased.includes(courseId)) {
     return res.json({ success: false, msg: "Course already enrolled" });
+  }
+
+  // Request-access courses must go through instructor approval
+  if (course.enrollmentType === "request") {
+    return res.json({
+      success: false,
+      msg: "This course requires the instructor's approval. Please send an enrollment request.",
+    });
+  }
+
+  // Paid courses must go through the payment flow
+  if (course.price > 0) {
+    return res.json({
+      success: false,
+      msg: "This is a paid course. Please complete the payment to enroll.",
+    });
   }
 
   user.coursePurchased.push(courseId);
@@ -1320,3 +1376,349 @@ module.exports.saveSectionVideoUrl = async(req,res)=>{
   await section.save();
   return res.json({ success: true, msg: "Video URLs saved successfully" });
 }
+
+/* ============================ CREATOR REQUESTS ============================ */
+
+// A logged-in user asks to become a course creator
+module.exports.requestCreatorAccess = async (req, res) => {
+  const user = req.user;
+
+  if (user.isCreator) {
+    return res.json({ success: false, msg: "You are already a creator" });
+  }
+  if (user.creatorRequestStatus === "pending") {
+    return res.json({ success: false, msg: "Your request is already pending" });
+  }
+
+  user.creatorRequestStatus = "pending";
+  await user.save();
+
+  return res.json({
+    success: true,
+    msg: "Creator access requested. An admin will review your request.",
+    creatorRequestStatus: user.creatorRequestStatus,
+  });
+};
+
+// Admin: list users who requested creator access
+module.exports.getCreatorRequests = async (req, res) => {
+  const requests = await userModel
+    .find({ creatorRequestStatus: "pending" })
+    .select("name email creatorRequestStatus");
+
+  return res.json({ success: true, requests });
+};
+
+// Admin: approve or reject a creator request
+module.exports.handleCreatorRequest = async (req, res) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { userId, decision } = req.body;
+
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return res.json({ success: false, msg: "User not found" });
+  }
+
+  if (decision === "approve") {
+    user.isCreator = true;
+    user.creatorRequestStatus = "approved";
+  } else if (decision === "reject") {
+    user.isCreator = false;
+    user.creatorRequestStatus = "rejected";
+  } else {
+    return res.json({ success: false, msg: "Invalid decision" });
+  }
+
+  await user.save();
+
+  return res.json({
+    success: true,
+    msg: `Creator request ${decision === "approve" ? "approved" : "rejected"} successfully`,
+  });
+};
+
+/* =========================== ENROLLMENT REQUESTS =========================== */
+
+// Student requests enrollment into a "request access" course
+module.exports.requestEnrollment = async (req, res) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { courseId } = req.body;
+  const user = req.user;
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  if (course.enrollmentType !== "request") {
+    return res.json({
+      success: false,
+      msg: "This course does not use the request access system",
+    });
+  }
+
+  if (user.coursePurchased.includes(courseId)) {
+    return res.json({ success: false, msg: "You are already enrolled" });
+  }
+
+  const existing = await enrollmentRequestModel.findOne({
+    user: user._id,
+    course: courseId,
+    status: "pending",
+  });
+  if (existing) {
+    return res.json({
+      success: false,
+      msg: "You already have a pending request for this course",
+    });
+  }
+
+  await enrollmentRequestModel.create({ user: user._id, course: courseId });
+
+  return res.json({
+    success: true,
+    msg: "Enrollment request sent. The instructor will review it soon.",
+  });
+};
+
+// Owner: list pending enrollment requests for one of their courses
+module.exports.getEnrollmentRequests = async (req, res) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { courseId } = req.query;
+
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  if (!course.creator || !course.creator.equals(req.user._id)) {
+    return res.json({
+      success: false,
+      msg: "Only the course owner can view enrollment requests",
+    });
+  }
+
+  const requests = await enrollmentRequestModel
+    .find({ course: courseId, status: "pending" })
+    .populate("user", "name email")
+    .sort({ createdAt: -1 });
+
+  return res.json({ success: true, requests });
+};
+
+// Owner: approve or reject an enrollment request
+module.exports.handleEnrollmentRequest = async (req, res) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { requestId, decision } = req.body;
+
+  const request = await enrollmentRequestModel.findById(requestId);
+  if (!request) {
+    return res.json({ success: false, msg: "Request not found" });
+  }
+
+  const course = await courseModel.findById(request.course);
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  if (!course.creator || !course.creator.equals(req.user._id)) {
+    return res.json({
+      success: false,
+      msg: "Only the course owner can handle enrollment requests",
+    });
+  }
+
+  if (request.status !== "pending") {
+    return res.json({ success: false, msg: "This request is already handled" });
+  }
+
+  if (decision === "approve") {
+    request.status = "approved";
+    await request.save();
+    await userModel.findByIdAndUpdate(request.user, {
+      $addToSet: { coursePurchased: course._id },
+    });
+  } else if (decision === "reject") {
+    request.status = "rejected";
+    await request.save();
+  } else {
+    return res.json({ success: false, msg: "Invalid decision" });
+  }
+
+  return res.json({
+    success: true,
+    msg: `Enrollment request ${decision === "approve" ? "approved" : "rejected"} successfully`,
+  });
+};
+
+/* ================================ TEST SCORES ============================== */
+
+// Turn a stored attempt's answeredQuizData into a review-friendly shape:
+// each question with its options, the correct option and the chosen one.
+function buildReview(answeredQuizData) {
+  return (answeredQuizData || []).map((q) => ({
+    question: q.question,
+    options: { 1: q["1"], 2: q["2"], 3: q["3"], 4: q["4"] },
+    correct: q.correct,
+    chosen: q.chosenAnswer ?? null,
+    isCorrect: q.chosenAnswer === q.correct,
+  }));
+}
+
+// Student: their own quiz attempts, enriched with titles + course names
+module.exports.getMyScores = async (req, res) => {
+  const user = req.user;
+
+  const sectionAttempts = user.sectionQuizAttempt || [];
+  const chapterAttempts = user.chapterQuizAttempt || [];
+
+  const sectionIds = sectionAttempts.map((a) => a.sectionId).filter(Boolean);
+  const chapterIds = chapterAttempts.map((a) => a.chapterId).filter(Boolean);
+
+  const sections = await sectionModel
+    .find({ _id: { $in: sectionIds } })
+    .select("sectionTitle");
+  const chapters = await chapterModel
+    .find({ _id: { $in: chapterIds } })
+    .select("chapterName");
+  const courses = await courseModel
+    .find({ sections: { $in: sectionIds } })
+    .select("courseName sections");
+
+  const sectionTitle = {};
+  sections.forEach((s) => (sectionTitle[s._id.toString()] = s.sectionTitle));
+  const chapterName = {};
+  chapters.forEach((c) => (chapterName[c._id.toString()] = c.chapterName));
+  const courseOfSection = {};
+  courses.forEach((c) =>
+    (c.sections || []).forEach(
+      (sid) => (courseOfSection[sid.toString()] = c.courseName)
+    )
+  );
+
+  const sectionScores = sectionAttempts.map((a) => ({
+    type: "Section",
+    title: sectionTitle[String(a.sectionId)] || "Section quiz",
+    courseName: courseOfSection[String(a.sectionId)] || "",
+    score: a.score,
+    total: Array.isArray(a.answeredQuizData) ? a.answeredQuizData.length : null,
+    review: buildReview(a.answeredQuizData),
+  }));
+
+  const chapterScores = chapterAttempts.map((a) => ({
+    type: "Chapter",
+    title: chapterName[String(a.chapterId)] || "Chapter quiz",
+    courseName: "",
+    score: a.score,
+    total: Array.isArray(a.answeredQuizData) ? a.answeredQuizData.length : null,
+    review: buildReview(a.answeredQuizData),
+  }));
+
+  return res.json({
+    success: true,
+    scores: [...sectionScores, ...chapterScores],
+  });
+};
+
+// Owner/Admin: quiz scores of all students for a given course
+module.exports.getCourseStudentScores = async (req, res) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return res.json({ success: false, msg: error.array() });
+  }
+
+  const { courseId } = req.query;
+
+  const course = await courseModel.findById(courseId).populate({
+    path: "sections",
+    select: "sectionTitle chapters",
+    populate: { path: "chapters", select: "chapterName" },
+  });
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
+
+  const isOwner = course.creator && course.creator.equals(req.user._id);
+  if (!req.user.isAdmin && !isOwner) {
+    return res.json({
+      success: false,
+      msg: "You are not authorized to view these scores",
+    });
+  }
+
+  const sectionTitle = {};
+  const chapterName = {};
+  const sectionIds = [];
+  const chapterIds = [];
+  (course.sections || []).forEach((s) => {
+    sectionIds.push(s._id.toString());
+    sectionTitle[s._id.toString()] = s.sectionTitle;
+    (s.chapters || []).forEach((c) => {
+      chapterIds.push(c._id.toString());
+      chapterName[c._id.toString()] = c.chapterName;
+    });
+  });
+
+  // Students who attempted any quiz belonging to this course
+  const students = await userModel
+    .find({
+      $or: [
+        { "sectionQuizAttempt.sectionId": { $in: sectionIds } },
+        { "chapterQuizAttempt.chapterId": { $in: chapterIds } },
+      ],
+    })
+    .select("name email sectionQuizAttempt chapterQuizAttempt");
+
+  const report = students.map((student) => {
+    const attempts = [];
+    (student.sectionQuizAttempt || []).forEach((a) => {
+      if (sectionIds.includes(String(a.sectionId))) {
+        attempts.push({
+          type: "Section",
+          title: sectionTitle[String(a.sectionId)] || "Section quiz",
+          score: a.score,
+          total: Array.isArray(a.answeredQuizData)
+            ? a.answeredQuizData.length
+            : null,
+          review: buildReview(a.answeredQuizData),
+        });
+      }
+    });
+    (student.chapterQuizAttempt || []).forEach((a) => {
+      if (chapterIds.includes(String(a.chapterId))) {
+        attempts.push({
+          type: "Chapter",
+          title: chapterName[String(a.chapterId)] || "Chapter quiz",
+          score: a.score,
+          total: Array.isArray(a.answeredQuizData)
+            ? a.answeredQuizData.length
+            : null,
+          review: buildReview(a.answeredQuizData),
+        });
+      }
+    });
+    return {
+      name: student.name,
+      email: student.email,
+      attempts,
+    };
+  });
+
+  return res.json({ success: true, report });
+};

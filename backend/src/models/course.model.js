@@ -22,6 +22,25 @@ const courseSchema = new mongoose.Schema({
     },
     price:{
         type:Number,
+        default: 0
+    },
+    enrollmentType:{
+        type:String,
+        enum:["paid","request"],
+        default:"paid"
+    },
+    // For "request" courses the fee (if any) is collected outside the app,
+    // e.g. via a Google Form the learner fills in before being approved.
+    googleFormLink:{
+        type:String,
+        default:""
+    },
+    creator:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User"
+    },
+    creatorName:{
+        type:String
     },
     publishedDate:{
         type:Date,

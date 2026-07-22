@@ -51,7 +51,9 @@ const AddCourse = () => {
     shortDescription: '',
     longDescription: '',
     courseIntroduction: '',
-    price: ''
+    price: '',
+    enrollmentType: 'paid',
+    googleFormLink: ''
   });
   
   const [courseThumbnailImage, setCourseThumbnailImage] = useState(null);
@@ -163,10 +165,10 @@ const AddCourse = () => {
       newErrors.courseIntroduction = 'Course introduction is required';
     }
     
-    if (!formData.price || parseFloat(formData.price) < 0) {
-      newErrors.price = 'Valid price is required';
+    if (formData.price === '' || parseFloat(formData.price) < 0 || isNaN(parseFloat(formData.price))) {
+      newErrors.price = 'Valid price is required (enter 0 for a free course)';
     }
-    
+
     if (!courseThumbnailImage) {
       newErrors.thumbnail = 'Thumbnail image is required';
     }
@@ -193,7 +195,11 @@ const AddCourse = () => {
       data.append('shortDescription', formData.shortDescription);
       data.append('longDescription', formData.longDescription);
       data.append('courseIntroduction', formData.courseIntroduction);
+      data.append('enrollmentType', formData.enrollmentType);
       data.append('price', formData.price);
+      if (formData.enrollmentType === 'request') {
+        data.append('googleFormLink', formData.googleFormLink);
+      }
       data.append('courseThumbnailImage', courseThumbnailImage);
       courseIntroductionImages.forEach((file, index) => {
         data.append('courseIntroductionImages', file);
@@ -214,7 +220,9 @@ const AddCourse = () => {
           shortDescription: '',
           longDescription: '',
           courseIntroduction: '',
-          price: ''
+          price: '',
+          enrollmentType: 'paid',
+          googleFormLink: ''
         });
         setCourseThumbnailImage(null);
         setCourseIntroductionImages([]);
@@ -298,7 +306,47 @@ const AddCourse = () => {
                   rows={5}
                 />
                 
-                {/* Price */}
+                {/* Enrollment Type */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Enrollment Type <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-sm text-gray-500">
+                    Choose how learners join this course.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, enrollmentType: 'paid' }))}
+                      className={`text-left p-4 rounded-2xl border-2 transition-all duration-200 ${
+                        formData.enrollmentType === 'paid'
+                          ? 'border-[#6366F1] bg-[#6366F1]/5'
+                          : 'border-stone-300 hover:border-[#6366F1]/50'
+                      }`}
+                    >
+                      <div className="font-semibold text-gray-900">💳 Paid / Free Price</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        Learners pay a set price (or 0 for free) and get instant access.
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, enrollmentType: 'request' }))}
+                      className={`text-left p-4 rounded-2xl border-2 transition-all duration-200 ${
+                        formData.enrollmentType === 'request'
+                          ? 'border-[#6366F1] bg-[#6366F1]/5'
+                          : 'border-stone-300 hover:border-[#6366F1]/50'
+                      }`}
+                    >
+                      <div className="font-semibold text-gray-900">✋ Request Access</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        Learners request enrollment and you approve or reject each request.
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Price — shown for both types */}
                 <InputField
                   label="Course Price"
                   name="price"
@@ -307,8 +355,27 @@ const AddCourse = () => {
                   value={formData.price}
                   onChange={handleInputChange}
                   error={errors.price}
-                  extraText = "Set Course Price 0 for Free Course"
+                  extraText={
+                    formData.enrollmentType === 'request'
+                      ? "Shown to learners for information. Collect the fee yourself (e.g. via the Google Form below), then approve their request. Set 0 if free."
+                      : "Set Course Price 0 for Free Course"
+                  }
                 />
+
+                {/* Google Form link (request access only) — optional */}
+                {formData.enrollmentType === 'request' && (
+                  <InputField
+                    label="Google Form Link (Optional)"
+                    name="googleFormLink"
+                    type="text"
+                    placeholder="https://docs.google.com/forms/... (leave blank if none)"
+                    value={formData.googleFormLink}
+                    onChange={handleInputChange}
+                    error={errors.googleFormLink}
+                    required={false}
+                    extraText="Optional. If added, learners see this form (for payment / details) before requesting enrollment."
+                  />
+                )}
 
                 {/* Thumbnail Image */}
                 <div className="space-y-4">

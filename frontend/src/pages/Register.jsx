@@ -18,7 +18,9 @@ const Register = () => {
     const {setLoggedIn} = useContext(UserContextData);
     const navigate = useNavigate();
 
-    const sendOTP = async()=>{
+    const sendOTP = async(e)=>{
+        if(e) e.preventDefault();
+        if(!name || !email || !password) return;
         try{
             setLoading(true);
             const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/sendOtp`,{email});
@@ -35,7 +37,9 @@ const Register = () => {
         }
     }
 
-    const verifyOTPandRegister = async()=>{
+    const verifyOTPandRegister = async(e)=>{
+        if(e) e.preventDefault();
+        if(OTP.length !== 6) return;
         try{
             setLoading(true);
             const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/verifyOTPandRegister`,{
@@ -107,7 +111,7 @@ const Register = () => {
 
                   {/* Registration Form */}
                   {!otpSent ? (
-                    <div className="space-y-6">
+                    <form onSubmit={sendOTP} className="space-y-6">
                       <div>
                         <label htmlFor="name" className="block text-sm font-medium text-ink-muted mb-2">
                           Full Name
@@ -175,8 +179,8 @@ const Register = () => {
                       </div>
 
                       <motion.button
+                        type="submit"
                         whileTap={{ scale: 0.97 }}
-                        onClick={sendOTP}
                         disabled={loading || !name || !email || !password}
                         className="w-full bg-primary hover:bg-primary-hover text-surface py-3 px-6 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                       >
@@ -197,10 +201,10 @@ const Register = () => {
                           </>
                         )}
                       </motion.button>
-                    </div>
+                    </form>
                   ) : (
                     /* OTP Verification Form */
-                    <div className="space-y-6">
+                    <form onSubmit={verifyOTPandRegister} className="space-y-6">
                       <div className="text-center mb-6">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4">
                           <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,6 +236,7 @@ const Register = () => {
 
                       <div className="flex space-x-3">
                         <motion.button
+                          type="button"
                           whileTap={{ scale: 0.97 }}
                           onClick={() => setOtpSent(false)}
                           className="flex-1 bg-surface text-ink-muted py-3 px-6 rounded-lg font-semibold hover:bg-[#2A2A38] transition-all duration-200 flex items-center justify-center space-x-2 border border-border"
@@ -243,8 +248,8 @@ const Register = () => {
                         </motion.button>
                         
                         <motion.button
+                          type="submit"
                           whileTap={{ scale: 0.97 }}
-                          onClick={verifyOTPandRegister}
                           disabled={loading || OTP.length !== 6}
                           className="flex-1 bg-primary hover:bg-primary-hover text-surface py-3 px-6 rounded-lg font-semibold transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                         >
@@ -269,6 +274,7 @@ const Register = () => {
 
                       <div className="text-center">
                         <button
+                          type="button"
                           onClick={() => {
                             sendOTP();
                           }}
@@ -277,7 +283,7 @@ const Register = () => {
                           Didn't receive the code? Resend OTP
                         </button>
                       </div>
-                    </div>
+                    </form>
                   )}
 
                   {/* Footer */}

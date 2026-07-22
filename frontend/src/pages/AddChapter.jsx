@@ -493,11 +493,11 @@ const AddChapter = () => {
               <InputField
                 label="Chapter Summary"
                 name="chapterSummary"
-                placeholder="Write the chapter summary..."
+                placeholder="Write the chapter summary... (optional)"
                 value={formData.chapterSummary}
                 onChange={handleInputChange}
                 rows={6}
-                required={true}
+                required={false}
               />
 
             
