@@ -9,6 +9,7 @@ const sectionModel = require("../models/section.model");
 const Razorpay = require("razorpay");
 const orderModel = require("../models/order.model");
 const enrollmentRequestModel = require("../models/enrollmentRequest.model");
+const quizRetakeRequestModel = require("../models/quizRetakeRequest.model");
 const crypto = require("crypto");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { getPresignedUrl } = require("../config/s3Service");
@@ -18,6 +19,152 @@ function checkValidation(req, res) {
   if (!error.isEmpty()) {
     return res.json({ success: false, msg: error.array() });
   }
+}
+
+const quizConfig = {
+  section: {
+    model: sectionModel,
+    quizField: "sectionQuiz",
+    titleField: "sectionQuizTitle",
+    nameField: "sectionTitle",
+    attemptField: "sectionQuizAttempt",
+    attemptIdField: "sectionId",
+  },
+  chapter: {
+    model: chapterModel,
+    quizField: "chapterQuiz",
+    titleField: "chapterQuizTitle",
+    nameField: "chapterName",
+    attemptField: "chapterQuizAttempt",
+    attemptIdField: "chapterId",
+  },
+};
+
+function normalizeQuizType(type) {
+  const normalized = String(type || "").toLowerCase();
+  return quizConfig[normalized] ? normalized : null;
+}
+
+async function resolveQuizContext(type, id) {
+  const normalizedType = normalizeQuizType(type);
+  const config = quizConfig[normalizedType];
+  if (!config) return null;
+
+  const target = await config.model.findById(id);
+  if (!target) return null;
+
+  let course;
+  if (normalizedType === "section") {
+    course = await courseModel.findOne({ sections: target._id });
+  } else {
+    const section = await sectionModel
+      .findOne({ chapters: target._id })
+      .select("_id");
+    course = section
+      ? await courseModel.findOne({ sections: section._id })
+      : null;
+  }
+
+  return { type: normalizedType, config, target, course };
+}
+
+function userCanManageCourse(user, course) {
+  return Boolean(
+    user &&
+      course &&
+      (user.isAdmin ||
+        (course.creator && course.creator.equals(user._id)))
+  );
+}
+
+function userHasCourseAccess(user, course) {
+  return Boolean(
+    userCanManageCourse(user, course) ||
+      user?.coursePurchased?.some(
+        (courseId) => String(courseId) === String(course?._id)
+      )
+  );
+}
+
+function getQuizAttempts(user, context) {
+  return (user?.[context.config.attemptField] || []).filter(
+    (attempt) =>
+      String(attempt?.[context.config.attemptIdField]) ===
+      String(context.target._id)
+  );
+}
+
+function sanitizeQuizForLearner(quiz) {
+  return (quiz || []).map((question) => ({
+    question: question.question,
+    1: question["1"],
+    2: question["2"],
+    3: question["3"],
+    4: question["4"],
+  }));
+}
+
+function validateAndSanitizeQuiz(quizData) {
+  if (!Array.isArray(quizData) || quizData.length === 0) return null;
+
+  const sanitized = quizData.map((question) => ({
+    question: String(question?.question || "").trim(),
+    1: String(question?.["1"] || "").trim(),
+    2: String(question?.["2"] || "").trim(),
+    3: String(question?.["3"] || "").trim(),
+    4: String(question?.["4"] || "").trim(),
+    correct: Number(question?.correct),
+  }));
+
+  const invalid = sanitized.some(
+    (question) =>
+      !question.question ||
+      !question["1"] ||
+      !question["2"] ||
+      !question["3"] ||
+      !question["4"] ||
+      ![1, 2, 3, 4].includes(question.correct)
+  );
+
+  return invalid ? null : sanitized;
+}
+
+function latestAttemptPayload(attempt) {
+  if (!attempt) return null;
+  const answers = Array.isArray(attempt.answeredQuizData)
+    ? attempt.answeredQuizData
+    : [];
+  return {
+    score: attempt.score,
+    total: answers.length,
+    review: buildReview(answers),
+    attemptedAt: attempt.attemptedAt || null,
+    title: attempt.quizTitle || "",
+  };
+}
+
+async function getQuizAttemptState(user, context) {
+  const attempts = getQuizAttempts(user, context);
+  const requests = await quizRetakeRequestModel
+    .find({
+      user: user._id,
+      quizType: context.type,
+      quizId: context.target._id,
+    })
+    .sort({ createdAt: -1 });
+  const availableApproval = requests.find(
+    (request) => request.status === "approved" && !request.usedAt
+  );
+  const latestRequest = requests[0];
+
+  return {
+    attemptCount: attempts.length,
+    canAttempt: attempts.length === 0 || Boolean(availableApproval),
+    retakeRequestStatus: availableApproval
+      ? "approved"
+      : latestRequest?.status || "none",
+    latestAttempt: latestAttemptPayload(attempts[attempts.length - 1]),
+  };
 }
 
 module.exports.sendOTP = async (req, res, next) => {
@@ -134,6 +281,25 @@ module.exports.getCourse = async (req, res, next) => {
     return res.json({ success: false, msg: "Course not found" });
   }
 
+  const sectionQuizStates = {};
+  if (req.user) {
+    await Promise.all(
+      (course.sections || [])
+        .filter((section) => section.sectionQuiz?.length > 0)
+        .map(async (section) => {
+          sectionQuizStates[String(section._id)] = await getQuizAttemptState(
+            req.user,
+            {
+              type: "section",
+              config: quizConfig.section,
+              target: section,
+              course,
+            }
+          );
+        })
+    );
+  }
+
   // Surface this user's enrollment-request status (for "request access" courses)
   let enrollmentRequestStatus = "none";
   if (req.user) {
@@ -145,11 +311,38 @@ module.exports.getCourse = async (req, res, next) => {
     }
   }
 
-  return res.json({ success: true, course, enrollmentRequestStatus });
+  const coursePayload = course.toObject();
+  const canManageCourse = userCanManageCourse(req.user, course);
+  const hasCourseAccess = userHasCourseAccess(req.user, course);
+  if (!canManageCourse) {
+    coursePayload.sections = (coursePayload.sections || []).map((section) => {
+      const learnerSection = {
+        ...section,
+        sectionQuiz: sanitizeQuizForLearner(section.sectionQuiz),
+      };
+      if (!hasCourseAccess) {
+        learnerSection.sectionVideoUrl = [];
+        learnerSection.externalLinks = [];
+        // Preserve only the question count for the public course outline.
+        learnerSection.sectionQuiz = (section.sectionQuiz || []).map(() => ({}));
+      }
+      return learnerSection;
+    });
+  }
+
+  return res.json({
+    success: true,
+    course: coursePayload,
+    enrollmentRequestStatus,
+    sectionQuizStates,
+  });
 };
 
 module.exports.getChapter = async (req, res, next) => {
-  checkValidation(req, res);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
 
   const { chapterId } = req.query;
 
@@ -163,15 +356,51 @@ module.exports.getChapter = async (req, res, next) => {
     .findOne({ chapters: chapterId })
     .select("_id");
 
-  console.log("sectionId:", sectionId._id);
+  if (!sectionId) {
+    return res.json({ success: false, msg: "Chapter is not assigned to a section" });
+  }
 
-  const courseId = await courseModel
-    .findOne({ sections: sectionId })
-    .select("_id");
+  const course = await courseModel.findOne({ sections: sectionId._id });
+  if (!course) {
+    return res.json({ success: false, msg: "Course not found" });
+  }
 
-  console.log("courseId:", courseId._id);
+  const canManage = userCanManageCourse(req.user, course);
+  if (!userHasCourseAccess(req.user, course)) {
+    return res.json({
+      success: false,
+      msg: "You do not have access to this chapter",
+      courseId: course._id,
+    });
+  }
+  const quizState = chapter.chapterQuiz?.length
+    ? await getQuizAttemptState(req.user, {
+        type: "chapter",
+        config: quizConfig.chapter,
+        target: chapter,
+        course,
+      })
+    : {
+        attemptCount: 0,
+        canAttempt: true,
+        retakeRequestStatus: "none",
+        latestAttempt: null,
+      };
 
-  return res.json({ success: true, chapter, courseId: courseId._id });
+  const chapterPayload = chapter.toObject();
+  if (!canManage) {
+    chapterPayload.chapterQuiz = sanitizeQuizForLearner(
+      chapterPayload.chapterQuiz
+    );
+  }
+
+  return res.json({
+    success: true,
+    chapter: chapterPayload,
+    courseId: course._id,
+    canManage,
+    quizState,
+  });
 };
 
 module.exports.addCourse = async (req, res, next) => {
@@ -208,21 +437,26 @@ module.exports.addCourse = async (req, res, next) => {
       googleFormLink,
     });
 
-    // Check if required files exist
-    if (!req.files || !req.files.courseThumbnailImage) {
-      console.log("Files missing:", req.files);
-      return res.json({
-        success: false,
-        msg: "Course thumbnail image is required",
-      });
-    }
-
-    console.log("Files validation passed");
-
-    const courseThumbnailImage = req.files.courseThumbnailImage[0].path;
-    const courseIntroductionImages = req.files.courseIntroductionImages
+    const courseThumbnailImage =
+      req.files?.courseThumbnailImage?.[0]?.path || "";
+    const courseIntroductionImages = req.files?.courseIntroductionImages
       ? req.files.courseIntroductionImages.map((file) => file.path)
       : [];
+    let courseIntroductionImageCaptions = [];
+    if (req.body.courseIntroductionImageCaptions) {
+      try {
+        const parsedCaptions = JSON.parse(
+          req.body.courseIntroductionImageCaptions
+        );
+        if (Array.isArray(parsedCaptions)) {
+          courseIntroductionImageCaptions = courseIntroductionImages.map(
+            (_, index) => String(parsedCaptions[index] || "").trim().slice(0, 240)
+          );
+        }
+      } catch (error) {
+        console.warn("Ignoring invalid gallery captions:", error.message);
+      }
+    }
 
     console.log("File paths extracted:", {
       courseThumbnailImage,
@@ -238,9 +472,9 @@ module.exports.addCourse = async (req, res, next) => {
     // the Google Form, with the owner approving once payment is confirmed.
     const courseData = {
       courseName,
-      shortDescription,
-      longDescription,
-      courseIntroduction,
+      shortDescription: shortDescription || "",
+      longDescription: longDescription || "",
+      courseIntroduction: courseIntroduction || "",
       courseThumbnailImage,
       price: parseFloat(price) || 0,
       enrollmentType: type,
@@ -248,6 +482,7 @@ module.exports.addCourse = async (req, res, next) => {
       creator: req.user._id,
       creatorName: req.user.name,
       courseIntroductionImages,
+      courseIntroductionImageCaptions,
     };
 
     console.log("Course data to be saved:", courseData);
@@ -317,20 +552,35 @@ module.exports.addChapter = async (req, res, next) => {
       chapterSummary,
       sectionId,
       chapterVideoTitle,
+      chapterVideoThumbnailIndex,
       externalLinks,
     } = req.body;
     console.log("Request body:", req.body);
     console.log("Request files:", req.files);
 
     // Handle file uploads
-    const chapterFile = req.files.chapterFile?.map((file) => file.path) || [];
-    const chapterThumbnailImage = req.files.chapterThumbnailImage?.[0].path;
+    const chapterFile = req.files?.chapterFile?.map((file) => file.path) || [];
+    const chapterThumbnailImage = req.files?.chapterThumbnailImage?.[0]?.path || "";
 
     // Handle video files
     const chapterVideo =
-      req.files.chapterVideo?.map((video) => video.path) || [];
+      req.files?.chapterVideo?.map((video) => video.path) || [];
     const videoThumbnailImage =
-      req.files.chapterVideoThumbnailImage?.map((img) => img.path) || [];
+      req.files?.chapterVideoThumbnailImage?.map((img) => img.path) || [];
+    const videoThumbnailIndexes = Array.isArray(chapterVideoThumbnailIndex)
+      ? chapterVideoThumbnailIndex
+      : chapterVideoThumbnailIndex !== undefined
+      ? [chapterVideoThumbnailIndex]
+      : [];
+    const videoThumbnailsByIndex = {};
+    videoThumbnailImage.forEach((thumbnail, fileIndex) => {
+      const videoIndex = Number(
+        videoThumbnailIndexes[fileIndex] ?? fileIndex
+      );
+      if (Number.isInteger(videoIndex) && videoIndex >= 0) {
+        videoThumbnailsByIndex[videoIndex] = thumbnail;
+      }
+    });
 
     // Handle video titles - they come as an array from FormData
     const videoTitleArray = Array.isArray(chapterVideoTitle)
@@ -346,7 +596,7 @@ module.exports.addChapter = async (req, res, next) => {
       for (let i = 0; i < chapterVideo.length; i++) {
         chapterVideoDetails.push({
           video: chapterVideo[i],
-          videoThumbnail: videoThumbnailImage[i] || null,
+          videoThumbnail: videoThumbnailsByIndex[i] || null,
           title: videoTitleArray[i] || `Video ${i + 1}`,
         });
       }
@@ -362,7 +612,9 @@ module.exports.addChapter = async (req, res, next) => {
     let parsedExternalLinks = [];
     if (externalLinks) {
       try {
-        parsedExternalLinks = JSON.parse(externalLinks);
+        parsedExternalLinks = JSON.parse(externalLinks).filter(
+          (link) => link && (link.label?.trim() || link.url?.trim())
+        );
       } catch (error) {
         console.error("Error parsing external links:", error);
       }
@@ -395,7 +647,10 @@ module.exports.addChapter = async (req, res, next) => {
 };
 
 module.exports.editCourse = async (req, res, next) => {
-  checkValidation(req, res);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
 
   const {
     courseId,
@@ -406,6 +661,7 @@ module.exports.editCourse = async (req, res, next) => {
     price,
     enrollmentType,
     googleFormLink,
+    courseIntroductionImageCaptions,
   } = req.body;
 
   const course = await courseModel.findById(courseId);
@@ -414,9 +670,17 @@ module.exports.editCourse = async (req, res, next) => {
   }
 
   course.courseName = courseName;
-  course.shortDescription = shortDescription;
-  course.longDescription = longDescription;
-  course.courseIntroduction = courseIntroduction;
+  course.shortDescription = shortDescription || "";
+  course.longDescription = longDescription || "";
+  course.courseIntroduction = courseIntroduction || "";
+  if (Array.isArray(courseIntroductionImageCaptions)) {
+    course.courseIntroductionImageCaptions =
+      course.courseIntroductionImages.map((_, index) =>
+        String(courseIntroductionImageCaptions[index] || "")
+          .trim()
+          .slice(0, 240)
+      );
+  }
 
   if (enrollmentType === "paid" || enrollmentType === "request") {
     course.enrollmentType = enrollmentType;
@@ -443,7 +707,10 @@ module.exports.editCourse = async (req, res, next) => {
 };
 
 module.exports.editChapter = async (req, res, next) => {
-  checkValidation(req, res);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
 
   const { chapterId, chapterName, shortDescription, chapterSummary } = req.body;
 
@@ -722,18 +989,32 @@ module.exports.addSectionQuiz = async (req, res, next) => {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { id, quizData } = req.body;
+  const { id, quizData, title } = req.body;
+  const sanitizedQuiz = validateAndSanitizeQuiz(quizData);
+  const quizTitle = String(title || "").trim().slice(0, 120);
+  if (!sanitizedQuiz || !quizTitle) {
+    return res.json({
+      success: false,
+      msg: "A quiz title and complete questions are required",
+    });
+  }
 
   const section = await sectionModel.findById(id);
   if (!section) {
     return res.json({ success: false, msg: "section does not exist" });
   }
 
-  section.sectionQuiz = quizData;
+  section.sectionQuiz = sanitizedQuiz;
+  section.sectionQuizTitle = quizTitle;
   await section.save();
-  console.log(section.sectionQuiz);
 
-  return res.json({ success: true, msg: "Quiz added successfully" });
+  return res.json({
+    success: true,
+    msg: "Quiz published successfully",
+    quiz: section.sectionQuiz,
+    title: section.sectionQuizTitle,
+    courseId: req.course?._id,
+  });
 };
 
 module.exports.getSectionQuiz = async (req, res, next) => {
@@ -742,14 +1023,7 @@ module.exports.getSectionQuiz = async (req, res, next) => {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { id } = req.query;
-
-  const section = await sectionModel.findById(id);
-  if (!section) {
-    return res.json({ success: false, msg: "section does not exist" });
-  }
-
-  return res.json({ success: true, quiz: section.sectionQuiz });
+  return getQuiz(req, res, "section");
 };
 
 module.exports.addChapterQuiz = async (req, res, next) => {
@@ -758,18 +1032,32 @@ module.exports.addChapterQuiz = async (req, res, next) => {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { id, quizData } = req.body;
+  const { id, quizData, title } = req.body;
+  const sanitizedQuiz = validateAndSanitizeQuiz(quizData);
+  const quizTitle = String(title || "").trim().slice(0, 120);
+  if (!sanitizedQuiz || !quizTitle) {
+    return res.json({
+      success: false,
+      msg: "A quiz title and complete questions are required",
+    });
+  }
 
   const chapter = await chapterModel.findById(id);
   if (!chapter) {
     return res.json({ success: false, msg: "chapter does not exist" });
   }
 
-  chapter.chapterQuiz = quizData;
+  chapter.chapterQuiz = sanitizedQuiz;
+  chapter.chapterQuizTitle = quizTitle;
   await chapter.save();
-  console.log(chapter.chapterQuiz);
 
-  return res.json({ success: true, msg: "Quiz added successfully" });
+  return res.json({
+    success: true,
+    msg: "Quiz published successfully",
+    quiz: chapter.chapterQuiz,
+    title: chapter.chapterQuizTitle,
+    courseId: req.course?._id,
+  });
 };
 
 module.exports.getChapterQuiz = async (req, res, next) => {
@@ -778,14 +1066,7 @@ module.exports.getChapterQuiz = async (req, res, next) => {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { id } = req.query;
-
-  const chapter = await chapterModel.findById(id);
-  if (!chapter) {
-    return res.json({ success: false, msg: "chapter does not exist" });
-  }
-
-  return res.json({ success: true, quiz: chapter.chapterQuiz });
+  return getQuiz(req, res, "chapter");
 };
 
 module.exports.submitSectionQuiz = async (req, res, next) => {
@@ -794,30 +1075,7 @@ module.exports.submitSectionQuiz = async (req, res, next) => {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { id, answeredQuizData } = req.body;
-
-  const section = await sectionModel.findById(id);
-  if (!section) {
-    return res.json({ success: false, msg: "section does not exist" });
-  }
-  let score = 0;
-  for (let i = 0; i < answeredQuizData.length; i++) {
-    if (answeredQuizData[i].chosenAnswer === answeredQuizData[i].correct) {
-      score += 1;
-    }
-  }
-
-  const user = req.user;
-
-  user.sectionQuizAttempt.push({
-    sectionId: id,
-    answeredQuizData,
-    score,
-  });
-
-  await user.save();
-
-  return res.json({ success: true, msg: "Quiz submitted successfully", score });
+  return submitQuizAttempt(req, res, "section");
 };
 
 module.exports.submitChapterQuiz = async (req, res, next) => {
@@ -826,31 +1084,186 @@ module.exports.submitChapterQuiz = async (req, res, next) => {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { id, answeredQuizData } = req.body;
+  return submitQuizAttempt(req, res, "chapter");
+};
 
-  const chapter = await chapterModel.findById(id);
-  if (!chapter) {
-    return res.json({ success: false, msg: "chapter does not exist" });
+async function getQuiz(req, res, type) {
+  const { id } = req.query;
+  const context = await resolveQuizContext(type, id);
+  if (!context?.course) {
+    return res.json({ success: false, msg: "Quiz not found" });
   }
-  let score = 0;
-  for (let i = 0; i < answeredQuizData.length; i++) {
-    if (answeredQuizData[i].chosenAnswer === answeredQuizData[i].correct) {
-      score += 1;
-    }
+  if (!userHasCourseAccess(req.user, context.course)) {
+    return res.json({ success: false, msg: "You do not have access to this quiz" });
+  }
+
+  const isManager = userCanManageCourse(req.user, context.course);
+  const quiz = context.target[context.config.quizField] || [];
+  const attemptState = isManager
+    ? {
+        attemptCount: 0,
+        canAttempt: false,
+        retakeRequestStatus: "none",
+        latestAttempt: null,
+      }
+    : await getQuizAttemptState(req.user, context);
+
+  return res.json({
+    success: true,
+    quiz: isManager ? quiz : sanitizeQuizForLearner(quiz),
+    title:
+      context.target[context.config.titleField] ||
+      `${context.target[context.config.nameField]} quiz`,
+    targetName: context.target[context.config.nameField],
+    courseId: context.course._id,
+    isManager,
+    ...attemptState,
+  });
+}
+
+async function submitQuizAttempt(req, res, type) {
+  const { id, answeredQuizData } = req.body;
+  const context = await resolveQuizContext(type, id);
+  if (!context?.course) {
+    return res.json({ success: false, msg: "Quiz not found" });
+  }
+  if (!userHasCourseAccess(req.user, context.course)) {
+    return res.json({ success: false, msg: "You do not have access to this quiz" });
+  }
+
+  const quiz = context.target[context.config.quizField] || [];
+  if (!quiz.length) {
+    return res.json({ success: false, msg: "This quiz is no longer available" });
+  }
+  if (
+    !Array.isArray(answeredQuizData) ||
+    answeredQuizData.length !== quiz.length
+  ) {
+    return res.json({
+      success: false,
+      msg: "Please submit one answer entry for every question",
+    });
   }
 
   const user = req.user;
+  const previousAttempts = getQuizAttempts(user, context);
+  let consumedApproval = null;
+  if (previousAttempts.length > 0) {
+    consumedApproval = await quizRetakeRequestModel.findOneAndUpdate(
+      {
+        user: user._id,
+        quizType: context.type,
+        quizId: context.target._id,
+        status: "approved",
+        usedAt: null,
+      },
+      { $set: { usedAt: new Date() } },
+      { sort: { createdAt: -1 }, new: true }
+    );
+    if (!consumedApproval) {
+      const state = await getQuizAttemptState(user, context);
+      return res.json({
+        success: false,
+        code: "retake_required",
+        msg: "A course creator must approve your retake before you can submit again",
+        ...state,
+      });
+    }
+  }
 
-  user.chapterQuizAttempt.push({
-    chapterId: id,
-    answeredQuizData,
+  const answerSnapshot = quiz.map((question, index) => ({
+    question: question.question,
+    1: question["1"],
+    2: question["2"],
+    3: question["3"],
+    4: question["4"],
+    correct: Number(question.correct),
+    chosenAnswer: [1, 2, 3, 4].includes(
+      Number(answeredQuizData[index]?.chosenAnswer)
+    )
+      ? Number(answeredQuizData[index].chosenAnswer)
+      : null,
+  }));
+  const score = answerSnapshot.reduce(
+    (total, answer) =>
+      total + (answer.chosenAnswer === answer.correct ? 1 : 0),
+    0
+  );
+  const quizTitle =
+    context.target[context.config.titleField] ||
+    `${context.target[context.config.nameField]} quiz`;
+
+  user[context.config.attemptField].push({
+    [context.config.attemptIdField]: context.target._id,
+    quizTitle,
+    answeredQuizData: answerSnapshot,
     score,
+    attemptedAt: new Date(),
   });
 
-  await user.save();
+  try {
+    await user.save();
+  } catch (error) {
+    if (consumedApproval) {
+      await quizRetakeRequestModel.findByIdAndUpdate(consumedApproval._id, {
+        $set: { usedAt: null },
+      });
+    }
+    throw error;
+  }
 
-  return res.json({ success: true, msg: "Quiz submitted successfully", score });
-};
+  return res.json({
+    success: true,
+    msg: "Quiz submitted successfully",
+    score,
+    total: answerSnapshot.length,
+    title: quizTitle,
+    review: buildReview(answerSnapshot),
+    attemptCount: previousAttempts.length + 1,
+    canAttempt: false,
+    retakeRequestStatus: "none",
+  });
+}
+
+module.exports.deleteSectionQuiz = async (req, res) =>
+  deleteQuiz(req, res, "section");
+
+module.exports.deleteChapterQuiz = async (req, res) =>
+  deleteQuiz(req, res, "chapter");
+
+async function deleteQuiz(req, res, type) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
+
+  const { id } = req.body;
+  const context = await resolveQuizContext(type, id);
+  if (!context) {
+    return res.json({ success: false, msg: "Quiz not found" });
+  }
+
+  context.target[context.config.quizField] = [];
+  context.target[context.config.titleField] = "";
+  await context.target.save();
+  await quizRetakeRequestModel.updateMany(
+    {
+      quizType: context.type,
+      quizId: context.target._id,
+      status: { $in: ["pending", "approved"] },
+      usedAt: null,
+    },
+    {
+      $set: {
+        status: "rejected",
+        reviewedAt: new Date(),
+        reviewedBy: req.user._id,
+      },
+    }
+  );
+
+  return res.json({ success: true, msg: "Quiz deleted successfully" });
+}
 
 module.exports.getSection = async (req, res, next) => {
   const error = validationResult(req);
@@ -902,7 +1315,7 @@ module.exports.removeCourseIntroductionImage = async (req, res, next) => {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { courseId, imageURL } = req.body;
+  const { courseId, imageURL, imageIndex } = req.body;
   if (!courseId) {
     return res.json({ success: false, msg: "Course Not Found" });
   }
@@ -912,9 +1325,23 @@ module.exports.removeCourseIntroductionImage = async (req, res, next) => {
     return res.json({ success: false, msg: "Course Not Found" });
   }
 
-  course.courseIntroductionImages = course.courseIntroductionImages.filter(
-    (img) => img !== imageURL
-  );
+  const requestedIndex =
+    imageIndex !== undefined
+      ? Number(imageIndex)
+      : course.courseIntroductionImages.findIndex((img) => img === imageURL);
+
+  if (
+    !Number.isInteger(requestedIndex) ||
+    requestedIndex < 0 ||
+    requestedIndex >= course.courseIntroductionImages.length
+  ) {
+    return res.json({ success: false, msg: "Gallery image not found" });
+  }
+
+  course.courseIntroductionImages.splice(requestedIndex, 1);
+  if (course.courseIntroductionImageCaptions?.length > requestedIndex) {
+    course.courseIntroductionImageCaptions.splice(requestedIndex, 1);
+  }
 
   await course.save();
 
@@ -938,6 +1365,21 @@ module.exports.addIntroductionImage = async (req, res, next) => {
   }
 
   const introductionImages = req.files.map((file) => file.path) || [];
+  let captions = [];
+  if (req.body.courseIntroductionImageCaptions) {
+    try {
+      const parsedCaptions = JSON.parse(
+        req.body.courseIntroductionImageCaptions
+      );
+      if (Array.isArray(parsedCaptions)) {
+        captions = introductionImages.map((_, index) =>
+          String(parsedCaptions[index] || "").trim().slice(0, 240)
+        );
+      }
+    } catch (error) {
+      console.warn("Ignoring invalid gallery captions:", error.message);
+    }
+  }
 
   const course = await courseModel.findById(courseId);
   if (!course) {
@@ -945,11 +1387,47 @@ module.exports.addIntroductionImage = async (req, res, next) => {
   }
 
   course.courseIntroductionImages.push(...introductionImages);
+  course.courseIntroductionImageCaptions.push(
+    ...introductionImages.map((_, index) => captions[index] || "")
+  );
   await course.save();
 
   return res.json({
     success: true,
     msg: "Introduction Images Added Successfully",
+    course,
+  });
+};
+
+module.exports.updateIntroductionImageCaption = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
+
+  const { courseId, imageIndex, caption = "" } = req.body;
+  const course = await courseModel.findById(courseId);
+  if (!course) {
+    return res.json({ success: false, msg: "Course Not Found" });
+  }
+
+  const index = Number(imageIndex);
+  if (index >= course.courseIntroductionImages.length) {
+    return res.json({ success: false, msg: "Gallery image not found" });
+  }
+
+  while (course.courseIntroductionImageCaptions.length < course.courseIntroductionImages.length) {
+    course.courseIntroductionImageCaptions.push("");
+  }
+  course.courseIntroductionImageCaptions[index] = String(caption)
+    .trim()
+    .slice(0, 240);
+  course.markModified("courseIntroductionImageCaptions");
+  await course.save();
+
+  return res.json({
+    success: true,
+    msg: "Image caption updated",
     course,
   });
 };
@@ -1269,16 +1747,85 @@ module.exports.giveAccessToCourse = async (req, res, next) => {
 
   const { emailArray, courseId } = req.body;
 
-  emailArray.forEach(async (email) => {
-    await userModel.findOneAndUpdate(
-      { email },
-      { $addToSet: { coursePurchased: courseId } }
-    );
-  });
+  const normalizedEmails = emailArray.map((email) =>
+    String(email).trim().toLowerCase()
+  );
+  const users = await userModel
+    .find({ email: { $in: normalizedEmails } })
+    .collation({ locale: "en", strength: 2 })
+    .select("_id name email");
+  await userModel.updateMany(
+    { _id: { $in: users.map((user) => user._id) } },
+    { $addToSet: { coursePurchased: courseId } }
+  );
+  const foundEmails = new Set(users.map((user) => user.email.toLowerCase()));
+  const notFound = normalizedEmails.filter((email) => !foundEmails.has(email));
 
   return res.json({
     success: true,
     msg: "Access to course granted successfully",
+    granted: users.length,
+    notFound,
+    learners: users,
+  });
+};
+
+module.exports.getCourseLearners = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
+
+  const { courseId } = req.query;
+  const learners = await userModel
+    .find({ coursePurchased: courseId })
+    .select("name email")
+    .sort({ name: 1, email: 1 });
+
+  return res.json({ success: true, learners });
+};
+
+module.exports.removeCourseAccess = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
+
+  const { courseId, userId } = req.body;
+  const learner = await userModel
+    .findByIdAndUpdate(
+      userId,
+      { $pull: { coursePurchased: courseId } },
+      { new: true }
+    )
+    .select("name email coursePurchased");
+  if (!learner) {
+    return res.json({ success: false, msg: "Learner not found" });
+  }
+
+  await enrollmentRequestModel.updateMany(
+    { user: userId, course: courseId, status: "approved" },
+    { $set: { status: "revoked" } }
+  );
+  await quizRetakeRequestModel.updateMany(
+    {
+      user: userId,
+      course: courseId,
+      status: { $in: ["pending", "approved"] },
+      usedAt: null,
+    },
+    {
+      $set: {
+        status: "rejected",
+        reviewedAt: new Date(),
+        reviewedBy: req.user._id,
+      },
+    }
+  );
+
+  return res.json({
+    success: true,
+    msg: `Course access removed for ${learner.name}`,
   });
 };
 
@@ -1567,6 +2114,145 @@ module.exports.handleEnrollmentRequest = async (req, res) => {
   });
 };
 
+/* ============================= QUIZ RETAKES ================================ */
+
+module.exports.requestQuizRetake = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
+
+  const { quizType, quizId } = req.body;
+  const context = await resolveQuizContext(quizType, quizId);
+  if (!context?.course) {
+    return res.json({ success: false, msg: "Quiz not found" });
+  }
+  if (!userHasCourseAccess(req.user, context.course)) {
+    return res.json({ success: false, msg: "You do not have access to this quiz" });
+  }
+  if (getQuizAttempts(req.user, context).length === 0) {
+    return res.json({
+      success: false,
+      msg: "Complete your first attempt before requesting a retake",
+    });
+  }
+
+  const existing = await quizRetakeRequestModel.findOne({
+    user: req.user._id,
+    quizType: context.type,
+    quizId: context.target._id,
+    $or: [
+      { status: "pending" },
+      { status: "approved", usedAt: null },
+    ],
+  });
+  if (existing) {
+    return res.json({
+      success: false,
+      msg:
+        existing.status === "pending"
+          ? "Your retake request is already awaiting review"
+          : "Your retake has already been approved",
+      status: existing.status,
+    });
+  }
+
+  const request = await quizRetakeRequestModel.create({
+    user: req.user._id,
+    course: context.course._id,
+    quizType: context.type,
+    quizId: context.target._id,
+  });
+
+  return res.json({
+    success: true,
+    msg: "Retake request sent to the course creator",
+    status: request.status,
+  });
+};
+
+module.exports.getQuizRetakeRequests = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
+
+  const { courseId } = req.query;
+  const requests = await quizRetakeRequestModel
+    .find({ course: courseId, status: "pending" })
+    .populate("user", "name email")
+    .sort({ createdAt: -1 });
+
+  const sectionIds = requests
+    .filter((request) => request.quizType === "section")
+    .map((request) => request.quizId);
+  const chapterIds = requests
+    .filter((request) => request.quizType === "chapter")
+    .map((request) => request.quizId);
+  const [sections, chapters] = await Promise.all([
+    sectionModel
+      .find({ _id: { $in: sectionIds } })
+      .select("sectionTitle sectionQuizTitle"),
+    chapterModel
+      .find({ _id: { $in: chapterIds } })
+      .select("chapterName chapterQuizTitle"),
+  ]);
+  const titles = new Map();
+  sections.forEach((section) =>
+    titles.set(
+      String(section._id),
+      section.sectionQuizTitle || `${section.sectionTitle} quiz`
+    )
+  );
+  chapters.forEach((chapter) =>
+    titles.set(
+      String(chapter._id),
+      chapter.chapterQuizTitle || `${chapter.chapterName} quiz`
+    )
+  );
+
+  return res.json({
+    success: true,
+    requests: requests.map((request) => ({
+      ...request.toObject(),
+      quizTitle: titles.get(String(request.quizId)) || "Deleted quiz",
+    })),
+  });
+};
+
+module.exports.handleQuizRetakeRequest = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
+
+  const { requestId, decision } = req.body;
+  const request = await quizRetakeRequestModel.findById(requestId);
+  if (!request) {
+    return res.json({ success: false, msg: "Retake request not found" });
+  }
+  const course = await courseModel.findById(request.course);
+  if (!userCanManageCourse(req.user, course)) {
+    return res.json({
+      success: false,
+      msg: "You are not authorized to handle this retake request",
+    });
+  }
+  if (request.status !== "pending") {
+    return res.json({ success: false, msg: "This request is already handled" });
+  }
+
+  request.status = decision === "approve" ? "approved" : "rejected";
+  request.reviewedAt = new Date();
+  request.reviewedBy = req.user._id;
+  await request.save();
+
+  return res.json({
+    success: true,
+    msg: `Retake request ${request.status}`,
+  });
+};
+
 /* ================================ TEST SCORES ============================== */
 
 // Turn a stored attempt's answeredQuizData into a review-friendly shape:
@@ -1593,18 +2279,26 @@ module.exports.getMyScores = async (req, res) => {
 
   const sections = await sectionModel
     .find({ _id: { $in: sectionIds } })
-    .select("sectionTitle");
+    .select("sectionTitle sectionQuizTitle");
   const chapters = await chapterModel
     .find({ _id: { $in: chapterIds } })
-    .select("chapterName");
+    .select("chapterName chapterQuizTitle");
   const courses = await courseModel
     .find({ sections: { $in: sectionIds } })
     .select("courseName sections");
 
   const sectionTitle = {};
-  sections.forEach((s) => (sectionTitle[s._id.toString()] = s.sectionTitle));
+  sections.forEach(
+    (s) =>
+      (sectionTitle[s._id.toString()] =
+        s.sectionQuizTitle || `${s.sectionTitle} quiz`)
+  );
   const chapterName = {};
-  chapters.forEach((c) => (chapterName[c._id.toString()] = c.chapterName));
+  chapters.forEach(
+    (c) =>
+      (chapterName[c._id.toString()] =
+        c.chapterQuizTitle || `${c.chapterName} quiz`)
+  );
   const courseOfSection = {};
   courses.forEach((c) =>
     (c.sections || []).forEach(
@@ -1614,7 +2308,7 @@ module.exports.getMyScores = async (req, res) => {
 
   const sectionScores = sectionAttempts.map((a) => ({
     type: "Section",
-    title: sectionTitle[String(a.sectionId)] || "Section quiz",
+    title: a.quizTitle || sectionTitle[String(a.sectionId)] || "Section quiz",
     courseName: courseOfSection[String(a.sectionId)] || "",
     score: a.score,
     total: Array.isArray(a.answeredQuizData) ? a.answeredQuizData.length : null,
@@ -1623,7 +2317,7 @@ module.exports.getMyScores = async (req, res) => {
 
   const chapterScores = chapterAttempts.map((a) => ({
     type: "Chapter",
-    title: chapterName[String(a.chapterId)] || "Chapter quiz",
+    title: a.quizTitle || chapterName[String(a.chapterId)] || "Chapter quiz",
     courseName: "",
     score: a.score,
     total: Array.isArray(a.answeredQuizData) ? a.answeredQuizData.length : null,
@@ -1647,8 +2341,11 @@ module.exports.getCourseStudentScores = async (req, res) => {
 
   const course = await courseModel.findById(courseId).populate({
     path: "sections",
-    select: "sectionTitle chapters",
-    populate: { path: "chapters", select: "chapterName" },
+    select: "sectionTitle sectionQuizTitle chapters",
+    populate: {
+      path: "chapters",
+      select: "chapterName chapterQuizTitle",
+    },
   });
   if (!course) {
     return res.json({ success: false, msg: "Course not found" });
@@ -1668,10 +2365,12 @@ module.exports.getCourseStudentScores = async (req, res) => {
   const chapterIds = [];
   (course.sections || []).forEach((s) => {
     sectionIds.push(s._id.toString());
-    sectionTitle[s._id.toString()] = s.sectionTitle;
+    sectionTitle[s._id.toString()] =
+      s.sectionQuizTitle || `${s.sectionTitle} quiz`;
     (s.chapters || []).forEach((c) => {
       chapterIds.push(c._id.toString());
-      chapterName[c._id.toString()] = c.chapterName;
+      chapterName[c._id.toString()] =
+        c.chapterQuizTitle || `${c.chapterName} quiz`;
     });
   });
 
@@ -1691,7 +2390,8 @@ module.exports.getCourseStudentScores = async (req, res) => {
       if (sectionIds.includes(String(a.sectionId))) {
         attempts.push({
           type: "Section",
-          title: sectionTitle[String(a.sectionId)] || "Section quiz",
+          title:
+            a.quizTitle || sectionTitle[String(a.sectionId)] || "Section quiz",
           score: a.score,
           total: Array.isArray(a.answeredQuizData)
             ? a.answeredQuizData.length
@@ -1704,7 +2404,8 @@ module.exports.getCourseStudentScores = async (req, res) => {
       if (chapterIds.includes(String(a.chapterId))) {
         attempts.push({
           type: "Chapter",
-          title: chapterName[String(a.chapterId)] || "Chapter quiz",
+          title:
+            a.quizTitle || chapterName[String(a.chapterId)] || "Chapter quiz",
           score: a.score,
           total: Array.isArray(a.answeredQuizData)
             ? a.answeredQuizData.length

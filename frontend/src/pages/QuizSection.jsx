@@ -1,10 +1,11 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Header from "../components/Header";
 
 const QuizSection = () => {
+  const [title, setTitle] = useState("");
   const [quizData, setQuizData] = React.useState([
     {
       question: "Enter Your Question Here",
@@ -16,9 +17,49 @@ const QuizSection = () => {
     },
   ]);
   const [loading, setLoading] = useState(false);
+  const [loadingQuiz, setLoadingQuiz] = useState(true);
+  const [existingQuiz, setExistingQuiz] = useState(false);
+  const [courseId, setCourseId] = useState(null);
   const { id, type} = useParams();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    async function fetchExistingQuiz() {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/user/get${type}Quiz`,
+          {
+            params: { id },
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+            },
+          }
+        );
+        if (response.data.success) {
+          setCourseId(response.data.courseId);
+          if (response.data.quiz?.length > 0) {
+            setQuizData(response.data.quiz);
+            setTitle(response.data.title || "");
+            setExistingQuiz(true);
+          } else {
+            setTitle(
+              response.data.targetName
+                ? `${response.data.targetName} knowledge check`
+                : ""
+            );
+          }
+        } else {
+          toast.error(response.data.msg || "Could not load this quiz");
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.msg || "Could not load this quiz");
+      } finally {
+        setLoadingQuiz(false);
+      }
+    }
+
+    fetchExistingQuiz();
+  }, [id, type]);
   function addQuestion() {
     setQuizData([
       ...quizData,
@@ -80,6 +121,9 @@ const QuizSection = () => {
 
   async function addQuiz() {
     try {
+     if (!title.trim()) {
+       return toast.error("Please give the quiz a title");
+     }
      const isValid =  checkNotNull();
      if(isValid){
         return toast.error("Please fill all required fields");
@@ -88,6 +132,7 @@ const QuizSection = () => {
 
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/add${type}Quiz`,{
         id,
+        title: title.trim(),
         quizData
       },{
         headers:{
@@ -97,7 +142,15 @@ const QuizSection = () => {
       console.log(response);
       
       if(response.data.success){
-        toast.success("quiz Added Successfully");
+        toast.success(existingQuiz ? "Quiz updated successfully" : "Quiz published successfully");
+        const parentCourseId = response.data.courseId || courseId;
+        if (type === "chapter") {
+          navigate(`/chapter/${id}`, { replace: true });
+        } else if (parentCourseId) {
+          navigate(`/course/${parentCourseId}`, { replace: true });
+        } else {
+          navigate(-1);
+        }
       }else{
         toast.error(response.data.msg);
       }
@@ -108,34 +161,104 @@ const QuizSection = () => {
     };
   }
 
+  async function deleteQuiz() {
+    if (!window.confirm("Delete this published quiz? Existing attempt history will be kept.")) {
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/delete${type}Quiz`,
+        { id },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+      if (response.data.success) {
+        toast.success("Quiz deleted successfully");
+        if (type === "chapter") {
+          navigate(`/chapter/${id}`, { replace: true });
+        } else if (courseId) {
+          navigate(`/course/${courseId}`, { replace: true });
+        } else {
+          navigate(-1);
+        }
+      } else {
+        toast.error(response.data.msg || "Could not delete this quiz");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.msg || "Could not delete this quiz");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingQuiz) {
+    return (
+      <>
+        <Header topics={[{ name: "Home", path: "home" }, { name: "Courses", path: "courses" }]} />
+        <main className="flex min-h-screen items-center justify-center bg-bg pt-20">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
       
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="min-h-screen bg-bg pt-20">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           {/* Page Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#6366F1] rounded-2xl mb-4">
+            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Create {`${type}`} quiz</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {existingQuiz ? "Manage" : "Create"} {`${type}`} quiz
+            </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Design engaging quizzes to test your students' knowledge and track their progress.
+              {existingQuiz
+                ? "Update the title or questions, or remove this published quiz."
+                : "Design an assessment to test your students' knowledge and track their progress."}
+            </p>
+          </div>
+
+          <div className="premium-card mb-8 rounded-2xl border border-border bg-surface p-5 sm:p-6">
+            <label
+              htmlFor="quiz-title"
+              className="mb-2 block text-sm font-semibold text-ink"
+            >
+              Quiz title
+            </label>
+            <input
+              id="quiz-title"
+              type="text"
+              maxLength={120}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="e.g. Foundations knowledge check"
+              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-ink outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+            />
+            <p className="mt-2 text-xs text-ink-muted">
+              Learners will see this title on the course, attempt, and review screens.
             </p>
           </div>
 
           {/* Quiz Questions */}
           <div className="space-y-8">
             {quizData?.map((quiz, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div key={index} className="premium-card overflow-hidden rounded-2xl border border-border bg-surface">
                 {/* Question Header */}
-                <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                <div className="border-b border-border bg-bg/60 px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-[#6366F1] rounded-lg flex items-center justify-center">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                         <span className="text-white font-semibold text-sm">{index + 1}</span>
                       </div>
                       <h3 className="text-lg font-semibold text-gray-900">Question {index + 1}</h3>
@@ -155,7 +278,7 @@ const QuizSection = () => {
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   {/* Question Input */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -163,7 +286,7 @@ const QuizSection = () => {
                     </label>
                     <textarea
                       rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none"
+                      className="w-full resize-none rounded-xl border border-border px-3 py-2.5 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                       placeholder="Enter your question here..."
                       value={quiz.question}
                       onClick={() => emptyOnClick(index, "question")}
@@ -176,7 +299,7 @@ const QuizSection = () => {
                     <h4 className="text-sm font-medium text-gray-700 mb-3">Answer Options</h4>
                     
                     {[1, 2, 3, 4].map((optionNum) => (
-                      <div key={optionNum} className="flex items-center space-x-3">
+                      <div key={optionNum} className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto]">
                         <div className="flex-shrink-0">
                           <div className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center text-sm font-medium text-gray-500">
                             {String.fromCharCode(64 + optionNum)}
@@ -185,7 +308,7 @@ const QuizSection = () => {
                         
                         <input
                           type="text"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                          className="w-full rounded-xl border border-border px-3 py-2.5 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                           placeholder={`Option ${String.fromCharCode(64 + optionNum)}`}
                           value={quiz[optionNum]}
                           onClick={() => emptyOnClick(index, optionNum.toString())}
@@ -194,7 +317,7 @@ const QuizSection = () => {
                         
                         <button
                           onClick={() => selectAnswer(index, optionNum)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                          className={`col-span-2 min-h-11 w-full rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-200 sm:col-span-1 sm:w-auto ${
                             quiz.correct === optionNum
                               ? 'bg-green-100 text-green-700 border border-green-300'
                               : 'bg-gray-50 text-gray-600 border border-gray-300 hover:bg-gray-100'
@@ -235,6 +358,15 @@ const QuizSection = () => {
 
           {/* Action Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            {existingQuiz && (
+              <button
+                onClick={deleteQuiz}
+                disabled={loading}
+                className="inline-flex items-center justify-center rounded-full border border-danger/30 bg-white px-6 py-3 font-medium text-danger transition hover:bg-danger/10 disabled:opacity-50"
+              >
+                Delete published quiz
+              </button>
+            )}
             <button
               onClick={addQuestion}
               className="inline-flex items-center justify-center px-6 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200"
@@ -248,7 +380,7 @@ const QuizSection = () => {
             <button
               onClick={addQuiz}
               disabled={loading}
-              className="inline-flex items-center justify-center px-8 py-3 bg-[#6366F1] text-white rounded-lg font-medium hover:bg-[#4F46E5] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 py-3 font-medium text-white shadow-lg shadow-primary/15 transition-colors duration-200 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <>
@@ -256,14 +388,14 @@ const QuizSection = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Creating Quiz...
+                  {existingQuiz ? "Saving Quiz..." : "Publishing Quiz..."}
                 </>
               ) : (
                 <>
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Create Quiz
+                  {existingQuiz ? "Save Quiz" : "Publish Quiz"}
                 </>
               )}
             </button>

@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Header from '../components/Header'
 import { toast } from 'react-toastify';
-import { UserContextData } from '../context/UserContext';
+import { UserContextData } from '../context/UserContextData';
 import { motion } from 'framer-motion';
 
 const Home = () => {
@@ -24,7 +24,9 @@ const Home = () => {
       }
     } catch (error) {
       console.error("Error fetching courses:", error);
-      toast.error("Error in fetching courses: " + error.message);
+      toast.error("Error in fetching courses: " + error.message, {
+        toastId: "course-fetch-error",
+      });
     } finally {
       setLoading(false);
     }
@@ -179,12 +181,12 @@ const Home = () => {
       <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
       
       {/* ===== HERO SECTION ===== */}
-      <section id="home" className="relative min-h-screen flex items-center overflow-hidden pt-16 bg-bg">
-        <div className="max-w-7xl mx-auto px-6 w-full">
+      <section id="home" className="relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-bg pt-16">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <div className="lg:grid lg:grid-cols-2 gap-12 items-center">
             
             {/* Left — Text */}
-            <div className="py-20 lg:py-0">
+            <div className="py-16 sm:py-20 lg:py-0">
               {/* Eyebrow */}
            
               {/* H1 */}
@@ -192,7 +194,7 @@ const Home = () => {
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="text-5xl lg:text-7xl font-serif text-ink tracking-tight leading-[1.1] mb-6"
+                className="mb-6 font-serif text-[clamp(2.65rem,11vw,4rem)] leading-[1.08] tracking-tight text-ink lg:text-7xl"
               >
                 <motion.span variants={wordVariants} className="block">
                   Your Journey to Learning
@@ -208,7 +210,7 @@ const Home = () => {
                 variants={fadeUp}
                 initial="hidden"
                 animate="visible"
-                className="text-base lg:text-sm text-ink-muted mb-10 max-w-lg leading-relaxed"
+                className="mb-10 max-w-lg text-base leading-relaxed text-ink-muted sm:text-lg"
               >
                Edvance is a wisdom portal which sees education not just as passing on of information, but as kindling of the soul that brings out the perfection already in us. 
               </motion.p>
@@ -227,7 +229,7 @@ const Home = () => {
                     const el = document.getElementById('courses');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="bg-primary hover:bg-primary-hover text-surface px-7 py-3.5 rounded-md font-semibold transition-all duration-150 shadow-[0_4px_15px_rgba(122,31,43,0.15)]"
+                  className="min-h-12 w-full rounded-xl bg-primary px-7 py-3.5 font-semibold text-surface shadow-[0_4px_15px_rgba(122,31,43,0.15)] transition-all duration-150 hover:bg-primary-hover sm:w-auto"
                 >
                   Browse Courses
                 </motion.button>
@@ -235,7 +237,7 @@ const Home = () => {
                   <motion.button
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/login')}
-                    className="border border-border text-ink-muted hover:border-primary hover:text-ink px-7 py-3.5 rounded-md font-semibold transition-all duration-150"
+                    className="min-h-12 w-full rounded-xl border border-border px-7 py-3.5 font-semibold text-ink-muted transition-all duration-150 hover:border-primary hover:text-ink sm:w-auto"
                   >
                     Sign In
                   </motion.button>
@@ -243,7 +245,7 @@ const Home = () => {
                   <motion.button
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/profile')}
-                    className="border border-border text-ink-muted hover:border-primary hover:text-ink px-7 py-3.5 rounded-md font-semibold transition-all duration-150"
+                    className="min-h-12 w-full rounded-xl border border-border px-7 py-3.5 font-semibold text-ink-muted transition-all duration-150 hover:border-primary hover:text-ink sm:w-auto"
                   >
                     Go to Profile
                   </motion.button>
@@ -276,8 +278,8 @@ const Home = () => {
       </section>
 
       {/* ===== COURSES SECTION ===== */}
-      <section id="courses" className="py-20 bg-surface">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="courses" className="bg-surface py-14 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           
           {/* Section Header */}
           <motion.div
@@ -285,7 +287,7 @@ const Home = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="mb-16"
+            className="mb-10 sm:mb-16"
           >
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8">
               <div className="mb-6 lg:mb-0">
@@ -303,7 +305,7 @@ const Home = () => {
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate('/addCourse')}
-                  className="bg-surface-muted hover:bg-border text-ink px-5 py-2.5 rounded-md text-sm font-semibold transition-all duration-150 flex items-center space-x-2 border border-border"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface-muted px-5 py-2.5 text-sm font-semibold text-ink transition-all duration-150 hover:bg-border sm:w-auto"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -352,7 +354,7 @@ const Home = () => {
                 <motion.div
                   key={course._id || index}
                   variants={cardVariants}
-                  className={`${canManageCourse ? 'min-h-[460px]' : 'min-h-[400px]'} flex flex-col`}
+                  className={`${canManageCourse ? 'sm:min-h-[460px]' : 'sm:min-h-[400px]'} flex min-h-0 flex-col`}
                 >
                   <div
                     onClick={() => navigate(`/course/${course._id}`)}
@@ -414,8 +416,8 @@ const Home = () => {
       </section>
 
       {/* ===== ABOUT SECTION ===== */}
-      <section id="about" className="py-20 bg-bg">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+      <section id="about" className="bg-bg py-14 sm:py-20">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

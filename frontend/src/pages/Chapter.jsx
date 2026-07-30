@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import Header from '../components/Header';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useContext } from 'react';
-import { UserContextData } from '../context/UserContext';
+import { UserContextData } from '../context/UserContextData';
 import { useNavigate } from 'react-router-dom';
 
 // Themed placeholder for videos with no creator-supplied thumbnail.
@@ -598,6 +598,12 @@ const Chapter = () => {
    const [currentFileIndex, setCurrentFileIndex] = useState(0);
    const {chapterId} = useParams();
    const [courseId, setCourseId] = useState(null);
+   const [canManage, setCanManage] = useState(false);
+   const [quizState, setQuizState] = useState({
+     attemptCount: 0,
+     canAttempt: true,
+     retakeRequestStatus: "none",
+   });
    const {profile} = useContext(UserContextData)
    const navigate = useNavigate();
    
@@ -626,9 +632,17 @@ const Chapter = () => {
       if(response.data.success){
         setChapter(response.data.chapter);
         setCourseId(response.data.courseId);
+        setCanManage(Boolean(response.data.canManage));
+        setQuizState(response.data.quizState || {
+          attemptCount: 0,
+          canAttempt: true,
+          retakeRequestStatus: "none",
+        });
       }else{
-        toast.error("Failed to fetch chapter");
-        console.log("Failed to fetch chapter");
+        toast.error(response.data.msg || "Failed to fetch chapter");
+        if (response.data.courseId) {
+          navigate(`/course/${response.data.courseId}`, { replace: true });
+        }
       }
     }catch(error){
       toast.error("An error occurred while fetching chapter");
@@ -813,6 +827,42 @@ const Chapter = () => {
     }
   };
 
+  const handleDeleteQuiz = async () => {
+    if (
+      !window.confirm(
+        "Delete this published quiz? Existing learner attempt history will be kept."
+      )
+    ) {
+      return;
+    }
+    try {
+      setManagementLoading(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/deleteChapterQuiz`,
+        { id: chapterId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+      if (response.data.success) {
+        setChapter((previous) => ({
+          ...previous,
+          chapterQuiz: [],
+          chapterQuizTitle: "",
+        }));
+        toast.success("Quiz deleted successfully");
+      } else {
+        toast.error(response.data.msg || "Could not delete this quiz");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.msg || "Could not delete this quiz");
+    } finally {
+      setManagementLoading(false);
+    }
+  };
+
   useEffect(() => {
     getChapter();
     // Smooth scroll to top
@@ -894,7 +944,13 @@ const Chapter = () => {
     );
   }
 
-  if(!profile.coursePurchased.includes(courseId) && !profile.isAdmin){
+  if(
+    profile &&
+    !canManage &&
+    !profile?.coursePurchased?.some(
+      (purchasedCourseId) => String(purchasedCourseId) === String(courseId)
+    )
+  ){
     toast.info("You do not have access to this chapter. Please enroll the course to access all chapters.");
     setTimeout(() => {
       navigate(`/course/${courseId}`);
@@ -952,7 +1008,7 @@ const Chapter = () => {
    <>
    <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
    <div className="min-h-screen bg-bg pt-20">
-     <div className="max-w-4xl mx-auto px-6 py-8 space-y-10">
+     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:space-y-10 sm:px-6 sm:py-8">
        
        {/* Chapter Header */}
        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-6">
@@ -962,7 +1018,7 @@ const Chapter = () => {
                <img
                  src={chapter.chapterThumbnailImage}
                  alt={chapter.chapterName}
-                 className="w-full sm:w-48 h-48 sm:h-32 rounded-md object-cover shadow-sm"
+                 className="h-48 w-full rounded-md bg-surface-muted object-contain shadow-sm sm:h-32 sm:w-48"
                />
              </div>
            )}
@@ -979,7 +1035,7 @@ const Chapter = () => {
          </div>
          
          {/* Admin Thumbnail Management */}
-         {profile?.isAdmin && (
+         {canManage && (
            <div className="mt-6 pt-6 border-t border-gray-200">
              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                <h3 className="text-lg font-medium text-gray-900 flex items-center">
@@ -1011,7 +1067,7 @@ const Chapter = () => {
                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                      />
                    </div>
-                   <div className="flex space-x-2">
+                   <div className="flex flex-col gap-2 sm:flex-row">
                      <button
                        onClick={handleUpdateThumbnail}
                        disabled={!newThumbnail || managementLoading}
@@ -1038,7 +1094,7 @@ const Chapter = () => {
 
        {/* External Links Section */}
        {chapter.externalLinks && chapter.externalLinks[0].uri && (
-         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
            <h3 className="text-xl font-medium text-gray-900 mb-6 flex items-center">
              <svg
                className="w-5 h-5 text-blue-600 mr-3"
@@ -1115,26 +1171,37 @@ const Chapter = () => {
        )}
 
        {/* Chapter Quiz Section */}
-       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-         <div className="flex items-center justify-between mb-6">
-           <h3 className="text-xl font-medium text-gray-900 flex items-center">
-             <svg className="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+       <div className="overflow-hidden rounded-[1.75rem] border border-border/80 bg-surface p-4 shadow-[0_20px_60px_-42px_rgba(40,30,22,0.55)] sm:p-8">
+         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+           <h3 className="font-serif text-2xl font-bold text-ink flex items-center">
+             <svg className="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
              </svg>
-             Chapter Quiz
+             Knowledge check
            </h3>
            
-           {/* Admin Add Quiz Button */}
-           {profile?.isAdmin && (
-             <button 
-               onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
-               className="bg-purple-50 border border-purple-200 text-purple-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-100 transition-colors duration-200 flex items-center"
-             >
-               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-               </svg>
-               Add Quiz
-             </button>
+           {/* Creator quiz management */}
+           {canManage && (
+             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+               <button
+                 onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
+                 className="inline-flex min-h-11 items-center justify-center rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary/10"
+               >
+                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                 </svg>
+                 {chapter.chapterQuiz?.length ? "Manage quiz" : "Create quiz"}
+               </button>
+               {chapter.chapterQuiz?.length > 0 && (
+                 <button
+                   onClick={handleDeleteQuiz}
+                   disabled={managementLoading}
+                   className="inline-flex min-h-11 items-center justify-center rounded-full border border-danger/30 bg-white px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                 >
+                   Delete quiz
+                 </button>
+               )}
+             </div>
            )}
          </div>
 
@@ -1142,26 +1209,30 @@ const Chapter = () => {
          {chapter.chapterQuiz && chapter.chapterQuiz.length > 0 ? (
            <div className="space-y-4">
              {/* Quiz Info Card */}
-             <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-100 p-4">
-               <div className="flex items-center space-x-3 mb-3">
-                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                   <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(250,247,240,0.96),rgba(255,255,255,0.98))] p-5 sm:p-7">
+               <div className="pointer-events-none absolute -right-12 -top-16 h-52 w-52 rounded-full bg-accent/15 blur-3xl" />
+               <div className="relative flex items-start space-x-4 mb-5">
+                 <div className="w-11 h-11 shrink-0 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                    </svg>
                  </div>
                  <div>
-                   <h4 className="font-medium text-gray-900">Quiz Available</h4>
-                   <p className="text-sm text-gray-600">Test your knowledge with {chapter.chapterQuiz.length} questions</p>
+                   <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Chapter assessment</p>
+                   <h4 className="font-serif text-xl font-bold text-ink">
+                     {chapter.chapterQuizTitle || `${chapter.chapterName} quiz`}
+                   </h4>
+                   <p className="mt-1 text-sm leading-6 text-ink-muted">A focused review of the ideas covered in this chapter.</p>
                  </div>
                </div>
                
                {/* Quiz Stats */}
-               <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+               <div className="relative flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-ink-muted mb-5">
                  <div className="flex items-center">
                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                    </svg>
-                   {chapter.chapterQuiz.length} Questions
+                   {chapter.chapterQuiz.length} {chapter.chapterQuiz.length === 1 ? "question" : "questions"}
                  </div>
                  <div className="flex items-center">
                   
@@ -1169,21 +1240,26 @@ const Chapter = () => {
                  </div>
                </div>
 
-               {/* Take Quiz Button */}
-               <button 
-                 onClick={() => navigate(`/takeQuiz/chapter/${chapter._id}`)}
-                 className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center transform hover:scale-[1.02]"
-               >
-                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                 </svg>
-                 Start Quiz
-               </button>
+               {!canManage && (
+                 <button
+                   onClick={() => navigate(`/takeQuiz/chapter/${chapter._id}`)}
+                   className="relative inline-flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-xl"
+                 >
+                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                   </svg>
+                   {quizState.attemptCount > 0
+                     ? quizState.canAttempt
+                       ? "Start approved retake"
+                       : "View results"
+                     : "Take quiz"}
+                 </button>
+               )}
              </div>
            </div>
          ) : (
           /* No Quiz Available State */
-          <div className="text-center py-16 px-6 bg-surface border border-border rounded-lg shadow-sm">
+          <div className="rounded-lg border border-border bg-surface px-4 py-10 text-center shadow-sm sm:px-6 sm:py-16">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-bg border border-border rounded-full mb-6 shadow-sm">
               <svg className="w-8 h-8 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -1193,7 +1269,7 @@ const Chapter = () => {
             <p className="text-ink-muted mb-6 max-w-md mx-auto">
               The evaluation module for this chapter is currently being refined by our instructors. Please check back later.
             </p>
-            {profile?.isAdmin && (
+            {canManage && (
               <button 
                 onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
                 className="inline-flex items-center bg-primary text-surface px-5 py-2.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors duration-200"
@@ -1221,7 +1297,7 @@ const Chapter = () => {
                </h2>
                
                {/* Admin File Management */}
-               {profile?.isAdmin && (
+               {canManage && (
                  <div className="flex flex-col sm:flex-row gap-2">
                    <button
                      onClick={() => setShowFileUpload(!showFileUpload)}
@@ -1244,7 +1320,7 @@ const Chapter = () => {
              </div>
 
              {/* File Upload Section */}
-             {profile?.isAdmin && showFileUpload && (
+             {canManage && showFileUpload && (
                <div className="mb-6 p-4 bg-gray-50 rounded-md border">
                  <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Files</h3>
                  <div className="space-y-4">
@@ -1328,7 +1404,7 @@ const Chapter = () => {
        )}
 
        {/* Admin-only File Upload when no files exist */}
-       {profile?.isAdmin && (!chapter.chapterFile || chapter.chapterFile.length === 0) && (
+       {canManage && (!chapter.chapterFile || chapter.chapterFile.length === 0) && (
          <div className="border-t border-gray-200 pt-8">
            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
              <div className="text-center">
@@ -1401,10 +1477,10 @@ const Chapter = () => {
        )}
 
        {/* Videos Section */}
-       {(chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > 0) || profile?.isAdmin ? (
+       {(chapter.chapterVideoDetails && chapter.chapterVideoDetails.length > 0) || canManage ? (
          <div className="border-t border-gray-200 pt-8">
            {/* Admin Video Management */}
-           {profile?.isAdmin && (
+           {canManage && (
              <div className="mb-6">
                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                  <h3 className="text-xl font-medium text-gray-900 flex items-center mb-4 sm:mb-0">

@@ -18,6 +18,11 @@ const sectionSchema = new mongoose.Schema({
   },
   sectionQuiz: {
     type: [],
+    default: [],
+  },
+  sectionQuizTitle: {
+    type: String,
+    default: "",
   },
   externalLinks: {
     type: [Object],

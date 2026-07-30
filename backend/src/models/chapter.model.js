@@ -22,6 +22,11 @@ const chapterSchema = new mongoose.Schema({
   },
   chapterQuiz: {
     type: [Object],
+    default: [],
+  },
+  chapterQuizTitle: {
+    type: String,
+    default: "",
   },
   externalLinks: {
     type: [Object],

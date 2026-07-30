@@ -1,16 +1,21 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-import { toast } from 'react-toastify'
-import Header from '../components/Header'
-import QuizReview from '../components/QuizReview'
-import { UserContextData } from '../context/UserContext';
-import { useContext } from 'react';
-import { motion } from 'framer-motion';
+import React, { useContext, useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { AnimatePresence, motion as Motion, useReducedMotion } from "framer-motion";
+import Header from "../components/Header";
+import QuizReview from "../components/QuizReview";
+import { UserContextData } from "../context/UserContextData";
+import profileEditorial from "../assets/edvance-profile-editorial.webp";
 
+const navTopics = [
+  { name: "Home", path: "home" },
+  { name: "Courses", path: "courses" },
+  { name: "About", path: "about" },
+];
 
 const Profile = () => {
   const { profile, fetchProfile } = useContext(UserContextData);
-
+  const prefersReducedMotion = useReducedMotion();
   const [scores, setScores] = useState([]);
   const [loadingScores, setLoadingScores] = useState(false);
   const [expandedScore, setExpandedScore] = useState(null);
@@ -29,9 +34,7 @@ const Profile = () => {
         `${import.meta.env.VITE_BASE_URL}/user/getMyScores`,
         { headers: authHeader }
       );
-      if (response.data.success) {
-        setScores(response.data.scores);
-      }
+      if (response.data.success) setScores(response.data.scores);
     } catch (error) {
       console.error("Error fetching scores:", error);
     } finally {
@@ -45,15 +48,12 @@ const Profile = () => {
         `${import.meta.env.VITE_BASE_URL}/user/getCreatorRequests`,
         { headers: authHeader }
       );
-      if (response.data.success) {
-        setCreatorRequests(response.data.requests);
-      }
+      if (response.data.success) setCreatorRequests(response.data.requests);
     } catch (error) {
       console.error("Error fetching creator requests:", error);
     }
   }
 
-  // Ask the admin for permission to publish courses
   async function requestCreatorAccess() {
     try {
       setRequesting(true);
@@ -75,7 +75,6 @@ const Profile = () => {
     }
   }
 
-  // Admin approves / rejects a creator request
   async function handleCreatorRequest(userId, decision) {
     try {
       setHandlingUserId(userId);
@@ -86,7 +85,9 @@ const Profile = () => {
       );
       if (response.data.success) {
         toast.success(response.data.msg);
-        setCreatorRequests((prev) => prev.filter((r) => r._id !== userId));
+        setCreatorRequests((previous) =>
+          previous.filter((request) => request._id !== userId)
+        );
       } else {
         toast.error(response.data.msg);
       }
@@ -100,318 +101,350 @@ const Profile = () => {
   useEffect(() => {
     if (!profile) return;
     fetchMyScores();
-    if (profile.isAdmin) {
-      fetchCreatorRequests();
-    }
+    if (profile.isAdmin) fetchCreatorRequests();
   }, [profile?._id, profile?.isAdmin]);
 
   const roleLabel = profile?.isAdmin
-    ? "Admin Account"
+    ? "Administrator"
     : profile?.isCreator
-    ? "Creator Account"
-    : "Student Account";
+      ? "Course creator"
+      : "Learner";
+  const initials = profile?.name
+    ? profile.name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "EV";
 
   return (
     <>
-      <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
-      
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="min-h-screen bg-bg py-8 px-4 sm:px-6 lg:px-8 pt-24"
-      >
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-surface rounded-2xl shadow-sm overflow-hidden border border-border mt-10">
-            <div className="lg:flex lg:flex-row-reverse">
-              
-              {/* Right Side — Illustration */}
-              <div className="w-full lg:w-1/2 p-8 lg:p-12 flex items-center justify-center bg-bg"
-                style={{
-                  backgroundImage: `linear-gradient(var(--color-primary) 1px, transparent 1px), linear-gradient(90deg, var(--color-primary) 1px, transparent 1px)`,
-                  backgroundSize: '40px 40px',
-                  opacity: 0.05
-                }}
-              >
-                <div className="max-w-md w-full text-center">
-                  <div className="w-24 h-24 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                  </div>
-                  <p className="text-ink-muted text-sm">Your account details</p>
-                </div>
-              </div>
-
-              {/* Left Side — Profile Information */}
-              <div className="w-full lg:w-1/2 p-8 lg:p-12">
-                <div className="max-w-md mx-auto">
-                  
-                  {/* Header */}
-                  <div className="mb-8">
-                    <h1 className="brand font-serif text-3xl font-bold text-ink mb-2">
-                      My Profile
-                    </h1>
-                    <p className="text-ink-muted">
-                      Your account details and information
-                    </p>
-                  </div>
-
-                  {/* Profile Information */}
-                  {profile ? (
-                    <div className="space-y-6">
-                      
-                      {/* Profile Picture Section */}
-                      <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-24 h-24 bg-primary/10 rounded-full mb-4 border border-primary/20">
-                          <span className="text-2xl font-bold text-primary">
-                            {profile.name ? profile.name.split(' ').map(n => n[0]).join('') : 'U'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Name Field */}
-                      <div>
-                        <label className="block text-sm font-medium text-ink-muted mb-2">
-                          Full Name
-                        </label>
-                        <div className="px-4 py-3 bg-bg border border-border rounded-lg text-ink font-medium">
-                          {profile.name || 'Not provided'}
-                        </div>
-                      </div>
-
-                      {/* Email Field */}
-                      <div>
-                        <label className="block text-sm font-medium text-ink-muted mb-2">
-                          Email Address
-                        </label>
-                        <div className="px-4 py-3 bg-bg border border-border rounded-lg text-ink font-medium">
-                          {profile.email || 'Not provided'}
-                        </div>
-                      </div>
-
-                      {/* Phone Field */}
-                      {profile.phone && (
-                        <div>
-                          <label className="block text-sm font-medium text-ink-muted mb-2">
-                            Phone Number
-                          </label>
-                          <div className="px-4 py-3 bg-bg border border-border rounded-lg text-ink font-medium">
-                            {profile.phone}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Date of Birth */}
-                      {profile.dateOfBirth && (
-                        <div>
-                          <label className="block text-sm font-medium text-ink-muted mb-2">
-                            Date of Birth
-                          </label>
-                          <div className="px-4 py-3 bg-bg border border-border rounded-lg text-ink font-medium">
-                            {new Date(profile.dateOfBirth).toLocaleDateString()}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Role */}
-                      <div>
-                        <label className="block text-sm font-medium text-ink-muted mb-2">
-                          Account Type
-                        </label>
-                        <div className="px-4 py-3 bg-bg border border-border rounded-lg text-ink font-medium">
-                          {roleLabel}
-                        </div>
-                      </div>
-
-                      {/* Creator access request (non-admin, non-creator) */}
-                      {!profile.isAdmin && !profile.isCreator && (
-                        <div>
-                          <label className="block text-sm font-medium text-ink-muted mb-2">
-                            Teach on Edvance
-                          </label>
-                          {profile.creatorRequestStatus === "pending" ? (
-                            <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm font-medium">
-                              Your creator request is pending admin approval.
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              {profile.creatorRequestStatus === "rejected" && (
-                                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                                  Your previous request was declined. You may request again.
-                                </div>
-                              )}
-                              <button
-                                onClick={requestCreatorAccess}
-                                disabled={requesting}
-                                className="w-full bg-primary hover:bg-primary-hover text-surface py-3 px-6 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50"
-                              >
-                                {requesting ? "Sending request..." : "Become a Creator"}
-                              </button>
-                              <p className="text-xs text-ink-muted">
-                                Creators can publish and manage their own courses.
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Created Date */}
-                      {profile.createdAt && (
-                        <div>
-                          <label className="block text-sm font-medium text-ink-muted mb-2">
-                            Member Since
-                          </label>
-                          <div className="px-4 py-3 bg-bg border border-border rounded-lg text-ink font-medium">
-                            {new Date(profile.createdAt).toLocaleDateString()}
-                          </div>
-                        </div>
-                      )}
+      <Header topics={navTopics} />
+      <main className="min-h-screen bg-[radial-gradient(circle_at_10%_8%,rgba(183,136,49,0.11),transparent_28%),var(--color-bg)] px-4 pb-20 pt-28 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <Motion.section
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="premium-card overflow-hidden rounded-[2rem] border border-border/80 bg-surface"
+          >
+            {profile ? (
+              <div className="grid lg:grid-cols-[1.12fr_0.88fr]">
+                <div className="p-7 sm:p-10 lg:p-12">
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                    <div className="relative inline-flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.75rem] bg-primary text-2xl font-bold text-white shadow-xl shadow-primary/20">
+                      {initials}
+                      <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-4 border-white bg-success" />
                     </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-bg border border-border rounded-2xl mb-4">
-                        <svg className="w-8 h-8 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                    <div className="min-w-0">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.17em] text-primary">
+                          {roleLabel}
+                        </span>
+                        <span className="text-xs font-medium text-ink-muted">
+                          Active account
+                        </span>
                       </div>
-                      <h3 className="text-lg font-medium text-ink mb-2">No Profile Data</h3>
-                      <p className="text-ink-muted">
-                        Your profile information is not available at the moment.
+                      <h1 className="truncate font-serif text-3xl font-bold text-ink sm:text-4xl">
+                        {profile.name || "Your profile"}
+                      </h1>
+                      <p className="mt-1 truncate text-sm text-ink-muted sm:text-base">
+                        {profile.email}
                       </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-9 grid grid-cols-2 gap-3">
+                    {[
+                      {
+                        value: profile.coursePurchased?.length || 0,
+                        label: "Courses",
+                      },
+                      { value: scores.length, label: "Attempts" },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-2xl border border-border/80 bg-bg/65 px-3 py-4 text-center"
+                      >
+                        <div className="font-serif text-2xl font-bold text-ink">
+                          {item.value}
+                        </div>
+                        <div className="mt-1 text-[11px] font-semibold text-ink-muted">
+                          {item.label}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-8">
+                    <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-ink-muted">
+                      Account details
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        { label: "Full name", value: profile.name || "Not provided" },
+                        { label: "Email address", value: profile.email || "Not provided" },
+                        ...(profile.phone
+                          ? [{ label: "Phone", value: profile.phone }]
+                          : []),
+                        {
+                          label: "Account access",
+                          value: roleLabel,
+                        },
+                        ...(profile.dateOfBirth
+                          ? [
+                              {
+                                label: "Date of birth",
+                                value: new Date(
+                                  profile.dateOfBirth
+                                ).toLocaleDateString(),
+                              },
+                            ]
+                          : []),
+                      ].map((detail) => (
+                        <div
+                          key={detail.label}
+                          className="rounded-2xl border border-border/75 bg-white px-4 py-4"
+                        >
+                          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink-muted">
+                            {detail.label}
+                          </p>
+                          <p className="mt-1.5 break-words text-sm font-semibold text-ink">
+                            {detail.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {!profile.isAdmin && !profile.isCreator && (
+                    <div className="mt-6 rounded-2xl border border-accent/30 bg-accent/10 p-5">
+                      <p className="text-sm font-bold text-ink">
+                        Share what you know
+                      </p>
+                      {profile.creatorRequestStatus === "pending" ? (
+                        <p className="mt-1.5 text-sm leading-6 text-ink-muted">
+                          Your creator request is with the Edvance team for review.
+                        </p>
+                      ) : (
+                        <>
+                          <p className="mt-1.5 text-sm leading-6 text-ink-muted">
+                            Request creator access to publish and manage your own courses.
+                          </p>
+                          <button
+                            onClick={requestCreatorAccess}
+                            disabled={requesting}
+                            className="mt-4 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-primary-hover disabled:opacity-50"
+                          >
+                            {requesting ? "Sending request…" : "Become a creator"}
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* ===== My Test Scores ===== */}
+                <div className="relative min-h-[320px] overflow-hidden sm:min-h-[420px] lg:min-h-full">
+                  <Motion.img
+                    src={profileEditorial}
+                    alt="A learner reviewing a personal study portfolio"
+                    className="absolute inset-0 h-full w-full object-cover object-[52%_center]"
+                    initial={prefersReducedMotion ? false : { scale: 1.05 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/15 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-7 text-white sm:p-9">
+                    <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.19em] backdrop-blur-md">
+                      Your learning space
+                    </span>
+                    <p className="mt-4 max-w-md font-serif text-2xl font-bold leading-tight sm:text-3xl">
+                      Small, steady progress becomes real expertise.
+                    </p>
+                    <p className="mt-3 max-w-sm text-sm leading-6 text-white/70">
+                      Keep your courses, assessments, and creator access together in one place.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="px-4 py-16 text-center sm:px-8 sm:py-20">
+                <div className="mx-auto mb-5 h-14 w-14 animate-pulse rounded-2xl bg-primary/10" />
+                <h1 className="font-serif text-2xl font-bold text-ink">
+                  Loading your profile
+                </h1>
+              </div>
+            )}
+          </Motion.section>
+
           {profile && (
-            <div className="bg-surface rounded-2xl shadow-sm overflow-hidden border border-border mt-8 p-8">
-              <div className="flex items-center mb-6">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                </div>
+            <Motion.section
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.12 }}
+              transition={{ duration: 0.55 }}
+              className="premium-card mt-8 rounded-[1.75rem] border border-border/80 bg-surface p-6 sm:p-8"
+            >
+              <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h2 className="brand font-serif text-2xl font-bold text-ink">My Test Scores</h2>
-                  <p className="text-ink-muted text-sm">Every quiz you have attempted</p>
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                    Learning record
+                  </p>
+                  <h2 className="font-serif text-3xl font-bold text-ink">
+                    Assessment history
+                  </h2>
                 </div>
+                <p className="text-sm text-ink-muted">
+                  {scores.length} {scores.length === 1 ? "attempt" : "attempts"} recorded
+                </p>
               </div>
 
               {loadingScores ? (
-                <p className="text-ink-muted text-sm py-4">Loading your scores...</p>
+                <div className="h-24 animate-pulse rounded-2xl bg-bg" />
               ) : scores.length === 0 ? (
-                <p className="text-ink-muted text-sm py-4">
-                  You haven't attempted any quizzes yet. Take a section or chapter quiz to see your scores here.
-                </p>
+                <div className="rounded-2xl border border-dashed border-border bg-bg/50 px-6 py-10 text-center">
+                  <p className="font-semibold text-ink">Your record starts here</p>
+                  <p className="mt-1 text-sm text-ink-muted">
+                    Completed course assessments will appear in this space.
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-3">
-                  {scores.map((s, i) => {
-                    const pct = s.total ? Math.round((s.score / s.total) * 100) : 0;
-                    const open = expandedScore === i;
+                  {scores.map((item, index) => {
+                    const percentage = item.total
+                      ? Math.round((item.score / item.total) * 100)
+                      : 0;
+                    const isOpen = expandedScore === index;
+
                     return (
-                      <div key={i} className="border border-border rounded-xl overflow-hidden">
+                      <div
+                        key={item._id || index}
+                        className="overflow-hidden rounded-2xl border border-border/80 bg-white"
+                      >
                         <button
-                          onClick={() => setExpandedScore(open ? null : i)}
-                          className="w-full flex items-center justify-between gap-4 p-4 hover:bg-bg transition-colors duration-200 text-left"
+                          onClick={() =>
+                            setExpandedScore(isOpen ? null : index)
+                          }
+                          className="flex w-full items-center justify-between gap-5 p-5 text-left transition hover:bg-bg/60"
                         >
                           <div className="min-w-0">
-                            <div className="font-semibold text-ink truncate">{s.title}</div>
-                            <div className="text-xs text-ink-muted">
-                              {s.type}{s.courseName ? ` · ${s.courseName}` : ""}
-                            </div>
+                            <p className="truncate font-semibold text-ink">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-ink-muted">
+                              {item.type}
+                              {item.courseName ? ` · ${item.courseName}` : ""}
+                            </p>
                           </div>
-                          <div className="flex items-center gap-3 shrink-0">
+                          <div className="flex shrink-0 items-center gap-3">
                             <span
-                              className={`text-sm font-bold px-3 py-1 rounded-full ${
-                                pct >= 70 ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                              className={`rounded-full px-3 py-1 text-xs font-bold ${
+                                percentage >= 70
+                                  ? "bg-success/10 text-success"
+                                  : "bg-accent/15 text-ink"
                               }`}
                             >
-                              {s.score}{s.total ? ` / ${s.total}` : ""}
+                              {item.score}
+                              {item.total ? ` / ${item.total}` : ""}
                             </span>
                             <svg
-                              className={`w-4 h-4 text-ink-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-                              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                              className={`h-4 w-4 text-ink-muted transition-transform ${
+                                isOpen ? "rotate-180" : ""
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                           </div>
                         </button>
-                        {open && (
-                          <div className="p-4 bg-bg border-t border-border">
-                            <QuizReview review={s.review} />
-                          </div>
-                        )}
+                        <AnimatePresence initial={false}>
+                          {isOpen && (
+                            <Motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden border-t border-border bg-bg/60"
+                            >
+                              <div className="p-5">
+                                <QuizReview review={item.review} />
+                              </div>
+                            </Motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     );
                   })}
                 </div>
               )}
-            </div>
+            </Motion.section>
           )}
 
-          {/* ===== Creator Requests (admin only) ===== */}
           {profile?.isAdmin && (
-            <div className="bg-surface rounded-2xl shadow-sm overflow-hidden border border-border mt-8 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="brand font-serif text-2xl font-bold text-ink">Creator Requests</h2>
-                    <p className="text-ink-muted text-sm">Approve users who want to publish courses</p>
-                  </div>
+            <section className="premium-card mt-8 rounded-[1.75rem] border border-border/80 bg-surface p-6 sm:p-8">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                    Administration
+                  </p>
+                  <h2 className="font-serif text-3xl font-bold text-ink">
+                    Creator requests
+                  </h2>
                 </div>
-                <span className="bg-purple-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                <span className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-white">
                   {creatorRequests.length} pending
                 </span>
               </div>
 
               {creatorRequests.length === 0 ? (
-                <p className="text-ink-muted text-sm py-4">No pending creator requests.</p>
+                <div className="rounded-2xl border border-dashed border-border bg-bg/50 px-6 py-8 text-center text-sm text-ink-muted">
+                  No pending creator requests.
+                </div>
               ) : (
                 <div className="space-y-3">
                   {creatorRequests.map((request) => (
                     <div
                       key={request._id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bg border border-border rounded-lg p-4"
+                      className="flex flex-col justify-between gap-4 rounded-2xl border border-border/80 bg-white p-5 sm:flex-row sm:items-center"
                     >
                       <div>
-                        <div className="font-semibold text-ink">{request.name}</div>
-                        <div className="text-sm text-ink-muted">{request.email}</div>
+                        <p className="font-semibold text-ink">{request.name}</p>
+                        <p className="mt-0.5 text-sm text-ink-muted">
+                          {request.email}
+                        </p>
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleCreatorRequest(request._id, "approve")}
+                          onClick={() =>
+                            handleCreatorRequest(request._id, "approve")
+                          }
                           disabled={handlingUserId === request._id}
-                          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-green-700 transition-colors duration-200 disabled:opacity-50"
+                          className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:opacity-50"
                         >
-                          Give Access
+                          Approve
                         </button>
                         <button
-                          onClick={() => handleCreatorRequest(request._id, "reject")}
+                          onClick={() =>
+                            handleCreatorRequest(request._id, "reject")
+                          }
                           disabled={handlingUserId === request._id}
-                          className="bg-surface border border-border text-danger px-4 py-2 rounded-md text-sm font-semibold hover:bg-bg transition-colors duration-200 disabled:opacity-50"
+                          className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-danger transition hover:bg-bg disabled:opacity-50"
                         >
-                          Reject
+                          Decline
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </section>
           )}
         </div>
-      </motion.div>
+      </main>
     </>
-  )
-}
+  );
+};
 
-export default Profile
+export default Profile;

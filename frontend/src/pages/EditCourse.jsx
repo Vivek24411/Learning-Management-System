@@ -47,20 +47,15 @@ const EditCourse = () => {
     
     if (!courseData.courseName?.trim()) {
       newErrors.courseName = "Course name is required";
-    } else if (courseData.courseName.length < 3) {
-      newErrors.courseName = "Course name must be at least 3 characters";
     }
     
-    if (!courseData.shortDescription?.trim()) {
-      newErrors.shortDescription = "Short description is required";
-    } else if (courseData.shortDescription.length < 10) {
-      newErrors.shortDescription = "Short description must be at least 10 characters";
-    }
-    
-    
-    
-    if (courseData.price === undefined || courseData.price === null || courseData.price === "" || courseData.price < 0) {
-      newErrors.price = "Price must be a valid number (0 or greater)";
+    if (
+      courseData.price !== undefined &&
+      courseData.price !== null &&
+      courseData.price !== "" &&
+      Number(courseData.price) < 0
+    ) {
+      newErrors.price = "Price must be 0 or greater";
     }
 
     setErrors(newErrors);
@@ -178,7 +173,7 @@ const EditCourse = () => {
       <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
       
       <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex items-center space-x-4 mb-4">
@@ -213,7 +208,7 @@ const EditCourse = () => {
               </div>
             </div>
 
-            <form onSubmit={editCourseData} className="p-6 space-y-8">
+            <form onSubmit={editCourseData} className="space-y-8 p-4 sm:p-6">
               {/* Course Name */}
               <div>
                 <label htmlFor="courseName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -242,7 +237,7 @@ const EditCourse = () => {
               {/* Short Description */}
               <div>
                 <label htmlFor="shortDescription" className="block text-sm font-medium text-gray-700 mb-2">
-                  Short Description <span className="text-red-500">*</span>
+                  Short Description <span className="text-gray-400 text-xs">(Optional)</span>
                 </label>
                 <textarea
                   id="shortDescription"
@@ -274,7 +269,7 @@ const EditCourse = () => {
               {/* Long Description */}
               <div>
                 <label htmlFor="longDescription" className="block text-sm font-medium text-gray-700 mb-2">
-                  Detailed Description <span className="text-red-500">*</span>
+                  Detailed Description <span className="text-gray-400 text-xs">(Optional)</span>
                 </label>
                 <textarea
                   id="longDescription"
@@ -306,7 +301,7 @@ const EditCourse = () => {
               {/* Course Introduction */}
               <div>
                 <label htmlFor="courseIntroduction" className="block text-sm font-medium text-gray-700 mb-2">
-                  Course Introduction <span className="text-red-500">*</span>
+                  Course Introduction <span className="text-gray-400 text-xs">(Optional)</span>
                 </label>
                 <textarea
                   id="courseIntroduction"
@@ -371,7 +366,7 @@ const EditCourse = () => {
               {/* Price — shown for both types */}
               <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Price (₹) <span className="text-red-500">*</span>
+                    Course Price (₹) <span className="text-gray-400 text-xs">(Optional)</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

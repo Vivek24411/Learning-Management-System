@@ -6,19 +6,30 @@ const courseSchema = new mongoose.Schema({
         required:true
     },
     shortDescription:{
-        type:String
+        type:String,
+        default:""
     },
     longDescription:{
-        type:String
+        type:String,
+        default:""
     },
     courseIntroduction:{
-        type:String
+        type:String,
+        default:""
     },
     courseThumbnailImage:{
-        type:String
+        type:String,
+        default:""
     },
     courseIntroductionImages:{
-        type:[String]
+        type:[String],
+        default:[]
+    },
+    // Kept as a parallel array so existing courses that store image URLs as
+    // strings continue to work without a migration.
+    courseIntroductionImageCaptions:{
+        type:[String],
+        default:[]
     },
     price:{
         type:Number,

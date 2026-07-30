@@ -1,7 +1,7 @@
 const express = require("express");
 const userRouter = express.Router();
 const {body, query} = require("express-validator");
-const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, removeSectionVideo, addSectionVideos, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos, giveAccessToCourse, giveAdminAccess, deleteSectionLink, addSectionLink, generateUrl, saveSectionVideoUrl, requestCreatorAccess, getCreatorRequests, handleCreatorRequest, requestEnrollment, getEnrollmentRequests, handleEnrollmentRequest, getMyScores, getCourseStudentScores } = require("../controllers/user.controllers");
+const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, deleteSectionQuiz, deleteChapterQuiz, requestQuizRetake, getQuizRetakeRequests, handleQuizRetakeRequest, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, updateIntroductionImageCaption, removeSectionVideo, addSectionVideos, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos, giveAccessToCourse, getCourseLearners, removeCourseAccess, giveAdminAccess, deleteSectionLink, addSectionLink, generateUrl, saveSectionVideoUrl, requestCreatorAccess, getCreatorRequests, handleCreatorRequest, requestEnrollment, getEnrollmentRequests, handleEnrollmentRequest, getMyScores, getCourseStudentScores } = require("../controllers/user.controllers");
 const { userAuth, adminAuth, creatorAuth, manageAuth, courseOwnerCheck } = require("../middlewares/auth");
 const { uploadCourseThumbnail } = require("../middlewares/upload");
 const upload = require("../middlewares/upload");
@@ -41,12 +41,13 @@ userRouter.post("/addCourse",creatorAuth,upload.fields([
     { name: "courseIntroductionImages", maxCount: 5 },
 ]),[
     body("courseName").isString().isLength({min:1}),
-    body("shortDescription").isString().isLength({min:1}),
+    body("shortDescription").optional({nullable:true}).isString(),
     body("price").optional(),
     body("enrollmentType").optional().isIn(["paid","request"]),
     body("googleFormLink").optional({checkFalsy:true}).isString(),
-    body("courseIntroduction").isString().isLength({min:1}),
-    body("longDescription").optional().isString()
+    body("courseIntroduction").optional({nullable:true}).isString(),
+    body("longDescription").optional({nullable:true}).isString(),
+    body("courseIntroductionImageCaptions").optional({nullable:true}).isString()
 ],(req,res,next)=>{
     console.log("In route");
     next();
@@ -59,33 +60,35 @@ userRouter.post("/addSection",creatorAuth,upload.array("sectionVideo", 5),course
 
 userRouter.post("/addChapter",creatorAuth,upload.fields([
     {name: "chapterThumbnailImage", maxCount:1},
-    {name: "chapterFile", maxCount:5},
+    {name: "chapterFile", maxCount:10},
     {name: "chapterVideo", maxCount:5},
     {name: "chapterVideoThumbnailImage", maxCount:5},
 ]),courseOwnerCheck("section"),[
     body("chapterName").isString().isLength({min:1}),
-    body("shortDescription").isString().isLength({min:1}),
-    body("chapterSummary").optional().isString(),
+    body("shortDescription").optional({nullable:true}).isString(),
+    body("chapterSummary").optional({nullable:true}).isString(),
     body("sectionId").isMongoId(),
     body("chapterVideoTitle").optional(),
+    body("chapterVideoThumbnailIndex").optional(),
 ],addChapter)
 
 userRouter.post("/editCourse",manageAuth("course"),[
     body("courseId").isMongoId(),
     body("courseName").isString().isLength({min:1}),
-    body("shortDescription").isString().isLength({min:1}),
+    body("shortDescription").optional({nullable:true}).isString(),
     body("price").optional(),
     body("enrollmentType").optional().isIn(["paid","request"]),
     body("googleFormLink").optional({checkFalsy:true}).isString(),
-    body("courseIntroduction").isString().isLength({min:1}),
-    body("longDescription").optional().isString()
+    body("courseIntroduction").optional({nullable:true}).isString(),
+    body("longDescription").optional({nullable:true}).isString(),
+    body("courseIntroductionImageCaptions").optional({nullable:true}).isArray()
 ],editCourse)
 
 userRouter.post("/editChapter",manageAuth("chapter"),[
     body("chapterId").isMongoId(),
     body("chapterName").isString().isLength({min:1}),
-    body("shortDescription").isString().isLength({min:1}),
-    body("chapterSummary").optional().isString(),
+    body("shortDescription").optional({nullable:true}).isString(),
+    body("chapterSummary").optional({nullable:true}).isString(),
 ],editChapter)
 
 userRouter.post("/editSection",manageAuth("section"),[
@@ -130,13 +133,23 @@ userRouter.post("/resetPassword",[
 
 userRouter.post("/addSectionQuiz",manageAuth("section","id"),[
     body("id").isMongoId(),
-    body("quizData").isArray({min:1})
+    body("quizData").isArray({min:1}),
+    body("title").isString().trim().isLength({min:1,max:120})
 ],addSectionQuiz)
 
 userRouter.post("/addChapterQuiz",manageAuth("chapter","id"),[
     body("id").isMongoId(),
-    body("quizData").isArray({min:1})
+    body("quizData").isArray({min:1}),
+    body("title").isString().trim().isLength({min:1,max:120})
 ],addChapterQuiz)
+
+userRouter.post("/deleteSectionQuiz",manageAuth("section","id"),[
+    body("id").isMongoId()
+],deleteSectionQuiz)
+
+userRouter.post("/deleteChapterQuiz",manageAuth("chapter","id"),[
+    body("id").isMongoId()
+],deleteChapterQuiz)
 
 
 userRouter.get("/getSectionQuiz",userAuth,[
@@ -157,6 +170,11 @@ userRouter.post("/submitChapterQuiz",userAuth,[
     body("answeredQuizData").isArray({min:1})
 ],submitChapterQuiz)
 
+userRouter.post("/requestQuizRetake",userAuth,[
+    body("quizType").isIn(["section","chapter"]),
+    body("quizId").isMongoId()
+],requestQuizRetake)
+
 userRouter.get("/getSection",manageAuth("section"),[
     query("sectionId").isMongoId()
 ],getSection)
@@ -167,12 +185,20 @@ userRouter.post("/updateCourseThumbnail",creatorAuth,upload.single("courseThumbn
 
 userRouter.post("/removeCourseIntroductionImage",manageAuth("course"),[
     body("courseId").isMongoId(),
-    body("imageURL").isString().isLength({min:1})
+    body("imageURL").optional().isString().isLength({min:1}),
+    body("imageIndex").optional().isInt({min:0})
 ],removeCourseIntroductionImage)
 
 userRouter.post("/addIntroductionImages",creatorAuth,upload.array("courseIntroductionImages", 5),courseOwnerCheck("course"),[
-    body("courseId").isMongoId()
+    body("courseId").isMongoId(),
+    body("courseIntroductionImageCaptions").optional({nullable:true}).isString()
 ],addIntroductionImage)
+
+userRouter.post("/updateIntroductionImageCaption",manageAuth("course"),[
+    body("courseId").isMongoId(),
+    body("imageIndex").isInt({min:0}),
+    body("caption").optional({nullable:true}).isString().isLength({max:240})
+],updateIntroductionImageCaption)
 
 userRouter.post("/removeSectionVideo",manageAuth("section"),[
     body("sectionId").isMongoId(),
@@ -229,6 +255,15 @@ userRouter.post("/giveCourseAccess",manageAuth("course"),[
     body("courseId").isMongoId()
 ],giveAccessToCourse)
 
+userRouter.get("/getCourseLearners",manageAuth("course"),[
+    query("courseId").isMongoId()
+],getCourseLearners)
+
+userRouter.post("/removeCourseAccess",manageAuth("course"),[
+    body("courseId").isMongoId(),
+    body("userId").isMongoId()
+],removeCourseAccess)
+
 userRouter.post("/giveAdminAccess",adminAuth,[
     body("email").isEmail().isLength({min:1})
 ],giveAdminAccess)
@@ -275,6 +310,16 @@ userRouter.post("/handleEnrollmentRequest",userAuth,[
     body("requestId").isMongoId(),
     body("decision").isIn(["approve","reject"])
 ],handleEnrollmentRequest)
+
+/* ---- Quiz retake requests ---- */
+userRouter.get("/getQuizRetakeRequests",manageAuth("course"),[
+    query("courseId").isMongoId()
+],getQuizRetakeRequests)
+
+userRouter.post("/handleQuizRetakeRequest",userAuth,[
+    body("requestId").isMongoId(),
+    body("decision").isIn(["approve","reject"])
+],handleQuizRetakeRequest)
 
 
 /* ---- Test scores ---- */

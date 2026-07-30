@@ -2,8 +2,7 @@ import axios from 'axios';
 import React from 'react'
 import { toast } from 'react-toastify';
 import { useEffect } from 'react';
-
-export const UserContextData = React.createContext();
+import { UserContextData } from './UserContextData';
 
 const UserContext = ({children}) => {
 
@@ -29,7 +28,10 @@ const UserContext = ({children}) => {
 
   useEffect(()=>{
     if(loggedIn){
-      fetchProfile();
+      const fetchTimer = window.setTimeout(() => {
+        fetchProfile();
+      }, 0);
+      return () => window.clearTimeout(fetchTimer);
     }
   },[loggedIn]);
 

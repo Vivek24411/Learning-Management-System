@@ -58,6 +58,7 @@ const AddCourse = () => {
   
   const [courseThumbnailImage, setCourseThumbnailImage] = useState(null);
   const [courseIntroductionImages, setCourseIntroductionImages] = useState([]);
+  const [courseIntroductionImageCaptions, setCourseIntroductionImageCaptions] = useState([]);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [introImagesPreview, setIntroImagesPreview] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,32 +120,29 @@ const AddCourse = () => {
     
     setCourseIntroductionImages(validFiles);
     
-    // Create previews
-    const previews = [];
-    validFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        previews.push({
-          file,
-          preview: reader.result,
-          name: file.name
-        });
-        
-        if (previews.length === validFiles.length) {
-          setIntroImagesPreview(previews);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    setCourseIntroductionImageCaptions(validFiles.map(() => ""));
+    setIntroImagesPreview(validFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      name: file.name
+    })));
   };
 
   // Remove introduction image
   const removeIntroImage = (index) => {
     const newImages = courseIntroductionImages.filter((_, i) => i !== index);
     const newPreviews = introImagesPreview.filter((_, i) => i !== index);
+    const newCaptions = courseIntroductionImageCaptions.filter((_, i) => i !== index);
     
     setCourseIntroductionImages(newImages);
     setIntroImagesPreview(newPreviews);
+    setCourseIntroductionImageCaptions(newCaptions);
+  };
+
+  const updateIntroImageCaption = (index, caption) => {
+    setCourseIntroductionImageCaptions(prev =>
+      prev.map((currentCaption, i) => i === index ? caption : currentCaption)
+    );
   };
 
   // Form validation
@@ -155,22 +153,11 @@ const AddCourse = () => {
       newErrors.courseName = 'Course name is required';
     }
     
-    if (!formData.shortDescription.trim()) {
-      newErrors.shortDescription = 'Short description is required';
-    }
-    
-   
-    
-    if (!formData.courseIntroduction.trim()) {
-      newErrors.courseIntroduction = 'Course introduction is required';
-    }
-    
-    if (formData.price === '' || parseFloat(formData.price) < 0 || isNaN(parseFloat(formData.price))) {
-      newErrors.price = 'Valid price is required (enter 0 for a free course)';
-    }
-
-    if (!courseThumbnailImage) {
-      newErrors.thumbnail = 'Thumbnail image is required';
+    if (
+      formData.price !== '' &&
+      (parseFloat(formData.price) < 0 || isNaN(parseFloat(formData.price)))
+    ) {
+      newErrors.price = 'Price must be 0 or greater';
     }
     
     setErrors(newErrors);
@@ -196,14 +183,20 @@ const AddCourse = () => {
       data.append('longDescription', formData.longDescription);
       data.append('courseIntroduction', formData.courseIntroduction);
       data.append('enrollmentType', formData.enrollmentType);
-      data.append('price', formData.price);
+      data.append('price', formData.price || '0');
       if (formData.enrollmentType === 'request') {
         data.append('googleFormLink', formData.googleFormLink);
       }
-      data.append('courseThumbnailImage', courseThumbnailImage);
-      courseIntroductionImages.forEach((file, index) => {
+      if (courseThumbnailImage) {
+        data.append('courseThumbnailImage', courseThumbnailImage);
+      }
+      courseIntroductionImages.forEach((file) => {
         data.append('courseIntroductionImages', file);
       });
+      data.append(
+        'courseIntroductionImageCaptions',
+        JSON.stringify(courseIntroductionImageCaptions)
+      );
 
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/addCourse`, data, {
         headers: {
@@ -226,6 +219,7 @@ const AddCourse = () => {
         });
         setCourseThumbnailImage(null);
         setCourseIntroductionImages([]);
+        setCourseIntroductionImageCaptions([]);
         setThumbnailPreview(null);
         setIntroImagesPreview([]);
       }else{
@@ -243,13 +237,13 @@ const AddCourse = () => {
     <>
       <Header topics={[{ name: 'Home', path: 'home' }, { name: 'Courses', path: 'courses' }, { name: 'About', path: 'about' }]} />
       
-      <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-yellow-50 pt-20 pb-12">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(184,144,47,0.14),_transparent_34%),linear-gradient(135deg,#FAF6EE_0%,#F2ECDD_100%)] pt-20 pb-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Page Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Add New <span className="text-[#6366F1]">Course</span>
+            <h1 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl">
+              Add New <span className="text-primary">Course</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Share your yoga wisdom with the community. Create a transformative learning experience.
@@ -257,8 +251,8 @@ const AddCourse = () => {
           </div>
 
           {/* Form Card */}
-          <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 overflow-hidden">
-            <div className="p-8 sm:p-12">
+          <div className="bg-white/95 rounded-3xl shadow-[0_28px_80px_-32px_rgba(34,28,22,0.35)] ring-1 ring-border/70 overflow-hidden backdrop-blur">
+            <div className="p-5 sm:p-8 lg:p-12">
               
               <form onSubmit={handleSubmit} className="space-y-8">
                 
@@ -281,6 +275,7 @@ const AddCourse = () => {
                   onChange={handleInputChange}
                   error={errors.shortDescription}
                   rows={3}
+                  required={false}
                 />
 
                 {/* Long Description */}
@@ -304,6 +299,7 @@ const AddCourse = () => {
                   onChange={handleInputChange}
                   error={errors.courseIntroduction}
                   rows={5}
+                  required={false}
                 />
                 
                 {/* Enrollment Type */}
@@ -355,6 +351,7 @@ const AddCourse = () => {
                   value={formData.price}
                   onChange={handleInputChange}
                   error={errors.price}
+                  required={false}
                   extraText={
                     formData.enrollmentType === 'request'
                       ? "Shown to learners for information. Collect the fee yourself (e.g. via the Google Form below), then approve their request. Set 0 if free."
@@ -380,9 +377,9 @@ const AddCourse = () => {
                 {/* Thumbnail Image */}
                 <div className="space-y-4">
                   <label className="block text-sm font-semibold text-gray-700">
-                    Course Thumbnail Image <span className="text-red-500">*</span>
+                    Course Thumbnail Image <span className="text-gray-500 font-normal">(Optional)</span>
                   </label>
-                  <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#6366F1]/50 transition-colors duration-200">
+                  <div className="rounded-2xl border-2 border-dashed border-stone-300 p-4 transition-colors duration-200 hover:border-[#6366F1]/50 sm:p-8">
                     <input
                       type="file"
                       accept="image/*"
@@ -396,7 +393,7 @@ const AddCourse = () => {
                           <img
                             src={thumbnailPreview}
                             alt="Thumbnail preview"
-                            className="w-48 h-32 object-cover rounded-xl shadow-lg mb-4"
+                            className="mb-4 h-32 w-full max-w-48 rounded-xl bg-surface-muted object-contain shadow-lg"
                           />
                           <p className="text-sm text-gray-600">Click to change image</p>
                         </div>
@@ -429,7 +426,7 @@ const AddCourse = () => {
                   <label className="block text-sm font-semibold text-gray-700">
                     Course Introduction Images <span className="text-gray-500">(Optional - Max 5)</span>
                   </label>
-                  <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#6366F1]/50 transition-colors duration-200">
+                  <div className="rounded-2xl border-2 border-dashed border-stone-300 p-4 transition-colors duration-200 hover:border-[#6366F1]/50 sm:p-8">
                     <input
                       type="file"
                       accept="image/*"
@@ -454,13 +451,13 @@ const AddCourse = () => {
                   
                   {/* Image Previews */}
                   {introImagesPreview.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {introImagesPreview.map((image, index) => (
-                        <div key={index} className="relative group">
+                        <div key={index} className="relative group rounded-2xl border border-border bg-white p-3 shadow-sm">
                           <img
                             src={image.preview}
                             alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-xl shadow-lg"
+                            className="h-32 w-full rounded-xl bg-surface-muted object-contain"
                           />
                           <button
                             type="button"
@@ -469,6 +466,19 @@ const AddCourse = () => {
                           >
                             ×
                           </button>
+                          <label className="block mt-3">
+                            <span className="text-xs font-semibold text-ink-muted">
+                              Caption <span className="font-normal">(Optional)</span>
+                            </span>
+                            <input
+                              type="text"
+                              maxLength={240}
+                              value={courseIntroductionImageCaptions[index] || ""}
+                              onChange={(e) => updateIntroImageCaption(index, e.target.value)}
+                              placeholder="What does this image show?"
+                              className="mt-1.5 w-full rounded-xl border border-border bg-bg/50 px-3 py-2 text-sm text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                            />
+                          </label>
                         </div>
                       ))}
                     </div>
@@ -509,4 +519,4 @@ const AddCourse = () => {
   )
 }
 
-export default AddCourse  
+export default AddCourse

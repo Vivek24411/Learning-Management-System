@@ -31,7 +31,7 @@ const AddSection = () => {
       formData.append("externalLinks", JSON.stringify(externalLinks));
 
       if (sectionVideos && sectionVideos.length > 0) {
-        sectionVideos.forEach((video, index) => {
+        sectionVideos.forEach((video) => {
           formData.append("sectionVideo", video);
         });
       }
@@ -58,7 +58,7 @@ const AddSection = () => {
       } else {
         toast.error(response.data.message || "Failed to add section");
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred while adding section");
     } finally {
       setIsSubmitting(false);
@@ -130,10 +130,10 @@ const AddSection = () => {
       />
 
       <div className="min-h-screen bg-gradient-to-br from-stone-100 via-amber-50 to-yellow-50 pt-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           {/* Page Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl lg:text-5xl">
               Add New Section
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
@@ -145,7 +145,7 @@ const AddSection = () => {
           {/* Main Form Card */}
           <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 border border-stone-200 overflow-hidden">
             {/* Form Header */}
-            <div className="bg-gradient-to-r from-[#6366F1]/15 via-[#6366F1]/10 to-[#4F46E5]/5 px-8 py-6 border-b border-stone-200 relative overflow-hidden">
+            <div className="relative overflow-hidden border-b border-stone-200 bg-gradient-to-r from-[#6366F1]/15 via-[#6366F1]/10 to-[#4F46E5]/5 px-5 py-5 sm:px-8 sm:py-6">
               {/* Decorative background pattern */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#6366F1]/10 to-transparent rounded-full -mt-16 -mr-16"></div>
 
@@ -179,7 +179,7 @@ const AddSection = () => {
             </div>
 
             {/* Form Content */}
-            <div className="p-8 space-y-8">
+            <div className="space-y-8 p-5 sm:p-8">
               {/* Section Title Field */}
               <div className="space-y-3">
                 <label className="flex items-center text-lg font-semibold text-gray-900 mb-3">
@@ -301,7 +301,7 @@ const AddSection = () => {
                   </span>
                 </label>
 
-                <div className="border-2 border-dashed border-stone-300 rounded-2xl p-8 hover:border-[#6366F1]/50 transition-colors duration-200 bg-gradient-to-br from-stone-50 to-amber-50/30">
+                <div className="rounded-2xl border-2 border-dashed border-stone-300 bg-gradient-to-br from-stone-50 to-amber-50/30 p-4 transition-colors duration-200 hover:border-[#6366F1]/50 sm:p-8">
                   <input
                     type="file"
                     accept="video/*"

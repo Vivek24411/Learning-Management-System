@@ -8,8 +8,7 @@ import Chapter from "./pages/Chapter.jsx";
 import AddCourse from "./pages/AddCourse.jsx";
 import EditCourse from "./pages/EditCourse.jsx";
 import Login from "./pages/Login.jsx";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Slide, ToastContainer } from "react-toastify";
 import AddChapter from "./pages/AddChapter.jsx";
 import EditChapter from "./pages/EditChapter.jsx";
 import AddSection from "./pages/AddSection.jsx";
@@ -19,7 +18,7 @@ import ForgotPassword from "./pages/ForgotPassword.jsx";
 import QuizSection from "./pages/QuizSection.jsx";
 import TakeSectionQuiz from "./pages/TakeSectionQuiz.jsx";
 import EditSection from "./pages/EditSection.jsx";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 
 
@@ -52,15 +51,20 @@ const App = () => {
 
       <ToastContainer
         position="top-right"
-        autoClose={3000}
+        autoClose={3600}
         hideProgressBar={false}
-        newestOnTop={false}
+        newestOnTop
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="dark"
+        limit={3}
+        transition={Slide}
+        theme="light"
+        toastClassName="edvance-toast"
+        bodyClassName="edvance-toast__body"
+        progressClassName="edvance-toast__progress"
       />
     </>
   );

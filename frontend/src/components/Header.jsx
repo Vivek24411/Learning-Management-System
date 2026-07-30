@@ -1,8 +1,20 @@
 import React, { useState } from 'react'
 import { useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { UserContextData } from '../context/UserContext';
-import { motion } from 'framer-motion';
+import { UserContextData } from '../context/UserContextData';
+import { motion as Motion } from 'framer-motion';
+
+const LogoIcon = () => (
+  <svg className="h-8 w-8 shrink-0 text-[#7A4E2D]" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+    <ellipse cx="16" cy="16" rx="14" ry="6" stroke="currentColor" strokeWidth="1.5" transform="rotate(45 16 16)" opacity="0.3"/>
+    <ellipse cx="16" cy="16" rx="14" ry="6" stroke="currentColor" strokeWidth="1.5" transform="rotate(-45 16 16)" opacity="0.3"/>
+    <circle cx="16" cy="16" r="3" fill="currentColor"/>
+    <circle cx="16" cy="2" r="1.5" fill="currentColor"/>
+    <circle cx="26" cy="22" r="1.5" fill="currentColor"/>
+    <circle cx="6" cy="22" r="1.5" fill="currentColor"/>
+  </svg>
+);
 
 const Header = ({topics}) => {
   const { loggedIn, setLoggedIn, setProfile } = useContext(UserContextData);
@@ -47,20 +59,8 @@ const Header = ({topics}) => {
     }
   };
 
-  const LogoIcon = () => (
-    <svg className="h-8 w-8 text-[#7A4E2D]" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
-      <ellipse cx="16" cy="16" rx="14" ry="6" stroke="currentColor" strokeWidth="1.5" transform="rotate(45 16 16)" opacity="0.3"/>
-      <ellipse cx="16" cy="16" rx="14" ry="6" stroke="currentColor" strokeWidth="1.5" transform="rotate(-45 16 16)" opacity="0.3"/>
-      <circle cx="16" cy="16" r="3" fill="currentColor"/>
-      <circle cx="16" cy="2" r="1.5" fill="currentColor"/>
-      <circle cx="26" cy="22" r="1.5" fill="currentColor"/>
-      <circle cx="6" cy="22" r="1.5" fill="currentColor"/>
-    </svg>
-  );
-
   return (
-    <motion.header
+    <Motion.header
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -70,7 +70,7 @@ const Header = ({topics}) => {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo and Brand Name */}
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <LogoIcon />
             <h1 className="brand text-xl font-bold text-ink tracking-tight">
               Edvance
@@ -129,7 +129,7 @@ const Header = ({topics}) => {
           <div className="md:hidden">
             <button
               onClick={toggleMobileMenu}
-              className="text-ink-muted hover:text-ink focus:outline-none transition-colors duration-200 p-2 rounded-md"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-ink-muted transition-colors duration-200 hover:bg-surface-muted hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               aria-expanded={isMobileMenuOpen}
               aria-label="Toggle mobile menu"
             >
@@ -146,8 +146,8 @@ const Header = ({topics}) => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-        <div className="px-4 pt-2 pb-6 space-y-2 bg-surface border-t border-border">
+      <div className={`md:hidden overflow-y-auto transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-[calc(100dvh-4rem)] opacity-100 shadow-xl' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+        <div className="space-y-2 border-t border-border bg-surface px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2">
           {topics && topics.map((topic, index) => (
             <button
               key={index}
@@ -202,7 +202,7 @@ const Header = ({topics}) => {
           </div>
         </div>
       </div>
-    </motion.header>
+    </Motion.header>
   )
 }
 
