@@ -1,5 +1,21 @@
 const mongoose = require("mongoose");
 
+const quizSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 120,
+    },
+    questions: {
+      type: [Object],
+      default: [],
+    },
+  },
+  { timestamps: true }
+);
+
 const chapterSchema = new mongoose.Schema({
   chapterName: {
     type: String,
@@ -27,6 +43,10 @@ const chapterSchema = new mongoose.Schema({
   chapterQuizTitle: {
     type: String,
     default: "",
+  },
+  chapterQuizzes: {
+    type: [quizSchema],
+    default: [],
   },
   externalLinks: {
     type: [Object],

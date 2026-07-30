@@ -126,13 +126,41 @@ const EditableCourseContent = ({
   </div>
 );
 
-const SectionVideoCard = ({ videoUrl, index, canManage, onRemove }) => {
+const SectionVideoCard = ({
+  videoUrl,
+  videoTitle,
+  index,
+  canManage,
+  onRemove,
+  onTitleSave,
+}) => {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(videoTitle || "");
+  const [savingTitle, setSavingTitle] = useState(false);
 
   const startVideo = async () => {
     setIsPlaying(true);
     window.setTimeout(() => videoRef.current?.play().catch(() => {}), 0);
+  };
+
+  const enterFullscreen = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const request =
+      video.requestFullscreen ||
+      video.webkitRequestFullscreen ||
+      video.msRequestFullscreen;
+    const result = request?.call(video);
+    result?.catch?.(() => {});
+  };
+
+  const saveTitle = async () => {
+    setSavingTitle(true);
+    const saved = await onTitleSave(index, titleDraft.trim());
+    setSavingTitle(false);
+    if (saved) setEditingTitle(false);
   };
 
   return (
@@ -141,7 +169,10 @@ const SectionVideoCard = ({ videoUrl, index, canManage, onRemove }) => {
       transition={{ duration: 0.25 }}
       className="group overflow-hidden rounded-2xl border border-border/80 bg-surface shadow-[0_18px_50px_-35px_rgba(34,28,22,0.55)]"
     >
-      <div className="relative aspect-video overflow-hidden bg-ink">
+      <div
+        className="relative aspect-video overflow-hidden bg-ink"
+        onDoubleClick={enterFullscreen}
+      >
         <video
           ref={videoRef}
           src={videoUrl}
@@ -176,6 +207,9 @@ const SectionVideoCard = ({ videoUrl, index, canManage, onRemove }) => {
         <span className="absolute left-3 top-3 rounded-full border border-white/15 bg-ink/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur">
           Lesson {String(index + 1).padStart(2, "0")}
         </span>
+        <span className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-white/15 bg-ink/65 px-3 py-1.5 text-[10px] font-medium text-white/90 backdrop-blur">
+          Double tap for fullscreen
+        </span>
 
         {canManage && (
           <button
@@ -193,7 +227,36 @@ const SectionVideoCard = ({ videoUrl, index, canManage, onRemove }) => {
       </div>
       <div className="flex items-center justify-between gap-4 px-4 py-3.5">
         <div>
-          <p className="text-sm font-semibold text-ink">Section lesson {index + 1}</p>
+          {editingTitle ? (
+            <div className="flex items-center gap-2">
+              <input
+                value={titleDraft}
+                onChange={(event) => setTitleDraft(event.target.value)}
+                maxLength={120}
+                autoFocus
+                className="min-w-0 rounded-lg border border-border px-2 py-1 text-sm font-semibold text-ink outline-none focus:border-primary"
+                placeholder={`Lesson ${index + 1}`}
+              />
+              <button
+                type="button"
+                onClick={saveTitle}
+                disabled={savingTitle}
+                className="text-xs font-bold text-success disabled:opacity-50"
+              >
+                {savingTitle ? "…" : "Save"}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => canManage && setEditingTitle(true)}
+              className={`text-left text-sm font-semibold text-ink ${canManage ? "hover:text-primary" : ""}`}
+              title={canManage ? "Edit video title" : undefined}
+            >
+              {videoTitle || `Section lesson ${index + 1}`}
+              {canManage && <span className="ml-1.5 text-[10px] text-primary">Edit</span>}
+            </button>
+          )}
           <p className="mt-0.5 text-xs text-ink-muted">Video · self-paced</p>
         </div>
         <button
@@ -454,9 +517,12 @@ const SectionItem = ({
   setSectionVideoFiles,
   sectionVideoPreview,
   setSectionVideoPreview,
+  sectionVideoTitles,
+  setSectionVideoTitles,
   handleSectionVideoFiles,
   addSectionVideos,
   removeSectionVideo,
+  updateSectionVideoTitle,
   updatingThumbnail,
   setCourse,
   quizState,
@@ -469,6 +535,18 @@ const SectionItem = ({
     url: "",
   }]);
   const [showSectionLinkInput, setShowSectionLinkInput] = useState(false);
+  const quizzes =
+    section.sectionQuizzes?.length > 0
+      ? section.sectionQuizzes
+      : section.sectionQuiz?.length > 0
+        ? [{
+            _id: section._id,
+            title:
+              section.sectionQuizTitle || `${section.sectionTitle} quiz`,
+            questions: section.sectionQuiz,
+            questionCount: section.sectionQuiz.length,
+          }]
+        : [];
   async function handleDeleteSection(sectionId) {
     const response = await axios.get(
       `${import.meta.env.VITE_BASE_URL}/user/deleteSection`,
@@ -491,7 +569,7 @@ const SectionItem = ({
     }
   }
 
-  async function handleDeleteQuiz() {
+  async function handleDeleteQuiz(quizId) {
     if (
       !window.confirm(
         "Delete this published quiz? Existing learner attempt history will be kept."
@@ -503,7 +581,7 @@ const SectionItem = ({
       setSubmitting(true);
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/user/deleteSectionQuiz`,
-        { id: section._id },
+        { id: section._id, quizId },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
@@ -515,7 +593,20 @@ const SectionItem = ({
           ...previous,
           sections: previous.sections.map((item) =>
             item._id === section._id
-              ? { ...item, sectionQuiz: [], sectionQuizTitle: "" }
+              ? {
+                  ...item,
+                  sectionQuizzes: (item.sectionQuizzes || []).filter(
+                    (quiz) => String(quiz._id) !== String(quizId)
+                  ),
+                  sectionQuiz:
+                    String(quizId) === String(item._id)
+                      ? []
+                      : item.sectionQuiz,
+                  sectionQuizTitle:
+                    String(quizId) === String(item._id)
+                      ? ""
+                      : item.sectionQuizTitle,
+                }
               : item
           ),
         }));
@@ -736,36 +827,85 @@ const SectionItem = ({
                 )}
               </div>
 
-              {section.sectionQuiz && section.sectionQuiz.length > 0 && (
-                <div className="rounded-xl border border-success/20 bg-success/5 px-4 py-3">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-success">
-                    Section quiz
-                  </p>
-                  <p className="mt-1 font-semibold text-ink">
-                    {section.sectionQuizTitle || `${section.sectionTitle} quiz`}
-                  </p>
-                  <p className="mt-1 text-xs text-ink-muted">
-                    {section.sectionQuiz.length}{" "}
-                    {section.sectionQuiz.length === 1 ? "question" : "questions"}
-                  </p>
+              {quizzes.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-success">
+                      Section quizzes
+                    </p>
+                    <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-bold text-success">
+                      {quizzes.length}
+                    </span>
+                  </div>
+                  {quizzes.map((quiz, quizIndex) => {
+                    const state = quizState?.[quiz._id] || {};
+                    const questionCount =
+                      quiz.questionCount ?? quiz.questions?.length ?? 0;
+                    return (
+                      <Motion.div
+                        key={quiz._id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: quizIndex * 0.06 }}
+                        className="rounded-2xl border border-success/20 bg-success/5 p-4"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-ink">
+                              {quiz.title}
+                            </p>
+                            <p className="mt-1 text-xs text-ink-muted">
+                              {questionCount} {questionCount === 1 ? "question" : "questions"}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {canView && !canManage && (
+                              <button
+                                onClick={() =>
+                                  navigate(`/takeQuiz/section/${section._id}/${quiz._id}`)
+                                }
+                                className="rounded-full bg-success px-4 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5"
+                              >
+                                {state.attemptCount > 0
+                                  ? state.canAttempt
+                                    ? "Start retake"
+                                    : "View results"
+                                  : "Take quiz"}
+                              </button>
+                            )}
+                            {canManage && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    navigate(`/takeQuiz/section/${section._id}/${quiz._id}`)
+                                  }
+                                  className="rounded-full border border-success/30 bg-white px-3 py-2 text-xs font-semibold text-success transition hover:bg-success/10"
+                                >
+                                  Preview
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    navigate(`/quiz/section/${section._id}/${quiz._id}`)
+                                  }
+                                  className="rounded-full border border-border bg-white px-3 py-2 text-xs font-semibold text-ink transition hover:bg-bg"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteQuiz(quiz._id)}
+                                  disabled={submitting}
+                                  className="rounded-full border border-danger/25 bg-white px-3 py-2 text-xs font-semibold text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </Motion.div>
+                    );
+                  })}
                 </div>
-              )}
-
-              {/* Student: quiz action */}
-              {canView && !canManage && section.sectionQuiz && section.sectionQuiz.length > 0 && (
-                <button
-                  onClick={() => navigate(`/takeQuiz/section/${section._id}`)}
-                  className="bg-success/10 border border-success/30 text-success rounded-md px-3 py-2 text-sm font-medium hover:bg-success/20 transition-colors duration-200 flex items-center"
-                >
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {quizState?.attemptCount > 0
-                    ? quizState.canAttempt
-                      ? "Start approved retake"
-                      : "View results"
-                    : "Take Quiz"}
-                </button>
               )}
 
               {/* Manage: grouped action buttons */}
@@ -778,20 +918,8 @@ const SectionItem = ({
                     <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    {section.sectionQuiz?.length ? "Manage Quiz" : "Create Quiz"}
+                    Add Quiz
                   </button>
-                  {section.sectionQuiz?.length > 0 && (
-                    <button
-                      onClick={handleDeleteQuiz}
-                      disabled={submitting}
-                      className="flex items-center rounded-md border border-danger/30 bg-surface px-3 py-2 text-sm font-medium text-danger transition-colors duration-200 hover:bg-danger/10 disabled:opacity-50"
-                    >
-                      <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete Quiz
-                    </button>
-                  )}
                   <button
                     onClick={() => navigate(`/editSection/${section._id}`)}
                     className="bg-surface border border-border text-ink-muted rounded-md px-3 py-2 text-sm font-medium hover:bg-bg hover:text-ink transition-colors duration-200 flex items-center"
@@ -907,11 +1035,15 @@ const SectionItem = ({
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {section.sectionVideoUrl.map((videoUrl, index) => (
                   <SectionVideoCard
-                    key={index}
+                    key={videoUrl}
                     videoUrl={videoUrl}
+                    videoTitle={section.sectionVideoTitles?.[index]}
                     index={index}
                     canManage={canManage}
                     onRemove={(url) => removeSectionVideo(section._id, url)}
+                    onTitleSave={(videoIndex, title) =>
+                      updateSectionVideoTitle(section._id, videoIndex, title)
+                    }
                   />
                 ))}
               </div>
@@ -1044,8 +1176,8 @@ const SectionItem = ({
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                             {sectionVideoPreview[section._id]?.map(
                               (videoSrc, index) => (
-                                <div key={index} className="relative">
-                                  <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                                <div key={index} className="space-y-2">
+                                  <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100">
                                     <video
                                       src={videoSrc}
                                       className="w-full h-full object-cover"
@@ -1058,6 +1190,25 @@ const SectionItem = ({
                                       </div>
                                     </div>
                                   </div>
+                                  <input
+                                    type="text"
+                                    maxLength={120}
+                                    value={sectionVideoTitles[section._id]?.[index] || ""}
+                                    onChange={(event) =>
+                                      setSectionVideoTitles((previous) => {
+                                        const titles = [
+                                          ...(previous[section._id] || []),
+                                        ];
+                                        titles[index] = event.target.value;
+                                        return {
+                                          ...previous,
+                                          [section._id]: titles,
+                                        };
+                                      })
+                                    }
+                                    placeholder={`Title for video ${index + 1}`}
+                                    className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                                  />
                                 </div>
                               )
                             )}
@@ -1125,6 +1276,10 @@ const SectionItem = ({
                                 setSectionVideoPreview((prev) => ({
                                   ...prev,
                                   [section._id]: null,
+                                }));
+                                setSectionVideoTitles((prev) => ({
+                                  ...prev,
+                                  [section._id]: [],
                                 }));
                               }}
                               className="px-4 py-2 bg-gray-100 text-ink-muted rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200"
@@ -1541,6 +1696,7 @@ const Course = () => {
   const [sectionVideoInput, setSectionVideoInput] = useState({});
   const [sectionVideoFiles, setSectionVideoFiles] = useState({});
   const [sectionVideoPreview, setSectionVideoPreview] = useState({});
+  const [sectionVideoTitles, setSectionVideoTitles] = useState({});
 
   // Course Access Management States
   const [showAccessManagement, setShowAccessManagement] = useState(false);
@@ -1566,6 +1722,7 @@ const Course = () => {
   const [courseLearners, setCourseLearners] = useState([]);
   const [loadingLearners, setLoadingLearners] = useState(false);
   const [removingLearnerId, setRemovingLearnerId] = useState(null);
+  const [showLearnerList, setShowLearnerList] = useState(false);
 
   // Student scores (owner / admin view)
   const [studentScores, setStudentScores] = useState([]);
@@ -2413,6 +2570,12 @@ const Course = () => {
       ...prev,
       [sectionId]: files.map((file) => URL.createObjectURL(file)),
     }));
+    setSectionVideoTitles((previous) => ({
+      ...previous,
+      [sectionId]: files.map((file) =>
+        file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ")
+      ),
+    }));
   }
 
   async function addSectionVideos(sectionId) {
@@ -2426,86 +2589,61 @@ const Course = () => {
       }
 
       setUpdatingThumbnail(true);
-      console.log(sectionVideoFiles);
-      
-      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/user/generateUrl`,{
-        headers:{
-          Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
-        },
-        params:{
-          fileName: sectionVideoFiles[sectionId][0].name,
-          fileType: sectionVideoFiles[sectionId][0].type
-        }
-      })
-      console.log(response);
-      
-      if(response.data.success){
-        const {uploadUrl, fileKey} = response.data.data;
-        const response2 = await axios.put(uploadUrl, sectionVideoFiles[sectionId][0], {
-          headers: { "Content-Type":  sectionVideoFiles[sectionId][0].type },
-        });
-
-        console.log(response2);
-
-        const s3Url = `https://${import.meta.env.VITE_BUCKETNAME}.s3.${import.meta.env.VITE_REGION}.amazonaws.com/${fileKey}`;
-
-        console.log(s3Url);
-        
-
-        const response1 = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/saveSectionVideoUrl`,{
-          videoUrl: s3Url,
-          sectionId
-        },{
-          headers:{
-            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`
+      let updatedSection = null;
+      for (let index = 0; index < sectionVideoFiles[sectionId].length; index += 1) {
+        const file = sectionVideoFiles[sectionId][index];
+        const signedUrlResponse = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/user/generateUrl`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+            },
+            params: { fileName: file.name, fileType: file.type },
           }
-        })
-
-        console.log(response1);
-        
-        if(response1.data.success){
-          toast.success("Video Saved Successfully");
-        }else{
-          toast.error(response1.data.msg);
+        );
+        if (!signedUrlResponse.data.success) {
+          throw new Error(signedUrlResponse.data.msg || "Could not prepare upload");
         }
-      }else{
-        toast.error(response.data.msg);
+
+        const { uploadUrl, fileKey } = signedUrlResponse.data.data;
+        await axios.put(uploadUrl, file, {
+          headers: { "Content-Type": file.type },
+        });
+        const videoUrl = `https://${import.meta.env.VITE_BUCKETNAME}.s3.${import.meta.env.VITE_REGION}.amazonaws.com/${fileKey}`;
+        const saveResponse = await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/user/saveSectionVideoUrl`,
+          {
+            videoUrl,
+            sectionId,
+            videoTitle: sectionVideoTitles[sectionId]?.[index] || "",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+            },
+          }
+        );
+        if (!saveResponse.data.success) {
+          throw new Error(saveResponse.data.msg || "Could not save video");
+        }
+        updatedSection = saveResponse.data.section;
       }
-      // const formData = new FormData();
-      // sectionVideoFiles[sectionId].forEach((file) => {
-      //   formData.append("sectionVideo", file);
-      // });
-      // formData.append("sectionId", sectionId);
 
-      // const response = await axios.post(
-      //   `${import.meta.env.VITE_BASE_URL}/user/addSectionVideos`,
-      //   formData,
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
-      //     },
-      //   }
-      // );
-
-      // console.log(response);
-      // if (response.data.success) {
-      //   toast.success("Section Videos Added Successfully");
-      //   // Update the course state with the updated section
-      //   setCourse((prev) => ({
-      //     ...prev,
-      //     sections: prev.sections.map((section) =>
-      //       section._id === sectionId
-      //         ? {
-      //             ...section,
-      //             sectionVideoUrl: response.data.section.sectionVideoUrl,
-      //           }
-      //         : section
-      //     ),
-      //   }));
-      //   setSectionVideoInput((prev) => ({ ...prev, [sectionId]: false }));
-      //   setSectionVideoFiles((prev) => ({ ...prev, [sectionId]: null }));
-      //   setSectionVideoPreview((prev) => ({ ...prev, [sectionId]: null }));
-      // }
+      if (updatedSection) {
+        setCourse((previous) => ({
+          ...previous,
+          sections: previous.sections.map((section) =>
+            section._id === sectionId ? { ...section, ...updatedSection } : section
+          ),
+        }));
+      }
+      setSectionVideoInput((previous) => ({ ...previous, [sectionId]: false }));
+      setSectionVideoFiles((previous) => ({ ...previous, [sectionId]: null }));
+      setSectionVideoPreview((previous) => ({ ...previous, [sectionId]: null }));
+      setSectionVideoTitles((previous) => ({ ...previous, [sectionId]: [] }));
+      toast.success(
+        `${sectionVideoFiles[sectionId].length} video${sectionVideoFiles[sectionId].length === 1 ? "" : "s"} added`
+      );
     } catch (err) {
       console.error("Error uploading section videos:", err);
       toast.error("An error occurred while uploading the section videos.");
@@ -2544,6 +2682,8 @@ const Course = () => {
               ? {
                   ...section,
                   sectionVideoUrl: response.data.section.sectionVideoUrl,
+                  sectionVideoTitles:
+                    response.data.section.sectionVideoTitles || [],
                 }
               : section
           ),
@@ -2554,6 +2694,41 @@ const Course = () => {
       toast.error("An error occurred while removing the section video.");
     } finally {
       setUpdatingThumbnail(false);
+    }
+  }
+
+  async function updateSectionVideoTitle(sectionId, videoIndex, title) {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/user/updateSectionVideoTitle`,
+        { sectionId, videoIndex, title },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
+          },
+        }
+      );
+      if (!response.data.success) {
+        toast.error(response.data.msg || "Could not update the video title");
+        return false;
+      }
+      setCourse((previous) => ({
+        ...previous,
+        sections: previous.sections.map((section) =>
+          section._id === sectionId
+            ? {
+                ...section,
+                sectionVideoTitles:
+                  response.data.section.sectionVideoTitles || [],
+              }
+            : section
+        ),
+      }));
+      toast.success("Video title updated");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.msg || "Could not update the video title");
+      return false;
     }
   }
 
@@ -2989,43 +3164,68 @@ const Course = () => {
                       View everyone in this course and revoke access when needed.
                     </p>
                   </div>
-                  <span className="w-fit rounded-full bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
+                  <button
+                    type="button"
+                    onClick={() => setShowLearnerList((visible) => !visible)}
+                    className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-2 text-xs font-bold text-primary transition hover:bg-primary/10"
+                    aria-expanded={showLearnerList}
+                  >
                     {courseLearners.length} learners
-                  </span>
+                    <svg
+                      className={`h-4 w-4 transition-transform duration-300 ${showLearnerList ? "rotate-180" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
                 </div>
 
-                {loadingLearners ? (
-                  <div className="h-20 animate-pulse rounded-xl bg-bg" />
-                ) : courseLearners.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border bg-bg/50 px-5 py-7 text-center text-sm text-ink-muted">
-                    No learners currently have access.
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
-                    {courseLearners.map((learner) => (
-                      <div
-                        key={learner._id}
-                        className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-semibold text-ink">{learner.name}</p>
-                          <p className="truncate text-sm text-ink-muted">
-                            {learner.email}
-                          </p>
+                <AnimatePresence initial={false}>
+                  {showLearnerList && (
+                    <Motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      {loadingLearners ? (
+                        <div className="h-20 animate-pulse rounded-xl bg-bg" />
+                      ) : courseLearners.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border bg-bg/50 px-5 py-7 text-center text-sm text-ink-muted">
+                          No learners currently have access.
                         </div>
-                        <button
-                          onClick={() => removeLearnerAccess(learner)}
-                          disabled={removingLearnerId === learner._id}
-                          className="w-fit rounded-full border border-danger/30 px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10 disabled:opacity-50"
-                        >
-                          {removingLearnerId === learner._id
-                            ? "Removing…"
-                            : "Remove access"}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ) : (
+                        <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
+                          {courseLearners.map((learner) => (
+                            <div
+                              key={learner._id}
+                              className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center"
+                            >
+                              <div className="min-w-0">
+                                <p className="font-semibold text-ink">{learner.name}</p>
+                                <p className="truncate text-sm text-ink-muted">
+                                  {learner.email}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => removeLearnerAccess(learner)}
+                                disabled={removingLearnerId === learner._id}
+                                className="w-fit rounded-full border border-danger/30 px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                              >
+                                {removingLearnerId === learner._id
+                                  ? "Removing…"
+                                  : "Remove access"}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </Motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </section>
@@ -4653,9 +4853,12 @@ const Course = () => {
                     setSectionVideoFiles={setSectionVideoFiles}
                     sectionVideoPreview={sectionVideoPreview}
                     setSectionVideoPreview={setSectionVideoPreview}
+                    sectionVideoTitles={sectionVideoTitles}
+                    setSectionVideoTitles={setSectionVideoTitles}
                     handleSectionVideoFiles={handleSectionVideoFiles}
                     addSectionVideos={addSectionVideos}
                     removeSectionVideo={removeSectionVideo}
+                    updateSectionVideoTitle={updateSectionVideoTitle}
                     updatingThumbnail={updatingThumbnail}
                     setCourse={setCourse}
                     quizState={sectionQuizStates[section._id]}

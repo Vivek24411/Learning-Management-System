@@ -403,6 +403,18 @@ const VideoPlayer = ({ videoDetails }) => {
     setIsPlaying(true);
   };
 
+  const enterFullscreen = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    setShowThumbnail(false);
+    const request =
+      video.requestFullscreen ||
+      video.webkitRequestFullscreen ||
+      video.msRequestFullscreen;
+    const result = request?.call(video);
+    result?.catch?.(() => {});
+  };
+
   const nextVideo = () => {
     if (currentVideoIndex < videoDetails.length - 1) {
       setCurrentVideoIndex(currentVideoIndex + 1);
@@ -420,21 +432,26 @@ const VideoPlayer = ({ videoDetails }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="premium-card rounded-[1.75rem] border border-border bg-white p-4 sm:p-6">
       <h3 className="text-lg font-medium text-gray-900 mb-6 flex items-center">
         <svg className="w-5 h-5 text-red-600 mr-3" fill="currentColor" viewBox="0 0 24 24">
           <path d="M8 5v14l11-7z"/>
         </svg>
         Chapter Videos
       </h3>
-      <h6 className="text-gray-500 text-xs mb-3">Double Tap On Video To Enter Fullscreen</h6>
-
       {currentVideo && (
         <div className="space-y-6">
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg px-3 py-1.5 text-[11px] font-semibold text-ink-muted">
+            <svg className="h-3.5 w-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+            Double tap the video for fullscreen
+          </p>
           {/* Video Player with Thumbnail Overlay */}
           <div 
             className="relative rounded-lg overflow-hidden shadow-sm group cursor-pointer bg-black border border-gray-200"
             onContextMenu={(e) => e.preventDefault()}
+            onDoubleClick={enterFullscreen}
           >
             {/* Video Element (hidden when thumbnail is shown) */}
             <video
@@ -604,6 +621,7 @@ const Chapter = () => {
      canAttempt: true,
      retakeRequestStatus: "none",
    });
+   const [quizStates, setQuizStates] = useState({});
    const {profile} = useContext(UserContextData)
    const navigate = useNavigate();
    
@@ -638,6 +656,7 @@ const Chapter = () => {
           canAttempt: true,
           retakeRequestStatus: "none",
         });
+        setQuizStates(response.data.quizStates || {});
       }else{
         toast.error(response.data.msg || "Failed to fetch chapter");
         if (response.data.courseId) {
@@ -827,7 +846,7 @@ const Chapter = () => {
     }
   };
 
-  const handleDeleteQuiz = async () => {
+  const handleDeleteQuiz = async (quizId) => {
     if (
       !window.confirm(
         "Delete this published quiz? Existing learner attempt history will be kept."
@@ -839,7 +858,7 @@ const Chapter = () => {
       setManagementLoading(true);
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/user/deleteChapterQuiz`,
-        { id: chapterId },
+        { id: chapterId, quizId },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
@@ -849,8 +868,17 @@ const Chapter = () => {
       if (response.data.success) {
         setChapter((previous) => ({
           ...previous,
-          chapterQuiz: [],
-          chapterQuizTitle: "",
+          chapterQuizzes: (previous.chapterQuizzes || []).filter(
+            (quiz) => String(quiz._id) !== String(quizId)
+          ),
+          chapterQuiz:
+            String(quizId) === String(previous._id)
+              ? []
+              : previous.chapterQuiz,
+          chapterQuizTitle:
+            String(quizId) === String(previous._id)
+              ? ""
+              : previous.chapterQuizTitle,
         }));
         toast.success("Quiz deleted successfully");
       } else {
@@ -991,6 +1019,18 @@ const Chapter = () => {
       </>
     );
   }
+
+  const chapterQuizzes =
+    chapter.chapterQuizzes?.length > 0
+      ? chapter.chapterQuizzes
+      : chapter.chapterQuiz?.length > 0
+        ? [{
+            _id: chapter._id,
+            title: chapter.chapterQuizTitle || `${chapter.chapterName} quiz`,
+            questions: chapter.chapterQuiz,
+            questionCount: chapter.chapterQuiz.length,
+          }]
+        : [];
 
   const nextFile = () => {
     if (currentFileIndex < chapter.chapterFile.length - 1) {
@@ -1180,85 +1220,93 @@ const Chapter = () => {
              Knowledge check
            </h3>
            
-           {/* Creator quiz management */}
            {canManage && (
-             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-               <button
-                 onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
-                 className="inline-flex min-h-11 items-center justify-center rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary/10"
-               >
-                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                 </svg>
-                 {chapter.chapterQuiz?.length ? "Manage quiz" : "Create quiz"}
-               </button>
-               {chapter.chapterQuiz?.length > 0 && (
-                 <button
-                   onClick={handleDeleteQuiz}
-                   disabled={managementLoading}
-                   className="inline-flex min-h-11 items-center justify-center rounded-full border border-danger/30 bg-white px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10 disabled:opacity-50"
-                 >
-                   Delete quiz
-                 </button>
-               )}
-             </div>
+             <button
+               onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
+               className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover sm:w-auto"
+             >
+               <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+               </svg>
+               Add quiz
+             </button>
            )}
          </div>
 
-         {/* Quiz Content */}
-         {chapter.chapterQuiz && chapter.chapterQuiz.length > 0 ? (
-           <div className="space-y-4">
-             {/* Quiz Info Card */}
-             <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(250,247,240,0.96),rgba(255,255,255,0.98))] p-5 sm:p-7">
-               <div className="pointer-events-none absolute -right-12 -top-16 h-52 w-52 rounded-full bg-accent/15 blur-3xl" />
-               <div className="relative flex items-start space-x-4 mb-5">
-                 <div className="w-11 h-11 shrink-0 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                   </svg>
-                 </div>
-                 <div>
-                   <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Chapter assessment</p>
-                   <h4 className="font-serif text-xl font-bold text-ink">
-                     {chapter.chapterQuizTitle || `${chapter.chapterName} quiz`}
-                   </h4>
-                   <p className="mt-1 text-sm leading-6 text-ink-muted">A focused review of the ideas covered in this chapter.</p>
-                 </div>
-               </div>
-               
-               {/* Quiz Stats */}
-               <div className="relative flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-ink-muted mb-5">
-                 <div className="flex items-center">
-                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                   </svg>
-                   {chapter.chapterQuiz.length} {chapter.chapterQuiz.length === 1 ? "question" : "questions"}
-                 </div>
-                 <div className="flex items-center">
-                  
-                  
-                 </div>
-               </div>
-
-               {!canManage && (
-                 <button
-                   onClick={() => navigate(`/takeQuiz/chapter/${chapter._id}`)}
-                   className="relative inline-flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-xl"
+         {chapterQuizzes.length > 0 ? (
+           <div className="grid gap-4">
+             {chapterQuizzes.map((quiz, quizIndex) => {
+               const state = quizStates[quiz._id] || quizState || {};
+               const questionCount =
+                 quiz.questionCount ?? quiz.questions?.length ?? 0;
+               return (
+                 <div
+                   key={quiz._id}
+                   className="group relative overflow-hidden rounded-2xl border border-border/70 bg-[linear-gradient(135deg,rgba(250,247,240,0.96),rgba(255,255,255,0.98))] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-accent/35 hover:shadow-xl sm:p-6"
+                   style={{ animationDelay: `${quizIndex * 80}ms` }}
                  >
-                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                   </svg>
-                   {quizState.attemptCount > 0
-                     ? quizState.canAttempt
-                       ? "Start approved retake"
-                       : "View results"
-                     : "Take quiz"}
-                 </button>
-               )}
-             </div>
+                   <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-accent/15 blur-3xl transition-transform duration-700 group-hover:scale-125" />
+                   <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                     <div className="flex min-w-0 items-start gap-4">
+                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
+                         <span className="font-serif text-sm font-bold">
+                           {String(quizIndex + 1).padStart(2, "0")}
+                         </span>
+                       </div>
+                       <div className="min-w-0">
+                         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                           Chapter assessment
+                         </p>
+                         <h4 className="mt-1 truncate font-serif text-xl font-bold text-ink">
+                           {quiz.title}
+                         </h4>
+                         <p className="mt-1 text-sm text-ink-muted">
+                           {questionCount} {questionCount === 1 ? "question" : "questions"}
+                         </p>
+                       </div>
+                     </div>
+                     <div className="relative flex flex-wrap gap-2">
+                       {canManage ? (
+                         <>
+                           <button
+                             onClick={() => navigate(`/takeQuiz/chapter/${chapter._id}/${quiz._id}`)}
+                             className="rounded-full border border-primary/20 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                           >
+                             Preview
+                           </button>
+                           <button
+                             onClick={() => navigate(`/quiz/chapter/${chapter._id}/${quiz._id}`)}
+                             className="rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-bg"
+                           >
+                             Edit
+                           </button>
+                           <button
+                             onClick={() => handleDeleteQuiz(quiz._id)}
+                             disabled={managementLoading}
+                             className="rounded-full border border-danger/25 bg-white px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/10 disabled:opacity-50"
+                           >
+                             Delete
+                           </button>
+                         </>
+                       ) : (
+                         <button
+                           onClick={() => navigate(`/takeQuiz/chapter/${chapter._id}/${quiz._id}`)}
+                           className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/15 transition hover:-translate-y-0.5 hover:bg-primary-hover"
+                         >
+                           {state.attemptCount > 0
+                             ? state.canAttempt
+                               ? "Start retake"
+                               : "View results"
+                             : "Take quiz"}
+                         </button>
+                       )}
+                     </div>
+                   </div>
+                 </div>
+               );
+             })}
            </div>
          ) : (
-          /* No Quiz Available State */
           <div className="rounded-lg border border-border bg-surface px-4 py-10 text-center shadow-sm sm:px-6 sm:py-16">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-bg border border-border rounded-full mb-6 shadow-sm">
               <svg className="w-8 h-8 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1269,17 +1317,6 @@ const Chapter = () => {
             <p className="text-ink-muted mb-6 max-w-md mx-auto">
               The evaluation module for this chapter is currently being refined by our instructors. Please check back later.
             </p>
-            {canManage && (
-              <button 
-                onClick={() => navigate(`/quiz/chapter/${chapter._id}`)}
-                className="inline-flex items-center bg-primary text-surface px-5 py-2.5 rounded-md text-sm font-medium hover:bg-primary-hover transition-colors duration-200"
-               >
-                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                 </svg>
-                 Create Quiz
-               </button>
-             )}
            </div>
          )}
        </div>

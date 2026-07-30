@@ -1,7 +1,7 @@
 const express = require("express");
 const userRouter = express.Router();
 const {body, query} = require("express-validator");
-const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, deleteSectionQuiz, deleteChapterQuiz, requestQuizRetake, getQuizRetakeRequests, handleQuizRetakeRequest, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, updateIntroductionImageCaption, removeSectionVideo, addSectionVideos, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos, giveAccessToCourse, getCourseLearners, removeCourseAccess, giveAdminAccess, deleteSectionLink, addSectionLink, generateUrl, saveSectionVideoUrl, requestCreatorAccess, getCreatorRequests, handleCreatorRequest, requestEnrollment, getEnrollmentRequests, handleEnrollmentRequest, getMyScores, getCourseStudentScores } = require("../controllers/user.controllers");
+const { sendOTP, verifyOTPandRegister, login, getProfile, getChapter, getAllCourses, addCourse, addSection, addChapter, editCourse, editChapter, editSection, deleteCourse, deleteChapter, deleteSection, getCourse, enrollCourse, createOrder, verifyOrder, resetPassword, addSectionQuiz, getSectionQuiz, submitSectionQuiz, addChapterQuiz, getChapterQuiz, submitChapterQuiz, deleteSectionQuiz, deleteChapterQuiz, requestQuizRetake, getQuizRetakeRequests, handleQuizRetakeRequest, getSection, updateCourseThumbnail, removeCourseIntroductionImage, addIntroductionImage, updateIntroductionImageCaption, removeSectionVideo, addSectionVideos, updateSectionVideoTitle, addChapterExternalLinks, removeChapterExternalLink, updateChapterExternalLinks, updateChapterThumbnail, removeChapterFile, addChapterFiles, removeChapterVideo, addChapterVideos, giveAccessToCourse, getCourseLearners, removeCourseAccess, giveAdminAccess, deleteSectionLink, addSectionLink, generateUrl, saveSectionVideoUrl, requestCreatorAccess, getCreatorRequests, handleCreatorRequest, requestEnrollment, getEnrollmentRequests, handleEnrollmentRequest, getMyScores, getCourseStudentScores } = require("../controllers/user.controllers");
 const { userAuth, adminAuth, creatorAuth, manageAuth, courseOwnerCheck } = require("../middlewares/auth");
 const { uploadCourseThumbnail } = require("../middlewares/upload");
 const upload = require("../middlewares/upload");
@@ -56,6 +56,7 @@ userRouter.post("/addCourse",creatorAuth,upload.fields([
 userRouter.post("/addSection",creatorAuth,upload.array("sectionVideo", 5),courseOwnerCheck("course"),[
     body("sectionTitle").isString().isLength({min:1}),
     body("courseId").isMongoId(),
+    body("sectionVideoTitle").optional(),
 ],addSection)
 
 userRouter.post("/addChapter",creatorAuth,upload.fields([
@@ -133,46 +134,55 @@ userRouter.post("/resetPassword",[
 
 userRouter.post("/addSectionQuiz",manageAuth("section","id"),[
     body("id").isMongoId(),
+    body("quizId").optional({checkFalsy:true}).isMongoId(),
     body("quizData").isArray({min:1}),
     body("title").isString().trim().isLength({min:1,max:120})
 ],addSectionQuiz)
 
 userRouter.post("/addChapterQuiz",manageAuth("chapter","id"),[
     body("id").isMongoId(),
+    body("quizId").optional({checkFalsy:true}).isMongoId(),
     body("quizData").isArray({min:1}),
     body("title").isString().trim().isLength({min:1,max:120})
 ],addChapterQuiz)
 
 userRouter.post("/deleteSectionQuiz",manageAuth("section","id"),[
-    body("id").isMongoId()
+    body("id").isMongoId(),
+    body("quizId").optional({checkFalsy:true}).isMongoId()
 ],deleteSectionQuiz)
 
 userRouter.post("/deleteChapterQuiz",manageAuth("chapter","id"),[
-    body("id").isMongoId()
+    body("id").isMongoId(),
+    body("quizId").optional({checkFalsy:true}).isMongoId()
 ],deleteChapterQuiz)
 
 
 userRouter.get("/getSectionQuiz",userAuth,[
-    query("id").isMongoId()
+    query("id").isMongoId(),
+    query("quizId").optional({checkFalsy:true}).isMongoId()
 ],getSectionQuiz)
 
 userRouter.get("/getChapterQuiz",userAuth,[
-    query("id").isMongoId()
+    query("id").isMongoId(),
+    query("quizId").optional({checkFalsy:true}).isMongoId()
 ],getChapterQuiz)
 
 userRouter.post("/submitSectionQuiz",userAuth,[
     body("id").isMongoId(),
+    body("quizId").optional({checkFalsy:true}).isMongoId(),
     body("answeredQuizData").isArray({min:1})
 ],submitSectionQuiz)
 
 userRouter.post("/submitChapterQuiz",userAuth,[
     body("id").isMongoId(),
+    body("quizId").optional({checkFalsy:true}).isMongoId(),
     body("answeredQuizData").isArray({min:1})
 ],submitChapterQuiz)
 
 userRouter.post("/requestQuizRetake",userAuth,[
     body("quizType").isIn(["section","chapter"]),
-    body("quizId").isMongoId()
+    body("quizId").isMongoId(),
+    body("assessmentId").optional({checkFalsy:true}).isMongoId()
 ],requestQuizRetake)
 
 userRouter.get("/getSection",manageAuth("section"),[
@@ -206,8 +216,15 @@ userRouter.post("/removeSectionVideo",manageAuth("section"),[
 ],removeSectionVideo)
 
 userRouter.post("/addSectionVideos",creatorAuth,upload.array("sectionVideo",5),courseOwnerCheck("section"),[
-    body("sectionId").isMongoId()
+    body("sectionId").isMongoId(),
+    body("sectionVideoTitle").optional()
 ],addSectionVideos)
+
+userRouter.post("/updateSectionVideoTitle",manageAuth("section"),[
+    body("sectionId").isMongoId(),
+    body("videoIndex").isInt({min:0}),
+    body("title").optional({nullable:true}).isString().isLength({max:120})
+],updateSectionVideoTitle)
 
 userRouter.post("/addChapterExternalLinks",manageAuth("chapter"),[
     body("chapterId").isMongoId(),
@@ -282,7 +299,8 @@ userRouter.post("/addSectionLink",manageAuth("section"),[
 userRouter.get("/generateUrl",generateUrl);
 
 userRouter.post("/saveSectionVideoUrl",manageAuth("section"),[
-    body("sectionId").isMongoId()
+    body("sectionId").isMongoId(),
+    body("videoTitle").optional({nullable:true}).isString().isLength({max:120})
 ],saveSectionVideoUrl)
 
 

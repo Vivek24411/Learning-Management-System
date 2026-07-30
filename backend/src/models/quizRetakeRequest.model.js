@@ -20,6 +20,11 @@ const quizRetakeRequestSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
+  // Identifies one quiz inside the owning section/chapter.
+  assessmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: null,
+  },
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],

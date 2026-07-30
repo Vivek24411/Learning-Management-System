@@ -26,6 +26,7 @@ const quizConfig = {
     model: sectionModel,
     quizField: "sectionQuiz",
     titleField: "sectionQuizTitle",
+    quizzesField: "sectionQuizzes",
     nameField: "sectionTitle",
     attemptField: "sectionQuizAttempt",
     attemptIdField: "sectionId",
@@ -34,6 +35,7 @@ const quizConfig = {
     model: chapterModel,
     quizField: "chapterQuiz",
     titleField: "chapterQuizTitle",
+    quizzesField: "chapterQuizzes",
     nameField: "chapterName",
     attemptField: "chapterQuizAttempt",
     attemptIdField: "chapterId",
@@ -45,7 +47,7 @@ function normalizeQuizType(type) {
   return quizConfig[normalized] ? normalized : null;
 }
 
-async function resolveQuizContext(type, id) {
+async function resolveQuizContext(type, id, assessmentId) {
   const normalizedType = normalizeQuizType(type);
   const config = quizConfig[normalizedType];
   if (!config) return null;
@@ -65,7 +67,89 @@ async function resolveQuizContext(type, id) {
       : null;
   }
 
-  return { type: normalizedType, config, target, course };
+  const quizzes = getQuizCollection(target, config);
+  const requestedQuizId = assessmentId ? String(assessmentId) : "";
+  const quiz = requestedQuizId
+    ? quizzes.find((item) => String(item._id) === requestedQuizId)
+    : quizzes[0];
+
+  return {
+    type: normalizedType,
+    config,
+    target,
+    course,
+    quizzes,
+    quiz,
+    quizId: quiz?._id || null,
+  };
+}
+
+function getQuizCollection(target, config) {
+  const quizzes = Array.from(target?.[config.quizzesField] || []);
+  const legacyQuestions = target?.[config.quizField] || [];
+  const hasMigratedLegacy = quizzes.some(
+    (quiz) => String(quiz?._id) === String(target?._id)
+  );
+
+  if (legacyQuestions.length && !hasMigratedLegacy) {
+    quizzes.unshift({
+      _id: target._id,
+      title:
+        target[config.titleField] ||
+        `${target[config.nameField]} quiz`,
+      questions: legacyQuestions,
+      createdAt: target._id?.getTimestamp?.() || null,
+      updatedAt: null,
+      legacy: true,
+    });
+  }
+
+  return quizzes;
+}
+
+function ensureQuizCollection(target, config) {
+  const legacyQuestions = target[config.quizField] || [];
+  const hasMigratedLegacy = (target[config.quizzesField] || []).some(
+    (quiz) => String(quiz?._id) === String(target._id)
+  );
+
+  if (legacyQuestions.length && !hasMigratedLegacy) {
+    target[config.quizzesField].unshift({
+      _id: target._id,
+      title:
+        target[config.titleField] ||
+        `${target[config.nameField]} quiz`,
+      questions: legacyQuestions,
+    });
+    target[config.quizField] = [];
+    target[config.titleField] = "";
+  }
+
+  return target[config.quizzesField];
+}
+
+function quizSummary(quiz, questions = quiz?.questions || []) {
+  return {
+    _id: quiz?._id,
+    title: quiz?.title || "Knowledge check",
+    questions,
+    questionCount: questions.length,
+    createdAt: quiz?.createdAt || null,
+    updatedAt: quiz?.updatedAt || null,
+  };
+}
+
+function assessmentRequestFilter(context) {
+  if (String(context.quizId) === String(context.target._id)) {
+    return {
+      $or: [
+        { assessmentId: context.quizId },
+        { assessmentId: null },
+        { assessmentId: { $exists: false } },
+      ],
+    };
+  }
+  return { assessmentId: context.quizId };
 }
 
 function userCanManageCourse(user, course) {
@@ -90,7 +174,10 @@ function getQuizAttempts(user, context) {
   return (user?.[context.config.attemptField] || []).filter(
     (attempt) =>
       String(attempt?.[context.config.attemptIdField]) ===
-      String(context.target._id)
+        String(context.target._id) &&
+      (String(attempt?.assessmentId) === String(context.quizId) ||
+        (!attempt?.assessmentId &&
+          String(context.quizId) === String(context.target._id)))
   );
 }
 
@@ -150,6 +237,7 @@ async function getQuizAttemptState(user, context) {
       user: user._id,
       quizType: context.type,
       quizId: context.target._id,
+      ...assessmentRequestFilter(context),
     })
     .sort({ createdAt: -1 });
   const availableApproval = requests.find(
@@ -284,19 +372,23 @@ module.exports.getCourse = async (req, res, next) => {
   const sectionQuizStates = {};
   if (req.user) {
     await Promise.all(
-      (course.sections || [])
-        .filter((section) => section.sectionQuiz?.length > 0)
-        .map(async (section) => {
-          sectionQuizStates[String(section._id)] = await getQuizAttemptState(
-            req.user,
-            {
+      (course.sections || []).map(async (section) => {
+        const quizzes = getQuizCollection(section, quizConfig.section);
+        const states = await Promise.all(
+          quizzes.map(async (quiz) => [
+            String(quiz._id),
+            await getQuizAttemptState(req.user, {
               type: "section",
               config: quizConfig.section,
               target: section,
               course,
-            }
-          );
-        })
+              quiz,
+              quizId: quiz._id,
+            }),
+          ])
+        );
+        sectionQuizStates[String(section._id)] = Object.fromEntries(states);
+      })
     );
   }
 
@@ -314,21 +406,35 @@ module.exports.getCourse = async (req, res, next) => {
   const coursePayload = course.toObject();
   const canManageCourse = userCanManageCourse(req.user, course);
   const hasCourseAccess = userHasCourseAccess(req.user, course);
-  if (!canManageCourse) {
-    coursePayload.sections = (coursePayload.sections || []).map((section) => {
-      const learnerSection = {
-        ...section,
-        sectionQuiz: sanitizeQuizForLearner(section.sectionQuiz),
-      };
+  coursePayload.sections = (course.sections || []).map((sectionDocument) => {
+    const section = sectionDocument.toObject();
+    const quizzes = getQuizCollection(sectionDocument, quizConfig.section);
+    const serializedQuizzes = quizzes.map((quiz) => {
+      const questions = canManageCourse
+        ? Array.from(quiz.questions || [])
+        : hasCourseAccess
+          ? sanitizeQuizForLearner(quiz.questions)
+          : (quiz.questions || []).map(() => ({}));
+      return quizSummary(quiz, questions);
+    });
+    const learnerSection = {
+      ...section,
+      sectionQuizzes: serializedQuizzes,
+    };
+
+    if (!canManageCourse) {
+      learnerSection.sectionQuiz = sanitizeQuizForLearner(
+        learnerSection.sectionQuiz
+      );
       if (!hasCourseAccess) {
         learnerSection.sectionVideoUrl = [];
+        learnerSection.sectionVideoTitles = [];
         learnerSection.externalLinks = [];
-        // Preserve only the question count for the public course outline.
         learnerSection.sectionQuiz = (section.sectionQuiz || []).map(() => ({}));
       }
-      return learnerSection;
-    });
-  }
+    }
+    return learnerSection;
+  });
 
   return res.json({
     success: true,
@@ -373,13 +479,23 @@ module.exports.getChapter = async (req, res, next) => {
       courseId: course._id,
     });
   }
-  const quizState = chapter.chapterQuiz?.length
-    ? await getQuizAttemptState(req.user, {
+  const chapterQuizzes = getQuizCollection(chapter, quizConfig.chapter);
+  const quizStateEntries = await Promise.all(
+    chapterQuizzes.map(async (quiz) => [
+      String(quiz._id),
+      await getQuizAttemptState(req.user, {
         type: "chapter",
         config: quizConfig.chapter,
         target: chapter,
         course,
-      })
+        quiz,
+        quizId: quiz._id,
+      }),
+    ])
+  );
+  const quizStates = Object.fromEntries(quizStateEntries);
+  const quizState = chapterQuizzes[0]
+    ? quizStates[String(chapterQuizzes[0]._id)]
     : {
         attemptCount: 0,
         canAttempt: true,
@@ -388,6 +504,14 @@ module.exports.getChapter = async (req, res, next) => {
       };
 
   const chapterPayload = chapter.toObject();
+  chapterPayload.chapterQuizzes = chapterQuizzes.map((quiz) =>
+    quizSummary(
+      quiz,
+      canManage
+        ? Array.from(quiz.questions || [])
+        : sanitizeQuizForLearner(quiz.questions)
+    )
+  );
   if (!canManage) {
     chapterPayload.chapterQuiz = sanitizeQuizForLearner(
       chapterPayload.chapterQuiz
@@ -400,6 +524,7 @@ module.exports.getChapter = async (req, res, next) => {
     courseId: course._id,
     canManage,
     quizState,
+    quizStates,
   });
 };
 
@@ -509,10 +634,21 @@ module.exports.addCourse = async (req, res, next) => {
 module.exports.addSection = async (req, res, next) => {
   checkValidation(req, res);
 
-  const { sectionTitle, sectionDescription, courseId, externalLinks } =
+  const {
+    sectionTitle,
+    sectionDescription,
+    courseId,
+    externalLinks,
+    sectionVideoTitle,
+  } =
     req.body;
   console.log(req.files);
   const sectionVideo = req.files.map((file) => file.path) || [];
+  const sectionVideoTitles = Array.isArray(sectionVideoTitle)
+    ? sectionVideoTitle
+    : sectionVideoTitle
+      ? [sectionVideoTitle]
+      : [];
   console.log("Section videos paths:", sectionVideo);
 
   const course = await courseModel.findById(courseId);
@@ -524,7 +660,12 @@ module.exports.addSection = async (req, res, next) => {
     sectionTitle,
     sectionDescription,
     sectionVideoUrl: sectionVideo,
-    externalLinks: JSON.parse(externalLinks),
+    sectionVideoTitles: sectionVideo.map((_, index) =>
+      String(sectionVideoTitles[index] || `Lesson ${index + 1}`)
+        .trim()
+        .slice(0, 120)
+    ),
+    externalLinks: externalLinks ? JSON.parse(externalLinks) : [],
   });
 
   course.sections.push(section._id);
@@ -984,37 +1125,7 @@ module.exports.resetPassword = async (req, res, next) => {
 };
 
 module.exports.addSectionQuiz = async (req, res, next) => {
-  const error = validationResult(req);
-  if (!error.isEmpty()) {
-    return res.json({ success: false, msg: error.array() });
-  }
-
-  const { id, quizData, title } = req.body;
-  const sanitizedQuiz = validateAndSanitizeQuiz(quizData);
-  const quizTitle = String(title || "").trim().slice(0, 120);
-  if (!sanitizedQuiz || !quizTitle) {
-    return res.json({
-      success: false,
-      msg: "A quiz title and complete questions are required",
-    });
-  }
-
-  const section = await sectionModel.findById(id);
-  if (!section) {
-    return res.json({ success: false, msg: "section does not exist" });
-  }
-
-  section.sectionQuiz = sanitizedQuiz;
-  section.sectionQuizTitle = quizTitle;
-  await section.save();
-
-  return res.json({
-    success: true,
-    msg: "Quiz published successfully",
-    quiz: section.sectionQuiz,
-    title: section.sectionQuizTitle,
-    courseId: req.course?._id,
-  });
+  return saveQuiz(req, res, "section");
 };
 
 module.exports.getSectionQuiz = async (req, res, next) => {
@@ -1027,12 +1138,16 @@ module.exports.getSectionQuiz = async (req, res, next) => {
 };
 
 module.exports.addChapterQuiz = async (req, res, next) => {
+  return saveQuiz(req, res, "chapter");
+};
+
+async function saveQuiz(req, res, type) {
   const error = validationResult(req);
   if (!error.isEmpty()) {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { id, quizData, title } = req.body;
+  const { id, quizId, quizData, title } = req.body;
   const sanitizedQuiz = validateAndSanitizeQuiz(quizData);
   const quizTitle = String(title || "").trim().slice(0, 120);
   if (!sanitizedQuiz || !quizTitle) {
@@ -1042,23 +1157,36 @@ module.exports.addChapterQuiz = async (req, res, next) => {
     });
   }
 
-  const chapter = await chapterModel.findById(id);
-  if (!chapter) {
-    return res.json({ success: false, msg: "chapter does not exist" });
+  const config = quizConfig[type];
+  const target = await config.model.findById(id);
+  if (!target) {
+    return res.json({ success: false, msg: `${type} does not exist` });
   }
 
-  chapter.chapterQuiz = sanitizedQuiz;
-  chapter.chapterQuizTitle = quizTitle;
-  await chapter.save();
+  const quizzes = ensureQuizCollection(target, config);
+  let quiz;
+  if (quizId) {
+    quiz = quizzes.id(quizId);
+    if (!quiz) {
+      return res.json({ success: false, msg: "Quiz not found" });
+    }
+    quiz.title = quizTitle;
+    quiz.questions = sanitizedQuiz;
+  } else {
+    quizzes.push({ title: quizTitle, questions: sanitizedQuiz });
+    quiz = quizzes[quizzes.length - 1];
+  }
+  await target.save();
 
   return res.json({
     success: true,
-    msg: "Quiz published successfully",
-    quiz: chapter.chapterQuiz,
-    title: chapter.chapterQuizTitle,
+    msg: quizId ? "Quiz updated successfully" : "Quiz published successfully",
+    quiz: quiz.questions,
+    quizId: quiz._id,
+    title: quiz.title,
     courseId: req.course?._id,
   });
-};
+}
 
 module.exports.getChapterQuiz = async (req, res, next) => {
   const error = validationResult(req);
@@ -1088,8 +1216,8 @@ module.exports.submitChapterQuiz = async (req, res, next) => {
 };
 
 async function getQuiz(req, res, type) {
-  const { id } = req.query;
-  const context = await resolveQuizContext(type, id);
+  const { id, quizId, create } = req.query;
+  const context = await resolveQuizContext(type, id, quizId);
   if (!context?.course) {
     return res.json({ success: false, msg: "Quiz not found" });
   }
@@ -1098,8 +1226,12 @@ async function getQuiz(req, res, type) {
   }
 
   const isManager = userCanManageCourse(req.user, context.course);
-  const quiz = context.target[context.config.quizField] || [];
-  const attemptState = isManager
+  if (quizId && !context.quiz) {
+    return res.json({ success: false, msg: "Quiz not found" });
+  }
+  const selectedQuiz = create === "true" ? null : context.quiz;
+  const quiz = selectedQuiz?.questions || [];
+  const attemptState = isManager || !selectedQuiz
     ? {
         attemptCount: 0,
         canAttempt: false,
@@ -1111,9 +1243,13 @@ async function getQuiz(req, res, type) {
   return res.json({
     success: true,
     quiz: isManager ? quiz : sanitizeQuizForLearner(quiz),
-    title:
-      context.target[context.config.titleField] ||
-      `${context.target[context.config.nameField]} quiz`,
+    quizId: selectedQuiz?._id || null,
+    quizzes: context.quizzes.map((item) => ({
+      _id: item._id,
+      title: item.title,
+      questionCount: (item.questions || []).length,
+    })),
+    title: selectedQuiz?.title || "",
     targetName: context.target[context.config.nameField],
     courseId: context.course._id,
     isManager,
@@ -1122,16 +1258,16 @@ async function getQuiz(req, res, type) {
 }
 
 async function submitQuizAttempt(req, res, type) {
-  const { id, answeredQuizData } = req.body;
-  const context = await resolveQuizContext(type, id);
-  if (!context?.course) {
+  const { id, quizId, answeredQuizData } = req.body;
+  const context = await resolveQuizContext(type, id, quizId);
+  if (!context?.course || !context.quiz) {
     return res.json({ success: false, msg: "Quiz not found" });
   }
   if (!userHasCourseAccess(req.user, context.course)) {
     return res.json({ success: false, msg: "You do not have access to this quiz" });
   }
 
-  const quiz = context.target[context.config.quizField] || [];
+  const quiz = context.quiz.questions || [];
   if (!quiz.length) {
     return res.json({ success: false, msg: "This quiz is no longer available" });
   }
@@ -1154,6 +1290,7 @@ async function submitQuizAttempt(req, res, type) {
         user: user._id,
         quizType: context.type,
         quizId: context.target._id,
+        ...assessmentRequestFilter(context),
         status: "approved",
         usedAt: null,
       },
@@ -1189,12 +1326,11 @@ async function submitQuizAttempt(req, res, type) {
       total + (answer.chosenAnswer === answer.correct ? 1 : 0),
     0
   );
-  const quizTitle =
-    context.target[context.config.titleField] ||
-    `${context.target[context.config.nameField]} quiz`;
+  const quizTitle = context.quiz.title;
 
   user[context.config.attemptField].push({
     [context.config.attemptIdField]: context.target._id,
+    assessmentId: context.quizId,
     quizTitle,
     answeredQuizData: answerSnapshot,
     score,
@@ -1237,19 +1373,24 @@ async function deleteQuiz(req, res, type) {
     return res.json({ success: false, msg: errors.array() });
   }
 
-  const { id } = req.body;
-  const context = await resolveQuizContext(type, id);
-  if (!context) {
+  const { id, quizId } = req.body;
+  const context = await resolveQuizContext(type, id, quizId);
+  if (!context || !context.quiz) {
     return res.json({ success: false, msg: "Quiz not found" });
   }
 
-  context.target[context.config.quizField] = [];
-  context.target[context.config.titleField] = "";
+  const quizzes = ensureQuizCollection(context.target, context.config);
+  const quizToDelete = quizzes.id(context.quizId);
+  if (!quizToDelete) {
+    return res.json({ success: false, msg: "Quiz not found" });
+  }
+  quizToDelete.deleteOne();
   await context.target.save();
   await quizRetakeRequestModel.updateMany(
     {
       quizType: context.type,
       quizId: context.target._id,
+      ...assessmentRequestFilter(context),
       status: { $in: ["pending", "approved"] },
       usedAt: null,
     },
@@ -1449,9 +1590,16 @@ module.exports.removeSectionVideo = async (req, res, next) => {
     return res.json({ success: false, msg: "Section Not Found" });
   }
 
-  section.sectionVideoUrl = section.sectionVideoUrl.filter(
-    (video) => video !== videoURL
+  const videoIndex = section.sectionVideoUrl.findIndex(
+    (video) => video === videoURL
   );
+  if (videoIndex < 0) {
+    return res.json({ success: false, msg: "Section video not found" });
+  }
+  section.sectionVideoUrl.splice(videoIndex, 1);
+  if (section.sectionVideoTitles?.length > videoIndex) {
+    section.sectionVideoTitles.splice(videoIndex, 1);
+  }
 
   await section.save();
 
@@ -1469,12 +1617,17 @@ module.exports.addSectionVideos = async (req, res, next) => {
     return res.json({ success: false, msg: error.array() });
   }
 
-  const { sectionId } = req.body;
+  const { sectionId, sectionVideoTitle } = req.body;
   if (!sectionId) {
     return res.json({ success: false, msg: "Section Not Found" });
   }
 
   const sectionVideos = req.files.map((file) => file.path) || [];
+  const titles = Array.isArray(sectionVideoTitle)
+    ? sectionVideoTitle
+    : sectionVideoTitle
+      ? [sectionVideoTitle]
+      : [];
 
   const section = await sectionModel.findById(sectionId);
   if (!section) {
@@ -1482,11 +1635,46 @@ module.exports.addSectionVideos = async (req, res, next) => {
   }
 
   section.sectionVideoUrl.push(...sectionVideos);
+  section.sectionVideoTitles.push(
+    ...sectionVideos.map((_, index) =>
+      String(titles[index] || `Lesson ${section.sectionVideoUrl.length - sectionVideos.length + index + 1}`)
+        .trim()
+        .slice(0, 120)
+    )
+  );
   await section.save();
 
   return res.json({
     success: true,
     msg: "Section Videos Added Successfully",
+    section,
+  });
+};
+
+module.exports.updateSectionVideoTitle = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.json({ success: false, msg: errors.array() });
+  }
+
+  const { sectionId, videoIndex, title = "" } = req.body;
+  const section = await sectionModel.findById(sectionId);
+  if (!section || Number(videoIndex) >= section.sectionVideoUrl.length) {
+    return res.json({ success: false, msg: "Section video not found" });
+  }
+
+  while (section.sectionVideoTitles.length < section.sectionVideoUrl.length) {
+    section.sectionVideoTitles.push("");
+  }
+  section.sectionVideoTitles[Number(videoIndex)] = String(title)
+    .trim()
+    .slice(0, 120);
+  section.markModified("sectionVideoTitles");
+  await section.save();
+
+  return res.json({
+    success: true,
+    msg: "Video title updated",
     section,
   });
 };
@@ -1909,7 +2097,7 @@ module.exports.saveSectionVideoUrl = async(req,res)=>{
     return res.json({ success: false, msg: error.array() });
   }
 
-  const {sectionId,videoUrl}=req.body;
+  const {sectionId,videoUrl,videoTitle}=req.body;
 
   console.log(sectionId,videoUrl);
   
@@ -1920,8 +2108,17 @@ module.exports.saveSectionVideoUrl = async(req,res)=>{
   }
 
   section.sectionVideoUrl.push(videoUrl);
+  section.sectionVideoTitles.push(
+    String(videoTitle || `Lesson ${section.sectionVideoUrl.length}`)
+      .trim()
+      .slice(0, 120)
+  );
   await section.save();
-  return res.json({ success: true, msg: "Video URLs saved successfully" });
+  return res.json({
+    success: true,
+    msg: "Video URL saved successfully",
+    section,
+  });
 }
 
 /* ============================ CREATOR REQUESTS ============================ */
@@ -2122,9 +2319,9 @@ module.exports.requestQuizRetake = async (req, res) => {
     return res.json({ success: false, msg: errors.array() });
   }
 
-  const { quizType, quizId } = req.body;
-  const context = await resolveQuizContext(quizType, quizId);
-  if (!context?.course) {
+  const { quizType, quizId, assessmentId } = req.body;
+  const context = await resolveQuizContext(quizType, quizId, assessmentId);
+  if (!context?.course || !context.quiz) {
     return res.json({ success: false, msg: "Quiz not found" });
   }
   if (!userHasCourseAccess(req.user, context.course)) {
@@ -2141,9 +2338,14 @@ module.exports.requestQuizRetake = async (req, res) => {
     user: req.user._id,
     quizType: context.type,
     quizId: context.target._id,
-    $or: [
-      { status: "pending" },
-      { status: "approved", usedAt: null },
+    $and: [
+      assessmentRequestFilter(context),
+      {
+        $or: [
+          { status: "pending" },
+          { status: "approved", usedAt: null },
+        ],
+      },
     ],
   });
   if (existing) {
@@ -2162,6 +2364,7 @@ module.exports.requestQuizRetake = async (req, res) => {
     course: context.course._id,
     quizType: context.type,
     quizId: context.target._id,
+    assessmentId: context.quizId,
   });
 
   return res.json({
@@ -2192,30 +2395,31 @@ module.exports.getQuizRetakeRequests = async (req, res) => {
   const [sections, chapters] = await Promise.all([
     sectionModel
       .find({ _id: { $in: sectionIds } })
-      .select("sectionTitle sectionQuizTitle"),
+      .select("sectionTitle sectionQuizTitle sectionQuizzes"),
     chapterModel
       .find({ _id: { $in: chapterIds } })
-      .select("chapterName chapterQuizTitle"),
+      .select("chapterName chapterQuizTitle chapterQuizzes"),
   ]);
-  const titles = new Map();
-  sections.forEach((section) =>
-    titles.set(
-      String(section._id),
-      section.sectionQuizTitle || `${section.sectionTitle} quiz`
-    )
-  );
-  chapters.forEach((chapter) =>
-    titles.set(
-      String(chapter._id),
-      chapter.chapterQuizTitle || `${chapter.chapterName} quiz`
-    )
-  );
+  const targets = new Map();
+  sections.forEach((section) => targets.set(String(section._id), section));
+  chapters.forEach((chapter) => targets.set(String(chapter._id), chapter));
 
   return res.json({
     success: true,
     requests: requests.map((request) => ({
       ...request.toObject(),
-      quizTitle: titles.get(String(request.quizId)) || "Deleted quiz",
+      quizTitle: (() => {
+        const target = targets.get(String(request.quizId));
+        if (!target) return "Deleted quiz";
+        const config = quizConfig[request.quizType];
+        const quizzes = getQuizCollection(target, config);
+        const assessment = quizzes.find(
+          (quiz) =>
+            String(quiz._id) ===
+            String(request.assessmentId || request.quizId)
+        );
+        return assessment?.title || "Deleted quiz";
+      })(),
     })),
   });
 };

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Header from "../components/Header";
+import { motion as Motion, useReducedMotion } from "framer-motion";
 
 const QuizSection = () => {
   const [title, setTitle] = useState("");
@@ -20,8 +21,9 @@ const QuizSection = () => {
   const [loadingQuiz, setLoadingQuiz] = useState(true);
   const [existingQuiz, setExistingQuiz] = useState(false);
   const [courseId, setCourseId] = useState(null);
-  const { id, type} = useParams();
+  const { id, type, quizId } = useParams();
   const navigate = useNavigate();
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     async function fetchExistingQuiz() {
@@ -29,7 +31,7 @@ const QuizSection = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/user/get${type}Quiz`,
           {
-            params: { id },
+            params: { id, quizId, create: quizId ? undefined : "true" },
             headers: {
               Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
             },
@@ -37,7 +39,7 @@ const QuizSection = () => {
         );
         if (response.data.success) {
           setCourseId(response.data.courseId);
-          if (response.data.quiz?.length > 0) {
+          if (quizId && response.data.quiz?.length > 0) {
             setQuizData(response.data.quiz);
             setTitle(response.data.title || "");
             setExistingQuiz(true);
@@ -59,7 +61,7 @@ const QuizSection = () => {
     }
 
     fetchExistingQuiz();
-  }, [id, type]);
+  }, [id, type, quizId]);
   function addQuestion() {
     setQuizData([
       ...quizData,
@@ -132,6 +134,7 @@ const QuizSection = () => {
 
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/user/add${type}Quiz`,{
         id,
+        quizId,
         title: title.trim(),
         quizData
       },{
@@ -169,7 +172,7 @@ const QuizSection = () => {
       setLoading(true);
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/user/delete${type}Quiz`,
-        { id },
+        { id, quizId },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
@@ -213,12 +216,21 @@ const QuizSection = () => {
       <div className="min-h-screen bg-bg pt-20">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           {/* Page Header */}
-          <div className="text-center mb-12">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20">
+          <Motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center mb-12"
+          >
+            <Motion.div
+              animate={prefersReducedMotion ? undefined : { rotate: [0, -3, 3, 0], y: [0, -3, 0] }}
+              transition={{ duration: 4.5, repeat: Infinity, repeatDelay: 1.5 }}
+              className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20"
+            >
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-            </div>
+            </Motion.div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {existingQuiz ? "Manage" : "Create"} {`${type}`} quiz
             </h1>
@@ -227,7 +239,7 @@ const QuizSection = () => {
                 ? "Update the title or questions, or remove this published quiz."
                 : "Design an assessment to test your students' knowledge and track their progress."}
             </p>
-          </div>
+          </Motion.div>
 
           <div className="premium-card mb-8 rounded-2xl border border-border bg-surface p-5 sm:p-6">
             <label

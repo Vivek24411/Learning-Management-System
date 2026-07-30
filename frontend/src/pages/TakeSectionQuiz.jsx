@@ -13,6 +13,7 @@ const navTopics = [
 ];
 
 const TakeSectionQuiz = () => {
+  const { id, type, quizId } = useParams();
   const [quizData, setQuizData] = React.useState([]);
   const [answeredQuizData, setAnsweredQuizData] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -27,7 +28,8 @@ const TakeSectionQuiz = () => {
   const [retakeRequestStatus, setRetakeRequestStatus] =
     React.useState("none");
   const [requestingRetake, setRequestingRetake] = React.useState(false);
-  const { id, type } = useParams();
+  const [isManager, setIsManager] = React.useState(false);
+  const [activeQuizId, setActiveQuizId] = React.useState(quizId || "");
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
 
@@ -46,7 +48,7 @@ const TakeSectionQuiz = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/user/get${type}Quiz`,
         {
-          params: { id },
+          params: { id, quizId },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
           },
@@ -66,6 +68,8 @@ const TakeSectionQuiz = () => {
         setRetakeRequestStatus(
           response.data.retakeRequestStatus || "none"
         );
+        setIsManager(Boolean(response.data.isManager));
+        setActiveQuizId(response.data.quizId || quizId || "");
         if (response.data.latestAttempt) {
           setScore(response.data.latestAttempt.score);
           setResultTotal(response.data.latestAttempt.total || questions.length);
@@ -95,7 +99,7 @@ const TakeSectionQuiz = () => {
       setSubmitting(true);
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/user/submit${type}Quiz`,
-        { id, answeredQuizData },
+        { id, quizId: activeQuizId, answeredQuizData },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
@@ -140,7 +144,7 @@ const TakeSectionQuiz = () => {
       setRequestingRetake(true);
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/user/requestQuizRetake`,
-        { quizType: type, quizId: id },
+        { quizType: type, quizId: id, assessmentId: activeQuizId },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("edvance_token")}`,
@@ -165,7 +169,7 @@ const TakeSectionQuiz = () => {
 
   useEffect(() => {
     fetchQuizData();
-  }, [id, type]);
+  }, [id, type, quizId]);
 
   if (loading) {
     return (
@@ -381,14 +385,15 @@ const TakeSectionQuiz = () => {
             className="mb-10 max-w-3xl"
           >
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
-              {assessmentLabel} assessment
+              {isManager ? "Instructor preview" : `${assessmentLabel} assessment`}
             </p>
             <h1 className="mt-3 font-serif text-4xl font-bold tracking-tight text-ink sm:text-5xl">
               {quizTitle}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-ink-muted">
-              Work through each prompt at your own pace. You can change any
-              answer before submitting.
+              {isManager
+                ? "This is the learner view. Correct choices are highlighted for your preview."
+                : "Work through each prompt at your own pace. You can change any answer before submitting."}
             </p>
           </Motion.header>
 
@@ -445,16 +450,23 @@ const TakeSectionQuiz = () => {
                         return (
                           <button
                             key={optionNumber}
-                            onClick={() => chooseAnswer(index, optionNumber)}
+                            onClick={() =>
+                              !isManager && chooseAnswer(index, optionNumber)
+                            }
+                            disabled={isManager}
                             className={`group flex w-full items-center gap-4 rounded-2xl border px-4 py-4 text-left transition-all duration-250 sm:px-5 ${
-                              isSelected
+                              isManager && Number(quizItem.correct) === optionNumber
+                                ? "border-success/40 bg-success/[0.08]"
+                                : isSelected
                                 ? "border-primary bg-primary/[0.06] shadow-[0_8px_26px_-22px_rgba(122,31,43,.8)]"
                                 : "border-border/90 bg-white hover:-translate-y-0.5 hover:border-primary/35 hover:bg-bg/55"
                             }`}
                           >
                             <span
                               className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
-                                isSelected
+                                isManager && Number(quizItem.correct) === optionNumber
+                                  ? "bg-success text-white"
+                                  : isSelected
                                   ? "bg-primary text-white"
                                   : "border border-border bg-bg text-ink-muted group-hover:border-primary/30 group-hover:text-primary"
                               }`}
@@ -463,7 +475,9 @@ const TakeSectionQuiz = () => {
                             </span>
                             <span
                               className={`leading-6 ${
-                                isSelected
+                                isManager && Number(quizItem.correct) === optionNumber
+                                  ? "font-semibold text-success"
+                                  : isSelected
                                   ? "font-medium text-primary"
                                   : "text-ink"
                               }`}
@@ -484,23 +498,23 @@ const TakeSectionQuiz = () => {
                 <div className="flex items-end justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink-muted">
-                      Progress
+                      {isManager ? "Quiz overview" : "Progress"}
                     </p>
                     <p className="mt-2 font-serif text-3xl font-bold text-ink">
-                      {answeredCount}
-                      <span className="text-lg text-ink-muted">
-                        /{quizData.length}
+                      {isManager ? quizData.length : answeredCount}
+                      <span className="ml-1 text-sm font-sans text-ink-muted">
+                        {isManager ? "questions" : `/${quizData.length}`}
                       </span>
                     </p>
                   </div>
                   <span className="text-sm font-semibold text-primary">
-                    {progress}%
+                    {isManager ? "Ready" : `${progress}%`}
                   </span>
                 </div>
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-border/70">
                   <Motion.div
                     className="h-full rounded-full bg-primary"
-                    animate={{ width: `${progress}%` }}
+                    animate={{ width: `${isManager ? 100 : progress}%` }}
                     transition={{ duration: 0.4 }}
                   />
                 </div>
@@ -530,28 +544,39 @@ const TakeSectionQuiz = () => {
                   ))}
                 </div>
 
-                <button
-                  onClick={submitQuiz}
-                  disabled={submitting || answeredCount === 0}
-                  className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
-                >
-                  {submitting ? (
-                    <>
-                      <svg className="mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Submitting…
-                    </>
-                  ) : (
-                    "Submit answers"
-                  )}
-                </button>
-                <p className="mt-3 text-center text-xs leading-5 text-ink-muted">
-                  {answeredCount === 0
-                    ? "Choose at least one answer to continue."
-                    : `${answeredCount} of ${quizData.length} answered`}
-                </p>
+                {isManager ? (
+                  <div className="mt-7 space-y-3">
+                    <button
+                      onClick={() =>
+                        navigate(`/quiz/${type}/${id}/${activeQuizId}`)
+                      }
+                      className="inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-primary-hover"
+                    >
+                      Edit this quiz
+                    </button>
+                    <button
+                      onClick={() => navigate(-1)}
+                      className="inline-flex w-full items-center justify-center rounded-full border border-border bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-bg"
+                    >
+                      Exit preview
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={submitQuiz}
+                      disabled={submitting || answeredCount === 0}
+                      className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      {submitting ? "Submitting…" : "Submit answers"}
+                    </button>
+                    <p className="mt-3 text-center text-xs leading-5 text-ink-muted">
+                      {answeredCount === 0
+                        ? "Choose at least one answer to continue."
+                        : `${answeredCount} of ${quizData.length} answered`}
+                    </p>
+                  </>
+                )}
               </div>
             </aside>
           </div>

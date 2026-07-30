@@ -9,6 +9,7 @@ const AddSection = () => {
   const [sectionTitle, setSectionTitle] = React.useState("");
   const [sectionDescription, setSectionDescription] = React.useState("");
   const [sectionVideos, setSectionVideos] = useState(null);
+  const [videoTitles, setVideoTitles] = useState([]);
   const [externalLinks, setExternalLinks] = useState([{
     label:"",
     url:""
@@ -31,8 +32,12 @@ const AddSection = () => {
       formData.append("externalLinks", JSON.stringify(externalLinks));
 
       if (sectionVideos && sectionVideos.length > 0) {
-        sectionVideos.forEach((video) => {
+        sectionVideos.forEach((video, index) => {
           formData.append("sectionVideo", video);
+          formData.append(
+            "sectionVideoTitle",
+            videoTitles[index]?.trim() || `Lesson ${index + 1}`
+          );
         });
       }
       setIsSubmitting(true);
@@ -55,6 +60,7 @@ const AddSection = () => {
         setSectionTitle("");
         setSectionDescription("");
         setSectionVideos(null);
+        setVideoTitles([]);
       } else {
         toast.error(response.data.message || "Failed to add section");
       }
@@ -112,6 +118,11 @@ const AddSection = () => {
 
     if (validFiles.length > 0) {
       setSectionVideos(validFiles);
+      setVideoTitles(
+        validFiles.map((file) =>
+          file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ")
+        )
+      );
       toast.success(`${validFiles.length} video(s) selected successfully`);
     } else if (files.length > 0) {
       // Clear the input if no valid files
@@ -387,7 +398,7 @@ const AddSection = () => {
                       {sectionVideos.map((video, index) => (
                         <div
                           key={index}
-                          className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                          className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow duration-200 hover:shadow-md"
                         >
                           <div className="flex items-center space-x-3">
                             <div className="flex-shrink-0">
@@ -418,6 +429,9 @@ const AddSection = () => {
                                 const newVideos = sectionVideos.filter(
                                   (_, i) => i !== index
                                 );
+                                setVideoTitles((previous) =>
+                                  previous.filter((_, i) => i !== index)
+                                );
                                 setSectionVideos(
                                   newVideos.length > 0 ? newVideos : null
                                 );
@@ -438,6 +452,31 @@ const AddSection = () => {
                                 />
                               </svg>
                             </button>
+                          </div>
+                          <div>
+                            <label
+                              htmlFor={`section-video-title-${index}`}
+                              className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500"
+                            >
+                              Video title
+                            </label>
+                            <input
+                              id={`section-video-title-${index}`}
+                              type="text"
+                              maxLength={120}
+                              value={videoTitles[index] || ""}
+                              onChange={(event) =>
+                                setVideoTitles((previous) =>
+                                  previous.map((title, titleIndex) =>
+                                    titleIndex === index
+                                      ? event.target.value
+                                      : title
+                                  )
+                                )
+                              }
+                              placeholder={`Lesson ${index + 1}`}
+                              className="w-full rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
+                            />
                           </div>
                         </div>
                       ))}
